@@ -1,0 +1,9 @@
+dict_type,code,name,value,parent_code,sort_order,is_active,remark
+ORG,ORG001,示例机构一,示例机构一,,1,true,示例
+BUSINESS_UNIT,BU001,示例板块一,示例板块一,,1,true,示例
+DEPT,DEPT001,示例部门一,示例部门一,,1,true,示例
+PROJECT_TYPE,PT001,示例类型一,示例类型一,,1,true,示例
+ORG_MODE,OM001,示例组织模式一,示例组织模式一,,1,true,示例
+DATA_STATUS,ENABLED,启用,启用,,1,true,示例
+PROVINCE,110000,北京市,北京市,,1,true,示例
+CITY,110100,北京市,北京市,110000,1,true,示例

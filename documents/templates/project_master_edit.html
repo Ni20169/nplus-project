@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑项目</title>
+    <style>
+        body {
+            font-family: "PingFang SC","Microsoft YaHei","Noto Sans SC","Source Han Sans SC",sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 30px auto;
+            background: #fff;
+            padding: 24px;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+        }
+        h1 {
+            font-size: 20px;
+            margin-bottom: 16px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        textarea {
+            margin-top: 12px;
+        }
+        .actions {
+            margin-top: 16px;
+            display: flex;
+            gap: 8px;
+        }
+        .btn {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+        }
+        .btn-save { background-color: #2ecc71; }
+        .btn-cancel { background-color: #95a5a6; text-decoration: none; }
+        @media (max-width: 1000px) {
+            .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (max-width: 700px) {
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>编辑项目：{{ project.project_code }}</h1>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-grid">
+                <input type="text" name="project_name" value="{{ project.project_name }}" placeholder="项目名称" required>
+
+                <select name="org_code" id="orgSelect" required>
+                    <option value="{{ project.org_code }}">{{ project.org_name }}</option>
+                    {% for item in dicts.ORG %}
+                        <option value="{{ item.code }}" data-name="{{ item.name }}">{{ item.name }}</option>
+                    {% endfor %}
+                </select>
+                <input type="text" name="org_code_display" id="orgCodeDisplay" value="{{ project.org_code }}" readonly>
+                <input type="hidden" name="org_name" id="orgNameHidden" value="{{ project.org_name }}">
+
+                <input type="text" name="parent_pj_code" value="{{ project.parent_pj_code }}" placeholder="上级PJ编码（可为空）">
+
+                <select name="province_code" id="provinceSelect" required>
+                    <option value="{{ project.province_code }}">{{ project.province_code }}</option>
+                    {% for item in dicts.PROVINCE %}
+                        <option value="{{ item.code }}">{{ item.name }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="city_code" id="citySelect" required>
+                    <option value="{{ project.city_code }}">{{ project.city_code }}</option>
+                    {% for item in dicts.CITY %}
+                        <option value="{{ item.code }}" data-parent="{{ item.parent_code }}">{{ item.name }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="business_unit" required>
+                    <option value="{{ project.business_unit }}">{{ project.business_unit }}</option>
+                    {% for item in dicts.BUSINESS_UNIT %}
+                        <option value="{{ item.code }}">{{ item.name }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="dept" required>
+                    <option value="{{ project.dept }}">{{ project.dept }}</option>
+                    {% for item in dicts.DEPT %}
+                        <option value="{{ item.code }}">{{ item.name }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="project_type" required>
+                    <option value="{{ project.project_type }}">{{ project.project_type }}</option>
+                    {% for item in dicts.PROJECT_TYPE %}
+                        <option value="{{ item.code }}">{{ item.name }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="org_mode" required>
+                    <option value="{{ project.org_mode }}">{{ project.org_mode }}</option>
+                    {% for item in dicts.ORG_MODE %}
+                        <option value="{{ item.code }}">{{ item.name }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="data_status" required>
+                    <option value="{{ project.data_status }}">{{ project.data_status }}</option>
+                    {% for item in dicts.DATA_STATUS %}
+                        <option value="{{ item.code }}">{{ item.name }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="is_execution_level" required>
+                    <option value="false" {% if not project.is_execution_level %}selected{% endif %}>否</option>
+                    <option value="true" {% if project.is_execution_level %}selected{% endif %}>是</option>
+                </select>
+
+                <select name="status" required>
+                    <option value="启用" {% if project.status == "启用" %}selected{% endif %}>启用</option>
+                    <option value="停用" {% if project.status == "停用" %}selected{% endif %}>停用</option>
+                    <option value="作废" {% if project.status == "作废" %}selected{% endif %}>作废</option>
+                </select>
+            </div>
+
+            <textarea name="remark" placeholder="备注">{{ project.remark }}</textarea>
+            <div class="actions">
+                <button class="btn btn-save" type="submit">保存</button>
+                <a class="btn btn-cancel" href="{% url 'project_master_list' %}">取消</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const orgSelect = document.getElementById('orgSelect');
+        const orgCodeDisplay = document.getElementById('orgCodeDisplay');
+        const orgNameHidden = document.getElementById('orgNameHidden');
+        if (orgSelect) {
+            orgSelect.addEventListener('change', () => {
+                const option = orgSelect.options[orgSelect.selectedIndex];
+                orgCodeDisplay.value = option.value || '';
+                orgNameHidden.value = option.getAttribute('data-name') || '';
+            });
+        }
+
+        const provinceSelect = document.getElementById('provinceSelect');
+        const citySelect = document.getElementById('citySelect');
+        if (provinceSelect && citySelect) {
+            provinceSelect.addEventListener('change', () => {
+                const province = provinceSelect.value;
+                Array.from(citySelect.options).forEach((opt) => {
+                    if (!opt.value) return;
+                    const parent = opt.getAttribute('data-parent');
+                    opt.style.display = parent === province ? 'block' : 'none';
+                });
+                citySelect.value = '';
+            });
+        }
+    </script>
+</body>
+</html>
