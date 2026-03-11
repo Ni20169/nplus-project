@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>项目主数据管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* 左侧导航栏 */
+        .sidebar {
+            width: 250px;
+            background-color: #333;
+            color: white;
+            padding: 20px;
+        }
+        
+        .sidebar h2 {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .sidebar ul {
+            list-style: none;
+        }
+        
+        .sidebar ul li {
+            margin-bottom: 15px;
+        }
+        
+        .sidebar ul li a {
+            color: white;
+            text-decoration: none;
+            display: block;
+            padding: 10px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        
+        .sidebar ul li a:hover {
+            background-color: #555;
+        }
+        
+        /* 主内容区域 */
+        .main-content {
+            flex: 1;
+            padding: 30px;
+        }
+        
+        .main-content h1 {
+            margin-bottom: 30px;
+            color: #333;
+        }
+        
+        /* 操作按钮区域 */
+        .action-buttons {
+            margin-bottom: 20px;
+        }
+        
+        .action-buttons button {
+            padding: 8px 16px;
+            margin-right: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn-add {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .btn-search {
+            background-color: #2196F3;
+            color: white;
+        }
+        
+        .btn-refresh {
+            background-color: #ff9800;
+            color: white;
+        }
+        
+        /* 搜索表单 */
+        .search-form {
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .search-form input {
+            padding: 8px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        /* 数据表格 */
+        .data-table {
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        /* 操作按钮 */
+        .btn-edit {
+            background-color: #2196F3;
+            color: white;
+            padding: 4px 8px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+        
+        .btn-delete {
+            background-color: #f44336;
+            color: white;
+            padding: 4px 8px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧导航栏 -->
+        <div class="sidebar">
+            <h2>系统管理</h2>
+            <ul>
+                <li><a href="#">用户管理</a></li>
+                <li><a href="#">项目管理</a></li>
+                <li><a href="#">数据统计</a></li>
+                <li><a href="#">系统设置</a></li>
+            </ul>
+            
+            <h2 style="margin-top: 40px;">项目操作</h2>
+            <ul>
+                <li><a href="#" onclick="showAddForm()">新增项目</a></li>
+                <li><a href="#" onclick="showSearchForm()">查询项目</a></li>
+                <li><a href="#" onclick="refreshList()">刷新列表</a></li>
+            </ul>
+        </div>
+        
+        <!-- 主内容区域 -->
+        <div class="main-content">
+            <h1>项目主数据管理</h1>
+            
+            <!-- 操作按钮 -->
+            <div class="action-buttons">
+                <button class="btn-add" onclick="showAddForm()">新增项目</button>
+                <button class="btn-search" onclick="showSearchForm()">查询项目</button>
+                <button class="btn-refresh" onclick="refreshList()">刷新列表</button>
+            </div>
+            
+            <!-- 搜索表单 -->
+            <div class="search-form" id="searchForm" style="display: none;">
+                <h3>项目查询</h3>
+                <input type="text" placeholder="项目编码">
+                <input type="text" placeholder="项目名称">
+                <input type="text" placeholder="机构名称">
+                <button class="btn-search">查询</button>
+                <button onclick="hideSearchForm()">取消</button>
+            </div>
+            
+            <!-- 新增表单 -->
+            <div class="search-form" id="addForm" style="display: none;">
+                <h3>新增项目</h3>
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="text" name="pj_code" placeholder="项目编码" required><br><br>
+                    <input type="text" name="pj_name" placeholder="项目名称" required><br><br>
+                    <input type="text" name="org_name" placeholder="机构名称" required><br><br>
+                    <input type="text" name="org_code" placeholder="机构编码" required><br><br>
+                    <input type="text" name="parent_pj_code" placeholder="上级项目编码"><br><br>
+                    <input type="text" name="province_code" placeholder="所在省" required><br><br>
+                    <input type="text" name="city_code" placeholder="所在市" required><br><br>
+                    <input type="text" name="business_unit" placeholder="业务板块" required><br><br>
+                    <input type="text" name="dept" placeholder="项目承担部门" required><br><br>
+                    <input type="text" name="project_type" placeholder="项目类型" required><br><br>
+                    <input type="text" name="org_mode" placeholder="项目组织模式" required><br><br>
+                    <input type="text" name="data_status" placeholder="数据状态" required><br><br>
+                    <input type="text" name="exec_pj_code" placeholder="执行层项目码"><br><br>
+                    <input type="text" name="year" placeholder="项目年份" required><br><br>
+                    <input type="text" name="created_by" placeholder="创建人" required><br><br>
+                    <textarea name="remark" placeholder="备注"></textarea><br><br>
+                    <button type="submit" class="btn-add">保存</button>
+                    <button type="button" onclick="hideAddForm()">取消</button>
+                </form>
+            </div>
+            
+            <!-- 数据表格 -->
+            <div class="data-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>项目编码</th>
+                            <th>项目名称</th>
+                            <th>机构名称</th>
+                            <th>所在省</th>
+                            <th>所在市</th>
+                            <th>业务板块</th>
+                            <th>项目类型</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for project in projects %}
+                        <tr>
+                            <td>{{ project.pj_code }}</td>
+                            <td>{{ project.pj_name }}</td>
+                            <td>{{ project.org_name }}</td>
+                            <td>{{ project.province_code }}</td>
+                            <td>{{ project.city_code }}</td>
+                            <td>{{ project.business_unit }}</td>
+                            <td>{{ project.project_type }}</td>
+                            <td>{{ project.created_at }}</td>
+                            <td>
+                                <button class="btn-edit" onclick="editProject('{{ project.pj_code }}')">修改</button>
+                                <button class="btn-delete" onclick="deleteProject('{{ project.pj_code }}')">删除</button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9">暂无数据</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 显示新增表单
+        function showAddForm() {
+            document.getElementById('addForm').style.display = 'block';
+            document.getElementById('searchForm').style.display = 'none';
+        }
+        
+        // 隐藏新增表单
+        function hideAddForm() {
+            document.getElementById('addForm').style.display = 'none';
+        }
+        
+        // 显示搜索表单
+        function showSearchForm() {
+            document.getElementById('searchForm').style.display = 'block';
+            document.getElementById('addForm').style.display = 'none';
+        }
+        
+        // 隐藏搜索表单
+        function hideSearchForm() {
+            document.getElementById('searchForm').style.display = 'none';
+        }
+        
+        // 刷新列表
+        function refreshList() {
+            location.reload();
+        }
+        
+        // 编辑项目
+        function editProject(pjCode) {
+            alert('编辑项目：' + pjCode);
+            // 这里可以添加编辑逻辑
+        }
+        
+        // 删除项目
+        function deleteProject(pjCode) {
+            if (confirm('确定要删除项目 ' + pjCode + ' 吗？')) {
+                // 这里可以添加删除逻辑
+                alert('项目已删除');
+                refreshList();
+            }
+        }
+    </script>
+</body>
+</html>

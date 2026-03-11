@@ -1,0 +1,22 @@
+from django.db import models
+
+class ProjectMaster(models.Model):
+    pj_code = models.CharField("项目主数据编码", max_length=12, unique=True)
+    pj_name = models.CharField("项目名称", max_length=100, unique=True)
+    org_name = models.CharField("项目机构名称", max_length=50)
+    org_code = models.CharField("项目机构组织编码", max_length=9)
+    parent_pj_code = models.CharField("上级PJ编码", max_length=12)
+    province_code = models.CharField("所在省", max_length=20)
+    city_code = models.CharField("所在市", max_length=20)
+    business_unit = models.CharField("业务板块", max_length=50)
+    dept = models.CharField("项目承担部门", max_length=50)
+    project_type = models.CharField("项目类型", max_length=50)
+    org_mode = models.CharField("项目组织模式", max_length=50)
+    data_status = models.CharField("主数据系统数据状态", max_length=50)
+    exec_pj_code = models.CharField("执行层PJ码", max_length=12)
+    year = models.CharField("项目年份", max_length=4)
+    created_at = models.DateTimeField("创建时间", auto_now_add=True)
+    created_by = models.CharField("创建人", max_length=50)
+    updated_at = models.DateTimeField("更新时间", auto_now=True)
+    updated_by = models.CharField("更新人", max_length=50)
+    remark = models.TextField("备注", blank=True)
