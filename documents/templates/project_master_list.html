@@ -1075,7 +1075,7 @@
                 </div>
                 {% endif %}
 
-                <div class="search-form" id="searchForm" style="display: none;">
+                <div class="search-form" id="searchForm" style="display: {% if show_search_form %}block{% else %}none{% endif %};">
                     <h3>
                         项目查询
                         <span class="collapse-btn" id="toggleSearchFields">收起</span>

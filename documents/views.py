@@ -340,6 +340,24 @@ def project_master_list(request):
         ).first()
         show_update_panel = True
 
+    # 检查是否有查询参数，如果有则显示查询表单
+    has_search_params = any([
+        search["project_code"],
+        search["project_name"],
+        search["org_name"],
+        search["parent_pj_code"],
+        search["province_code"],
+        search["business_unit"],
+        search["dept"],
+        search["project_type"],
+        search["org_mode"],
+        search["data_status"],
+        search["is_execution_level"],
+        search["project_year"],
+        search["created_by"],
+        search["remark"],
+    ])
+
     return render(
         request,
         "project_master_list.html",
@@ -352,6 +370,7 @@ def project_master_list(request):
             "update_target": update_target,
             "update_code": update_code,
             "show_update_panel": show_update_panel,
+            "show_search_form": has_search_params,
             "update_now": timezone.localtime().strftime("%Y-%m-%d %H:%M"),
             "all_projects": all_projects,
             "pending_approvals": pending_approvals,
