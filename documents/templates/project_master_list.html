@@ -1722,153 +1722,154 @@
                 });
             });
 
-        if (addUpdateRowBtn) {
-            addUpdateRowBtn.addEventListener('click', () => {
-                const container = document.getElementById('updateRows');
-                if (!container) return;
-                const row = document.createElement('div');
-                row.className = 'form-grid';
-                row.innerHTML = `
-                    <div class="field field-sm">
-                        <label>字段</label>
-                        <select name="update_field_key" class="update-field-key">
-                            <option value="">请选择字段</option>
-                            <option value="project_name">项目名称</option>
-                            <option value="parent_pj_code">上级PJ编码</option>
-                            <option value="province_code">所在省</option>
-                            <option value="business_unit">业务板块</option>
-                            <option value="dept">承担部门</option>
-                            <option value="project_type">项目类型</option>
-                            <option value="org_mode">项目组织模式</option>
-                            <option value="data_status">数据状态</option>
-                            <option value="is_execution_level">是否执行层</option>
-                            <option value="status">状态</option>
-                            <option value="remark">备注</option>
-                        </select>
-                    </div>
-                    <div class="field update-value-cell">
-                        <label>新值</label>
-                        <input type="text" name="update_field_value" placeholder="填写新值">
-                    </div>
-                    <div class="field field-sm" style="align-self:flex-end;">
-                        <button class="btn-cancel" type="button">删除</button>
-                    </div>
-                `;
-                const delBtn = row.querySelector('button');
-                const newSelect = row.querySelector('.update-field-key');
-                newSelect.addEventListener('change', () => applyUpdateFieldTemplate(row));
-                delBtn.addEventListener('click', () => row.remove());
-                container.appendChild(row);
-            });
-        }
-
-        const updateCodeInput = document.querySelector('input[name="update_code"]');
-        const updateNameInput = document.querySelector('input[name="update_name"]');
-        if (updateCodeInput && updateNameInput) {
-            updateCodeInput.addEventListener('input', () => {
-                if (updateCodeInput.value.trim()) {
-                    updateNameInput.value = '';
-                }
-            });
-            updateNameInput.addEventListener('input', () => {
-                if (updateNameInput.value.trim()) {
-                    updateCodeInput.value = '';
-                }
-            });
-        }
-
-        const sidebar = document.getElementById('sidebar');
-        const handle = document.getElementById('resizeHandle');
-        let isResizing = false;
-
-        if (handle) {
-            handle.addEventListener('mousedown', (e) => {
-                isResizing = true;
-                document.body.style.cursor = 'col-resize';
-                e.preventDefault();
-            });
-        }
-
-        document.addEventListener('mousemove', (e) => {
-            if (!isResizing) return;
-            const newWidth = Math.min(Math.max(e.clientX, 200), 360);
-            sidebar.style.width = newWidth + 'px';
-        });
-
-        document.addEventListener('mouseup', () => {
-            if (isResizing) {
-                isResizing = false;
-                document.body.style.cursor = 'default';
-            }
-        });
-
-        const table = document.getElementById('projectTable');
-        if (table) {
-            const tbody = table.querySelector('tbody');
-            const headers = table.querySelectorAll('th[data-sort]');
-            const filterInputs = table.querySelectorAll('[data-filter]');
-            const resetBtn = document.getElementById('resetTableFilter');
-            let sortIndex = null;
-            let sortAsc = true;
-
-            const applyFilters = () => {
-                const filters = Array.from(filterInputs).map((input) => input.value.trim().toLowerCase());
-                let visibleCount = 0;
-                Array.from(tbody.querySelectorAll('tr')).forEach((row) => {
-                    const cells = Array.from(row.children);
-                    const match = filters.every((value, idx) => {
-                        if (!value) return true;
-                        const cell = cells[idx];
-                        if (!cell) return true;
-                        return cell.textContent.toLowerCase().includes(value);
-                    });
-                    row.style.display = match ? '' : 'none';
-                    if (match) visibleCount += 1;
+            if (addUpdateRowBtn) {
+                addUpdateRowBtn.addEventListener('click', () => {
+                    const container = document.getElementById('updateRows');
+                    if (!container) return;
+                    const row = document.createElement('div');
+                    row.className = 'form-grid';
+                    row.innerHTML = `
+                        <div class="field field-sm">
+                            <label>字段</label>
+                            <select name="update_field_key" class="update-field-key">
+                                <option value="">请选择字段</option>
+                                <option value="project_name">项目名称</option>
+                                <option value="parent_pj_code">上级PJ编码</option>
+                                <option value="province_code">所在省</option>
+                                <option value="business_unit">业务板块</option>
+                                <option value="dept">承担部门</option>
+                                <option value="project_type">项目类型</option>
+                                <option value="org_mode">项目组织模式</option>
+                                <option value="data_status">数据状态</option>
+                                <option value="is_execution_level">是否执行层</option>
+                                <option value="status">状态</option>
+                                <option value="remark">备注</option>
+                            </select>
+                        </div>
+                        <div class="field update-value-cell">
+                            <label>新值</label>
+                            <input type="text" name="update_field_value" placeholder="填写新值">
+                        </div>
+                        <div class="field field-sm" style="align-self:flex-end;">
+                            <button class="btn-cancel" type="button">删除</button>
+                        </div>
+                    `;
+                    const delBtn = row.querySelector('button');
+                    const newSelect = row.querySelector('.update-field-key');
+                    newSelect.addEventListener('change', () => applyUpdateFieldTemplate(row));
+                    delBtn.addEventListener('click', () => row.remove());
+                    container.appendChild(row);
                 });
-                const matchCount = document.getElementById('matchCount');
-                if (matchCount) {
-                    matchCount.textContent = String(visibleCount);
-                }
-            };
+            }
 
-            filterInputs.forEach((input) => {
-                input.addEventListener('input', applyFilters);
-                input.addEventListener('change', applyFilters);
-            });
+            const updateCodeInput = document.querySelector('input[name="update_code"]');
+            const updateNameInput = document.querySelector('input[name="update_name"]');
+            if (updateCodeInput && updateNameInput) {
+                updateCodeInput.addEventListener('input', () => {
+                    if (updateCodeInput.value.trim()) {
+                        updateNameInput.value = '';
+                    }
+                });
+                updateNameInput.addEventListener('input', () => {
+                    if (updateNameInput.value.trim()) {
+                        updateCodeInput.value = '';
+                    }
+                });
+            }
 
-            if (resetBtn) {
-                resetBtn.addEventListener('click', () => {
-                    filterInputs.forEach((input) => {
-                        input.value = '';
+            const sidebar = document.getElementById('sidebar');
+            const handle = document.getElementById('resizeHandle');
+            let isResizing = false;
+
+            if (handle) {
+                handle.addEventListener('mousedown', (e) => {
+                    isResizing = true;
+                    document.body.style.cursor = 'col-resize';
+                    e.preventDefault();
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (!isResizing) return;
+                    const newWidth = Math.min(Math.max(e.clientX, 200), 360);
+                    sidebar.style.width = newWidth + 'px';
+                });
+
+                document.addEventListener('mouseup', () => {
+                    if (isResizing) {
+                        isResizing = false;
+                        document.body.style.cursor = 'default';
+                    }
+                });
+            }
+
+            const table = document.getElementById('projectTable');
+            if (table) {
+                const tbody = table.querySelector('tbody');
+                const headers = table.querySelectorAll('th[data-sort]');
+                const filterInputs = table.querySelectorAll('[data-filter]');
+                const resetBtn = document.getElementById('resetTableFilter');
+                let sortIndex = null;
+                let sortAsc = true;
+
+                const applyFilters = () => {
+                    const filters = Array.from(filterInputs).map((input) => input.value.trim().toLowerCase());
+                    let visibleCount = 0;
+                    Array.from(tbody.querySelectorAll('tr')).forEach((row) => {
+                        const cells = Array.from(row.children);
+                        const match = filters.every((value, idx) => {
+                            if (!value) return true;
+                            const cell = cells[idx];
+                            if (!cell) return true;
+                            return cell.textContent.toLowerCase().includes(value);
+                        });
+                        row.style.display = match ? '' : 'none';
+                        if (match) visibleCount += 1;
                     });
+                    const matchCount = document.getElementById('matchCount');
+                    if (matchCount) {
+                        matchCount.textContent = String(visibleCount);
+                    }
+                };
+
+                filterInputs.forEach((input) => {
+                    input.addEventListener('input', applyFilters);
+                    input.addEventListener('change', applyFilters);
+                });
+
+                if (resetBtn) {
+                    resetBtn.addEventListener('click', () => {
+                        filterInputs.forEach((input) => {
+                            input.value = '';
+                        });
+                        applyFilters();
+                    });
+                }
+
+                headers.forEach((th) => {
+                    th.style.cursor = 'pointer';
+                    th.addEventListener('click', () => {
+                        const index = Number(th.getAttribute('data-sort'));
+                        sortAsc = sortIndex === index ? !sortAsc : true;
+                        sortIndex = index;
+                        const rows = Array.from(tbody.querySelectorAll('tr'));
+                        rows.sort((a, b) => {
+                            const aText = a.children[index]?.textContent.trim() || '';
+                            const bText = b.children[index]?.textContent.trim() || '';
+                            if (!aText && !bText) return 0;
+                            if (!aText) return sortAsc ? 1 : -1;
+                            if (!bText) return sortAsc ? -1 : 1;
+                            if (aText === bText) return 0;
+                            return sortAsc ? aText.localeCompare(bText, 'zh-Hans-CN') : bText.localeCompare(aText, 'zh-Hans-CN');
+                        });
+                        rows.forEach((row) => tbody.appendChild(row));
+                    });
+                });
+
+                if (typeof applyFilters === 'function') {
                     applyFilters();
-                });
+                }
             }
-
-            headers.forEach((th) => {
-                th.style.cursor = 'pointer';
-                th.addEventListener('click', () => {
-                    const index = Number(th.getAttribute('data-sort'));
-                    sortAsc = sortIndex === index ? !sortAsc : true;
-                    sortIndex = index;
-                    const rows = Array.from(tbody.querySelectorAll('tr'));
-                    rows.sort((a, b) => {
-                        const aText = a.children[index]?.textContent.trim() || '';
-                        const bText = b.children[index]?.textContent.trim() || '';
-                        if (!aText && !bText) return 0;
-                        if (!aText) return sortAsc ? 1 : -1;
-                        if (!bText) return sortAsc ? -1 : 1;
-                        if (aText === bText) return 0;
-                        return sortAsc ? aText.localeCompare(bText, 'zh-Hans-CN') : bText.localeCompare(aText, 'zh-Hans-CN');
-                    });
-                    rows.forEach((row) => tbody.appendChild(row));
-                });
-            });
-
-            if (typeof applyFilters === 'function') {
-                applyFilters();
-            }
-        }
+        });
     </script>
 </body>
 </html>
