@@ -821,8 +821,10 @@
                             <button class="btn-search" type="submit">查询</button>
                         </div>
                     </form>
-                    {% if (update_code or update_name) and not update_candidates %}
-                        <div class="hint">暂无匹配项目</div>
+                    {% if update_code or update_name %}
+                        {% if not update_candidates %}
+                            <div class="hint">暂无匹配项目</div>
+                        {% endif %}
                     {% endif %}
 
                     {% if update_target %}
