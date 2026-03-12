@@ -174,8 +174,8 @@
             color: white;
         }
 
-        .btn-add { background-color: #2ecc71; }
-        .btn-search { background-color: #3498db; }
+        .btn-add { background-color: #6adf9a; }
+        .btn-search { background-color: #6aa7ff; }
         .btn-refresh { background-color: #f39c12; }
         .btn-export { background-color: #1abc9c; }
         .btn-import { background-color: #9b59b6; }
@@ -206,12 +206,12 @@
         .search-form input,
         .search-form select,
         .search-form textarea {
-            padding: 8px;
-            margin: 6px 0;
+            padding: 6px 8px;
+            margin: 4px 0;
             border: 1px solid #ddd;
             border-radius: 4px;
             width: 100%;
-            font-size: 14px;
+            font-size: 13px;
             font-family: inherit;
         }
 
@@ -231,7 +231,7 @@
         .form-grid {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 12px;
+            gap: 10px;
         }
 
         .form-actions {
@@ -243,7 +243,7 @@
         .form-actions .btn-search,
         .form-actions .btn-cancel {
             padding: 8px 14px;
-            font-size: 14px;
+            font-size: 13px;
             border-radius: 4px;
             min-width: 96px;
         }
@@ -260,10 +260,10 @@
 
         .field label {
             display: block;
-            font-size: 13px;
+            font-size: 12px;
             color: #111;
             font-weight: 600;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
         }
 
         .required-star {
@@ -281,7 +281,32 @@
 
         .table-wrapper {
             width: 100%;
-            overflow-x: auto;
+            max-height: 520px;
+            overflow: auto;
+        }
+
+        .filter-row input,
+        .filter-row select {
+            width: 100%;
+            padding: 4px 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .filter-row th {
+            background: #f9fafb;
+        }
+
+        .btn-reset-filter {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            background: #95a5a6;
+            color: #fff;
+            width: 100%;
         }
 
         table {
@@ -291,7 +316,7 @@
         }
 
         th, td {
-            padding: 10px 12px;
+            padding: 8px 10px;
             text-align: left;
             border-bottom: 1px solid #eee;
             font-size: 13px;
@@ -554,7 +579,7 @@
                     </form>
                 </div>
 
-                <div class="search-form" id="addForm" style="display: none;">
+                <div class="search-form add-form" id="addForm" style="display: none;">
                     <h3>新增项目</h3>
                     <form method="post">
                         {% csrf_token %}
@@ -680,27 +705,48 @@
 
                 <div class="data-table">
                     <div class="table-wrapper">
-                        <table>
+                        <table id="projectTable">
                             <thead>
                                 <tr>
-                                    <th>项目编码</th>
-                                    <th>项目名称</th>
-                                    <th>机构名称</th>
-                                    <th>所在省</th>
-                                    <th>所在市</th>
-                                    <th>业务板块</th>
-                                    <th>项目类型</th>
-                                    <th>状态</th>
-                                    <th>创建时间</th>
+                                    <th class="sticky-col col-1" data-sort="0">项目编码</th>
+                                    <th class="sticky-col col-2" data-sort="1">项目名称</th>
+                                    <th class="sticky-col col-3" data-sort="2">机构名称</th>
+                                    <th data-sort="3">所在省</th>
+                                    <th data-sort="4">所在市</th>
+                                    <th data-sort="5">业务板块</th>
+                                    <th data-sort="6">项目类型</th>
+                                    <th data-sort="7">状态</th>
+                                    <th data-sort="8">创建时间</th>
                                     <th>操作</th>
+                                </tr>
+                                <tr class="filter-row">
+                                    <th class="sticky-col col-1"><input type="text" data-filter="0" placeholder="筛选"></th>
+                                    <th class="sticky-col col-2"><input type="text" data-filter="1" placeholder="筛选"></th>
+                                    <th class="sticky-col col-3"><input type="text" data-filter="2" placeholder="筛选"></th>
+                                    <th><input type="text" data-filter="3" placeholder="筛选"></th>
+                                    <th><input type="text" data-filter="4" placeholder="筛选"></th>
+                                    <th><input type="text" data-filter="5" placeholder="筛选"></th>
+                                    <th><input type="text" data-filter="6" placeholder="筛选"></th>
+                                    <th>
+                                        <select data-filter="7">
+                                            <option value="">全部</option>
+                                            <option value="启用">启用</option>
+                                            <option value="停用">停用</option>
+                                            <option value="作废">作废</option>
+                                        </select>
+                                    </th>
+                                    <th><input type="text" data-filter="8" placeholder="筛选"></th>
+                                    <th>
+                                        <button type="button" class="btn-reset-filter" id="resetTableFilter">清空</button>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for project in projects %}
                                 <tr>
-                                    <td>{{ project.project_code }}</td>
-                                    <td>{{ project.project_name }}</td>
-                                    <td>{{ project.org_name }}</td>
+                                    <td class="sticky-col col-1">{{ project.project_code }}</td>
+                                    <td class="sticky-col col-2">{{ project.project_name }}</td>
+                                    <td class="sticky-col col-3">{{ project.org_name }}</td>
                                     <td>{{ project.province_name }}</td>
                                     <td>{{ project.city_name }}</td>
                                     <td>{{ project.business_unit_name }}</td>
@@ -819,6 +865,90 @@
                 document.body.style.cursor = 'default';
             }
         });
+
+        const table = document.getElementById('projectTable');
+        if (table) {
+            const tbody = table.querySelector('tbody');
+            const headers = table.querySelectorAll('th[data-sort]');
+            const filterInputs = table.querySelectorAll('[data-filter]');
+            const resetBtn = document.getElementById('resetTableFilter');
+            let sortIndex = null;
+            let sortAsc = true;
+
+            const applyFilters = () => {
+                const filters = Array.from(filterInputs).map((input) => input.value.trim().toLowerCase());
+                Array.from(tbody.querySelectorAll('tr')).forEach((row) => {
+                    const cells = Array.from(row.children);
+                    const match = filters.every((value, idx) => {
+                        if (!value) return true;
+                        const cell = cells[idx];
+                        if (!cell) return true;
+                        return cell.textContent.toLowerCase().includes(value);
+                    });
+                    row.style.display = match ? '' : 'none';
+                });
+            };
+
+            filterInputs.forEach((input) => {
+                input.addEventListener('input', applyFilters);
+                input.addEventListener('change', applyFilters);
+            });
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                    filterInputs.forEach((input) => {
+                        input.value = '';
+                    });
+                    applyFilters();
+                });
+            }
+
+            headers.forEach((th) => {
+                th.style.cursor = 'pointer';
+                th.addEventListener('click', () => {
+                    const index = Number(th.getAttribute('data-sort'));
+                    sortAsc = sortIndex === index ? !sortAsc : true;
+                    sortIndex = index;
+                    const rows = Array.from(tbody.querySelectorAll('tr'));
+                    rows.sort((a, b) => {
+                        const aText = a.children[index]?.textContent.trim() || '';
+                        const bText = b.children[index]?.textContent.trim() || '';
+                        if (!aText && !bText) return 0;
+                        if (!aText) return sortAsc ? 1 : -1;
+                        if (!bText) return sortAsc ? -1 : 1;
+                        if (aText === bText) return 0;
+                        return sortAsc ? aText.localeCompare(bText, 'zh-Hans-CN') : bText.localeCompare(aText, 'zh-Hans-CN');
+                    });
+                    rows.forEach((row) => tbody.appendChild(row));
+                });
+            });
+        }
     </script>
 </body>
 </html>
+        .sticky-col {
+            position: sticky;
+            background: #fff;
+            z-index: 2;
+        }
+
+        th.sticky-col {
+            background: #f3f6f9;
+            z-index: 3;
+        }
+
+        .col-1 { left: 0; min-width: 140px; }
+        .col-2 { left: 140px; min-width: 160px; }
+        .col-3 { left: 300px; min-width: 160px; }
+
+        .add-form {
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .add-form textarea,
+        .add-form input,
+        .add-form select {
+            font-size: 13px;
+            line-height: 1.4;
+        }

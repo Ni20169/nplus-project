@@ -11,7 +11,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from openpyxl import Workbook, load_workbook
 
-from .models import DictType, ImportBatch, ImportError, ProjectMaster, ProjectMasterLog
+from .models import DictType, ImportBatch, ImportError, ProjectMaster, ProjectMasterLog, UserProfile
 
 
 DICT_CODES = [
@@ -486,20 +486,27 @@ def user_list(request):
     else:
         users = User.objects.filter(id=request.user.id)
 
+    for user in users:
+        UserProfile.objects.get_or_create(user=user)
+
     if request.method == "POST" and request.user.is_staff:
         action = request.POST.get("action")
         if action == "create":
             username = request.POST.get("username", "").strip()
             email = request.POST.get("email", "").strip()
             password = request.POST.get("password", "").strip()
+            department = request.POST.get("department", "").strip()
             is_staff = request.POST.get("is_staff") == "true"
             if username and password:
-                User.objects.create_user(
+                new_user = User.objects.create_user(
                     username=username,
                     email=email,
                     password=password,
                     is_staff=is_staff,
                 )
+                profile, _ = UserProfile.objects.get_or_create(user=new_user)
+                profile.department = department
+                profile.save(update_fields=["department"])
                 messages.success(request, "用户已创建")
             else:
                 messages.error(request, "用户名和密码不能为空")

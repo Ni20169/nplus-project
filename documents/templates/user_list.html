@@ -5,170 +5,290 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>用户管理</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: "PingFang SC","Microsoft YaHei","Noto Sans SC","Source Han Sans SC",sans-serif;
             background-color: #f5f5f5;
             color: #333;
+            font-size: 14px;
+            line-height: 1.45;
         }
+
         .container {
-            max-width: 1100px;
-            margin: 24px auto;
-            background: #fff;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 240px;
+            min-width: 200px;
+            max-width: 360px;
+            background-color: #2f3542;
+            color: white;
+            padding: 16px 16px 20px 20px;
+        }
+
+        .menu-section {
+            margin-bottom: 12px;
+        }
+
+        .menu-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
             border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.06);
-            padding: 20px;
+            cursor: pointer;
+            background: rgba(255,255,255,0.06);
+            font-weight: 600;
+        }
+
+        .menu-list {
+            list-style: none;
+            margin-top: 8px;
+            padding-left: 8px;
+            display: none;
+        }
+
+        .menu-list.show {
+            display: block;
+        }
+
+        .menu-list li {
+            margin-bottom: 10px;
+        }
+
+        .menu-list li a {
+            color: white;
+            text-decoration: none;
+            display: block;
+            padding: 6px 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .menu-list li a:hover {
+            background-color: #57606f;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 16px 24px 24px;
             position: relative;
         }
-        h1 {
-            font-size: 20px;
-            margin-bottom: 16px;
-        }
+
         .watermark {
             position: fixed;
             inset: 0;
             pointer-events: none;
-            opacity: 0.08;
-            font-size: 26px;
+            opacity: 0.07;
+            font-size: 16px;
             color: #000;
             display: flex;
             flex-wrap: wrap;
             transform: rotate(-20deg);
-            z-index: 0;
+            z-index: 2;
         }
+
         .watermark span {
-            width: 320px;
-            height: 140px;
+            width: 240px;
+            height: 120px;
             display: flex;
             align-items: center;
             justify-content: center;
             text-transform: uppercase;
         }
+
         .content {
             position: relative;
-            z-index: 1;
+            z-index: 3;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
+
+        h1 {
+            font-size: 18px;
+            margin-bottom: 12px;
         }
-        th, td {
-            padding: 10px 12px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-            font-size: 13px;
-        }
-        th {
-            background-color: #f3f6f9;
-            font-weight: 600;
+
+        .card {
+            background: rgba(255,255,255,0.92);
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+            padding: 16px;
         }
 
         .form-row {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: repeat(5, minmax(0, 1fr));
             gap: 10px;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
 
-        .form-row input, .form-row select {
-            padding: 8px;
+        .form-row input,
+        .form-row select {
+            padding: 6px 8px;
             border: 1px solid #ddd;
             border-radius: 4px;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .btn {
-            padding: 6px 10px;
+            padding: 8px 14px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             color: white;
-            font-size: 12px;
+            font-size: 13px;
+            min-width: 96px;
         }
-        .btn-create { background-color: #2ecc71; }
+
+        .btn-create { background-color: #6adf9a; }
         .btn-toggle { background-color: #f39c12; }
-        .btn-reset { background-color: #3498db; }
+        .btn-reset { background-color: #6aa7ff; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+
+        th, td {
+            padding: 8px 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+        }
+
+        th {
+            background-color: #f3f6f9;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
-    <div class="watermark">
-        {% for _ in "1234567890" %}
-            <span>{{ request.user.username }}</span>
-        {% endfor %}
-    </div>
     <div class="container">
-        <div class="content">
-            <h1>用户管理</h1>
-            {% if messages %}
-                {% for message in messages %}
-                    <p>{{ message }}</p>
-                {% endfor %}
-            {% endif %}
-            {% if request.user.is_staff %}
-            <form method="post">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="create">
-                <div class="form-row">
-                    <input type="text" name="username" placeholder="用户名" required>
-                    <input type="email" name="email" placeholder="邮箱">
-                    <input type="text" name="password" placeholder="初始密码" required>
-                    <select name="is_staff">
-                        <option value="false">普通用户</option>
-                        <option value="true">管理员</option>
-                    </select>
-                </div>
-                <button class="btn btn-create" type="submit">新增用户</button>
-            </form>
-            {% endif %}
+        <div class="sidebar">
+            <div class="menu-section">
+                <div class="menu-toggle" data-target="menu-system">系统管理<span>▸</span></div>
+                <ul class="menu-list show" id="menu-system">
+                    <li><a href="{% url 'user_list' %}">用户管理</a></li>
+                    {% if request.user.is_staff %}
+                        <li><a href="#">权限管理</a></li>
+                        <li><a href="#">系统设置</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+            <div class="menu-section">
+                <div class="menu-toggle" data-target="menu-projects">项目管理<span>▸</span></div>
+                <ul class="menu-list show" id="menu-projects">
+                    <li><a href="{% url 'project_master_list' %}">项目主数据</a></li>
+                </ul>
+            </div>
+        </div>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>用户名</th>
-                        <th>邮箱</th>
-                        <th>是否启用</th>
-                        <th>是否管理员</th>
-                        <th>最后登录</th>
-                        <th>创建时间</th>
-                        {% if request.user.is_staff %}<th>操作</th>{% endif %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for user in users %}
-                    <tr>
-                        <td>{{ user.username }}</td>
-                        <td>{{ user.email }}</td>
-                        <td>{{ user.is_active|yesno:"是,否" }}</td>
-                        <td>{{ user.is_staff|yesno:"是,否" }}</td>
-                        <td>{{ user.last_login }}</td>
-                        <td>{{ user.date_joined }}</td>
-                        {% if request.user.is_staff %}
-                        <td>
-                            <form method="post" style="display:inline;">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="toggle">
-                                <input type="hidden" name="user_id" value="{{ user.id }}">
-                                <button class="btn btn-toggle" type="submit">
-                                    {% if user.is_active %}禁用{% else %}启用{% endif %}
-                                </button>
-                            </form>
-                            <form method="post" style="display:inline;">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="reset">
-                                <input type="hidden" name="user_id" value="{{ user.id }}">
-                                <input type="text" name="new_password" placeholder="新密码" style="width:120px;">
-                                <button class="btn btn-reset" type="submit">重置</button>
-                            </form>
-                        </td>
-                        {% endif %}
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6">暂无用户</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="main-content">
+            <div class="watermark">
+                {% for _ in "1234567890" %}
+                    <span>{{ request.user.username }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="content">
+                <h1>用户管理</h1>
+                <div class="card">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <p>{{ message }}</p>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if request.user.is_staff %}
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="create">
+                        <div class="form-row">
+                            <input type="text" name="username" placeholder="用户名" required>
+                            <input type="email" name="email" placeholder="邮箱">
+                            <input type="text" name="password" placeholder="初始密码" required>
+                            <input type="text" name="department" placeholder="部门">
+                            <select name="is_staff">
+                                <option value="false">普通用户</option>
+                                <option value="true">管理员</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-create" type="submit">新增用户</button>
+                    </form>
+                    {% endif %}
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>用户名</th>
+                                <th>邮箱</th>
+                                <th>部门</th>
+                                <th>是否启用</th>
+                                <th>是否管理员</th>
+                                <th>最后登录</th>
+                                <th>创建时间</th>
+                                {% if request.user.is_staff %}<th>操作</th>{% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>{{ user.username }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.profile.department|default:"" }}</td>
+                                <td>{{ user.is_active|yesno:"是,否" }}</td>
+                                <td>{{ user.is_staff|yesno:"是,否" }}</td>
+                                <td>{{ user.last_login }}</td>
+                                <td>{{ user.date_joined }}</td>
+                                {% if request.user.is_staff %}
+                                <td>
+                                    <form method="post" style="display:inline;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="toggle">
+                                        <input type="hidden" name="user_id" value="{{ user.id }}">
+                                        <button class="btn btn-toggle" type="submit">
+                                            {% if user.is_active %}禁用{% else %}启用{% endif %}
+                                        </button>
+                                    </form>
+                                    <form method="post" style="display:inline;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="reset">
+                                        <input type="hidden" name="user_id" value="{{ user.id }}">
+                                        <input type="text" name="new_password" placeholder="新密码" style="width:120px;">
+                                        <button class="btn btn-reset" type="submit">重置</button>
+                                    </form>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6">暂无用户</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
+
+    <script>
+        document.querySelectorAll('.menu-toggle').forEach((toggle) => {
+            toggle.addEventListener('click', () => {
+                const targetId = toggle.getAttribute('data-target');
+                const target = document.getElementById(targetId);
+                if (target) {
+                    target.classList.toggle('show');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

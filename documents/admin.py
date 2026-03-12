@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import DictType, DictItem, ProjectMaster, ImportBatch, ImportError, ProjectMasterLog
+from .models import DictType, DictItem, ProjectMaster, ImportBatch, ImportError, ProjectMasterLog, UserProfile
 
 
 @admin.register(DictType)
@@ -40,3 +40,9 @@ class ProjectMasterLogAdmin(admin.ModelAdmin):
     list_display = ("project_code", "action", "operator", "created_at")
     search_fields = ("project_code", "operator")
     list_filter = ("action",)
+
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "department")
+    search_fields = ("user__username", "department")

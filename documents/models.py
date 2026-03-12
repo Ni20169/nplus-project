@@ -1,5 +1,8 @@
 from django.db import models
 from django.core.validators import RegexValidator
+from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 PJ_CODE_REGEX = r"^PJ\d{10}$"
@@ -165,3 +168,24 @@ class ProjectMasterLog(models.Model):
 
     def __str__(self):
         return f"{self.project_code} - {self.action}"
+
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    department = models.CharField("部门", max_length=100, blank=True)
+
+    class Meta:
+        verbose_name = "用户扩展信息"
+        verbose_name_plural = "用户扩展信息"
+
+    def __str__(self):
+        return f"{self.user.username} - {self.department}"
+
+
+@receiver(post_save, sender=User)
+def ensure_user_profile(sender, instance, created, **kwargs):
+    if created:
+        UserProfile.objects.create(user=instance)
+    else:
+        if not hasattr(instance, "profile"):
+            UserProfile.objects.create(user=instance)
