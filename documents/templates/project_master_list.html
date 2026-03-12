@@ -409,6 +409,11 @@
             min-width: 200px;
         }
 
+        .form-grid .field-flex {
+            flex: 1 1 100px;
+            min-width: 140px;
+        }
+
         .form-actions {
             margin-top: 12px;
             display: flex;
@@ -883,14 +888,14 @@
                                     {% endfor %}
                                 </select>
                             </div>
-                            <div class="field field-sm">
+                            <div class="field field-flex">
                                 <label><span class="required-star">*</span>是否为执行层</label>
                                 <select name="is_execution_level" required>
                                     <option value="false">否</option>
                                     <option value="true">是</option>
                                 </select>
                             </div>
-                            <div class="field field-sm">
+                            <div class="field field-flex">
                                 <label><span class="required-star">*</span>状态</label>
                                 <select name="status" required>
                                     <option value="启用">启用</option>
@@ -898,7 +903,7 @@
                                     <option value="作废">作废</option>
                                 </select>
                             </div>
-                            <div class="field field-sm">
+                            <div class="field field-flex">
                                 <label><span class="required-star">*</span>创建人</label>
                                 <input type="text" name="created_by" value="{{ request.user.username }}" required>
                             </div>
