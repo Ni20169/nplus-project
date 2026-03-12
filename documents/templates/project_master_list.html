@@ -198,8 +198,8 @@
             text-align: center;
         }
 
-        .btn-add { background-color: #7fe6a8; color: #111; }
-        .btn-search { background-color: #7fb6ff; color: #111; }
+        .btn-add { background-color: #7fe6a8; color: #111; font-weight: 600; }
+        .btn-search { background-color: #7fb6ff; color: #111; font-weight: 600; }
         .btn-refresh { background-color: #f39c12; }
         .btn-export { background-color: #1abc9c; }
         .btn-import { background-color: #9b59b6; }
@@ -376,6 +376,33 @@
 
         .btn-edit { background-color: #3498db; }
         .btn-delete { background-color: #e74c3c; }
+
+        .sticky-col {
+            position: sticky;
+            background: #fff;
+            z-index: 2;
+        }
+
+        th.sticky-col {
+            background: #f3f6f9;
+            z-index: 3;
+        }
+
+        .col-1 { left: 0; min-width: 140px; }
+        .col-2 { left: 140px; min-width: 160px; }
+        .col-3 { left: 300px; min-width: 160px; }
+
+        .add-form {
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .add-form textarea,
+        .add-form input,
+        .add-form select {
+            font-size: 13px;
+            line-height: 1.4;
+        }
 
         .hint {
             color: #999;
@@ -997,29 +1024,3 @@
     </script>
 </body>
 </html>
-        .sticky-col {
-            position: sticky;
-            background: #fff;
-            z-index: 2;
-        }
-
-        th.sticky-col {
-            background: #f3f6f9;
-            z-index: 3;
-        }
-
-        .col-1 { left: 0; min-width: 140px; }
-        .col-2 { left: 140px; min-width: 160px; }
-        .col-3 { left: 300px; min-width: 160px; }
-
-        .add-form {
-            font-size: 13px;
-            line-height: 1.4;
-        }
-
-        .add-form textarea,
-        .add-form input,
-        .add-form select {
-            font-size: 13px;
-            line-height: 1.4;
-        }
