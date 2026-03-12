@@ -22,7 +22,7 @@
         .container {
             display: flex;
             min-height: 100vh;
-            width: 1600px;
+            width: 100%;
             max-width: 100%;
             margin: 0 auto;
         }
@@ -224,6 +224,64 @@
             background: #fff;
             z-index: 10;
             box-shadow: 0 2px 2px rgba(0,0,0,0.1);
+        }
+
+        table thead tr {
+            background: #fff;
+        }
+
+        table thead tr.filter-row {
+            background: #f8f9fa;
+        }
+
+        table thead th {
+            position: sticky;
+            top: 0;
+            background: inherit;
+            z-index: 10;
+        }
+
+        /* 前两列固定 */
+        table th.sticky-col,
+        table td.sticky-col {
+            position: sticky;
+            left: 0;
+            background: inherit;
+            z-index: 5;
+        }
+
+        table th.col-1,
+        table td.col-1 {
+            left: 0;
+            z-index: 6;
+        }
+
+        table th.col-2,
+        table td.col-2 {
+            left: 120px;
+            z-index: 6;
+        }
+
+        table th.col-3,
+        table td.col-3 {
+            left: 280px;
+            z-index: 6;
+        }
+
+        table thead th.sticky-col {
+            z-index: 11;
+        }
+
+        table thead th.col-1 {
+            left: 0;
+        }
+
+        table thead th.col-2 {
+            left: 120px;
+        }
+
+        table thead th.col-3 {
+            left: 280px;
         }
 
         .page-header {
