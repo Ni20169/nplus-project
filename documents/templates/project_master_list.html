@@ -649,6 +649,7 @@
                             <li><a href="#" onclick="showSearchForm()">查询项目</a></li>
                             <li><a href="#" onclick="showUpdatePanel()">信息更新</a></li>
                             <li><a href="#" onclick="refreshList()">项目列表</a></li>
+                            <li><a href="#" onclick="showApprovalPanel()">审批管理</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -1838,7 +1839,9 @@
                 });
             });
 
-            applyFilters();
+            if (typeof applyFilters === 'function') {
+                applyFilters();
+            }
         }
     </script>
 </body>
