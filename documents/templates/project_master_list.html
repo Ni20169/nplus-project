@@ -642,7 +642,7 @@
         }
     </style>
 </head>
-<body>
+<body data-show-update-panel="{% if show_update_panel %}true{% else %}false{% endif %}">
     <div class="container" id="layoutRoot">
         <div class="sidebar" id="sidebar">
             <div class="menu-section">
@@ -1611,7 +1611,8 @@
             // 初始化面板显示状态
             const updatePanel = document.getElementById('updatePanel');
             const dataTable = document.getElementById('dataTable');
-            const showUpdatePanel = {% if show_update_panel %}true{% else %}false{% endif %};
+            // 从HTML数据属性获取初始化状态
+            const showUpdatePanel = document.body.dataset.showUpdatePanel === 'true';
             if (showUpdatePanel) {
                 if (updatePanel) updatePanel.style.display = 'block';
                 if (dataTable) dataTable.style.display = 'none';
