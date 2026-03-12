@@ -1457,7 +1457,7 @@
             document.getElementById('searchForm').style.display = 'none';
             document.getElementById('updatePanel').style.display = 'none';
             document.getElementById('approvalPanel').style.display = 'none';
-            document.querySelector('.data-table').style.display = 'block';
+            document.querySelector('.data-table').style.display = 'none';
         }
 
         function hideAddForm() {
@@ -1525,7 +1525,7 @@
             document.getElementById('addForm').style.display = 'none';
             document.getElementById('searchForm').style.display = 'none';
             document.getElementById('approvalPanel').style.display = 'none';
-            document.querySelector('.data-table').style.display = 'block';
+            document.querySelector('.data-table').style.display = 'none';
             document.getElementById('updatePanel').classList.remove('collapsed');
             const toggleBtn = document.getElementById('toggleUpdatePanel');
             if (toggleBtn) {
@@ -1552,7 +1552,11 @@
         }
 
         function refreshList() {
-            location.href = "{% url 'project_master_list' %}";
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('searchForm').style.display = 'none';
+            document.getElementById('updatePanel').style.display = 'none';
+            document.getElementById('approvalPanel').style.display = 'none';
+            document.querySelector('.data-table').style.display = 'block';
         }
 
         document.addEventListener('DOMContentLoaded', function() {
