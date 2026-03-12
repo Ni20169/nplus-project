@@ -1585,14 +1585,7 @@
                                             <option value="作废">作废</option>
                                         </select>
                                     </th>
-                                    <th>
-                                        <select data-filter="13">
-                                            <option value="">全部</option>
-                                            {% for cdate in unique_created_dates %}
-                                                <option value="{{ cdate }}">{{ cdate }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </th>
+                                    <th><input type="month" data-filter="13" placeholder="选择年月"></th>
                                     <th><input type="text" data-filter="14" placeholder="筛选"></th>
                                     <th>
                                         <button type="button" class="btn-reset-filter" id="resetTableFilter">清空</button>
