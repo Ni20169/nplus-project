@@ -172,6 +172,8 @@
             font-size: 14px;
             text-decoration: none;
             color: white;
+            min-width: 96px;
+            text-align: center;
         }
 
         .btn-add { background-color: #6adf9a; }
@@ -307,6 +309,15 @@
             background: #95a5a6;
             color: #fff;
             width: 100%;
+        }
+
+        .table-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #666;
+            margin: 6px 4px 10px;
         }
 
         table {
@@ -704,6 +715,10 @@
                 </div>
 
                 <div class="data-table">
+                    <div class="table-meta">
+                        <div>当前匹配：<span id="matchCount">0</span> 条</div>
+                        <div>总记录：<span id="totalCount">{{ projects|length }}</span> 条</div>
+                    </div>
                     <div class="table-wrapper">
                         <table id="projectTable">
                             <thead>
@@ -714,9 +729,16 @@
                                     <th data-sort="3">所在省</th>
                                     <th data-sort="4">所在市</th>
                                     <th data-sort="5">业务板块</th>
-                                    <th data-sort="6">项目类型</th>
-                                    <th data-sort="7">状态</th>
-                                    <th data-sort="8">创建时间</th>
+                                    <th data-sort="6">承担部门</th>
+                                    <th data-sort="7">组织模式</th>
+                                    <th data-sort="8">数据状态</th>
+                                    <th data-sort="9">是否执行层</th>
+                                    <th data-sort="10">项目年份</th>
+                                    <th data-sort="11">创建人</th>
+                                    <th data-sort="12">项目类型</th>
+                                    <th data-sort="13">状态</th>
+                                    <th data-sort="14">创建时间</th>
+                                    <th data-sort="15">备注</th>
                                     <th>操作</th>
                                 </tr>
                                 <tr class="filter-row">
@@ -727,15 +749,22 @@
                                     <th><input type="text" data-filter="4" placeholder="筛选"></th>
                                     <th><input type="text" data-filter="5" placeholder="筛选"></th>
                                     <th><input type="text" data-filter="6" placeholder="筛选"></th>
+                                    <th><input type="text" data-filter="7" placeholder="筛选"></th>
+                                    <th><input type="text" data-filter="8" placeholder="筛选"></th>
+                                    <th><input type="text" data-filter="9" placeholder="筛选"></th>
+                                    <th><input type="text" data-filter="10" placeholder="筛选"></th>
+                                    <th><input type="text" data-filter="11" placeholder="筛选"></th>
+                                    <th><input type="text" data-filter="12" placeholder="筛选"></th>
                                     <th>
-                                        <select data-filter="7">
+                                        <select data-filter="13">
                                             <option value="">全部</option>
                                             <option value="启用">启用</option>
                                             <option value="停用">停用</option>
                                             <option value="作废">作废</option>
                                         </select>
                                     </th>
-                                    <th><input type="text" data-filter="8" placeholder="筛选"></th>
+                                    <th><input type="text" data-filter="14" placeholder="筛选"></th>
+                                    <th><input type="text" data-filter="15" placeholder="筛选"></th>
                                     <th>
                                         <button type="button" class="btn-reset-filter" id="resetTableFilter">清空</button>
                                     </th>
@@ -750,9 +779,16 @@
                                     <td>{{ project.province_name }}</td>
                                     <td>{{ project.city_name }}</td>
                                     <td>{{ project.business_unit_name }}</td>
+                                    <td>{{ project.dept_name }}</td>
+                                    <td>{{ project.org_mode_name }}</td>
+                                    <td>{{ project.data_status_name }}</td>
+                                    <td>{{ project.is_execution_level|yesno:"是,否" }}</td>
+                                    <td>{{ project.project_year }}</td>
+                                    <td>{{ project.created_by }}</td>
                                     <td>{{ project.project_type_name }}</td>
                                     <td>{{ project.status }}</td>
                                     <td>{{ project.created_at }}</td>
+                                    <td>{{ project.remark }}</td>
                                     <td>
                                         <a class="btn-edit" href="{% url 'project_master_edit' project.project_code %}">修改</a>
                                         <form method="post" action="{% url 'project_master_delete' project.project_code %}" style="display:inline;">
@@ -877,6 +913,7 @@
 
             const applyFilters = () => {
                 const filters = Array.from(filterInputs).map((input) => input.value.trim().toLowerCase());
+                let visibleCount = 0;
                 Array.from(tbody.querySelectorAll('tr')).forEach((row) => {
                     const cells = Array.from(row.children);
                     const match = filters.every((value, idx) => {
@@ -886,7 +923,12 @@
                         return cell.textContent.toLowerCase().includes(value);
                     });
                     row.style.display = match ? '' : 'none';
+                    if (match) visibleCount += 1;
                 });
+                const matchCount = document.getElementById('matchCount');
+                if (matchCount) {
+                    matchCount.textContent = String(visibleCount);
+                }
             };
 
             filterInputs.forEach((input) => {
@@ -922,6 +964,8 @@
                     rows.forEach((row) => tbody.appendChild(row));
                 });
             });
+
+            applyFilters();
         }
     </script>
 </body>

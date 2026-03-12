@@ -188,6 +188,9 @@ def project_master_list(request):
         project.business_unit_name = name_map.get("BUSINESS_UNIT", {}).get(
             project.business_unit, project.business_unit
         )
+        project.dept_name = name_map.get("DEPT", {}).get(project.dept, project.dept)
+        project.org_mode_name = name_map.get("ORG_MODE", {}).get(project.org_mode, project.org_mode)
+        project.data_status_name = name_map.get("DATA_STATUS", {}).get(project.data_status, project.data_status)
         project.project_type_name = name_map.get("PROJECT_TYPE", {}).get(
             project.project_type, project.project_type
         )
