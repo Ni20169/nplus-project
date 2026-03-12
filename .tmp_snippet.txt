@@ -1,0 +1,35 @@
+        function showAddForm() {
+            document.getElementById('addForm').style.display = 'block';
+            document.getElementById('searchForm').style.display = 'none';
+        }
+
+        function hideAddForm() {
+            document.getElementById('addForm').style.display = 'none';
+        }
+
+        function showSearchForm() {
+            document.getElementById('searchForm').style.display = 'block';
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('updatePanel').style.display = 'none';
+            document.getElementById('searchForm').classList.remove('collapsed');
+            const toggleBtn = document.getElementById('toggleSearchFields');
+            if (toggleBtn) {
+                toggleBtn.textContent = '收起';
+            }
+        }
+
+        function showUpdatePanel() {
+            document.getElementById('updatePanel').style.display = 'block';
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('searchForm').style.display = 'none';
+            document.getElementById('updatePanel').classList.remove('collapsed');
+            const toggleBtn = document.getElementById('toggleUpdatePanel');
+            if (toggleBtn) {
+                toggleBtn.textContent = '收起';
+            }
+        }
+
+        function hideSearchForm() {
+            document.getElementById('searchForm').style.display = 'none';
+        }
+

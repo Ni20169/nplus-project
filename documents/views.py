@@ -125,6 +125,79 @@ def project_master_list(request):
         except Exception as exc:
             messages.error(request, f"保存失败：{exc}")
 
+    if request.method == "POST" and request.POST.get("form_type") == "update":
+        target_code = request.POST.get("update_project_code", "").strip()
+        project = ProjectMaster.objects.filter(project_code=target_code, is_deleted=False).first()
+        if not project:
+            messages.error(request, "未找到需要更新的项目")
+            return redirect("project_master_list")
+
+        before = {
+            "project_name": project.project_name,
+            "org_name": project.org_name,
+            "org_code": project.org_code,
+            "parent_pj_code": project.parent_pj_code,
+            "province_code": project.province_code,
+            "business_unit": project.business_unit,
+            "dept": project.dept,
+            "project_type": project.project_type,
+            "org_mode": project.org_mode,
+            "data_status": project.data_status,
+            "is_execution_level": project.is_execution_level,
+            "status": project.status,
+            "remark": project.remark,
+        }
+
+        project.project_name = request.POST.get("project_name", project.project_name).strip()
+        project.org_code = request.POST.get("org_code", project.org_code).strip()
+        project.org_name = request.POST.get("org_name", project.org_name).strip()
+        project.parent_pj_code = request.POST.get("parent_pj_code", "").strip() or None
+        project.province_code = request.POST.get("province_code", project.province_code).strip()
+        project.business_unit = request.POST.get("business_unit", project.business_unit).strip()
+        project.dept = request.POST.get("dept", project.dept).strip()
+        project.project_type = request.POST.get("project_type", project.project_type).strip()
+        project.org_mode = request.POST.get("org_mode", project.org_mode).strip()
+        project.data_status = request.POST.get("data_status", project.data_status).strip()
+        project.is_execution_level = request.POST.get("is_execution_level", "false") == "true"
+        project.status = request.POST.get("status", project.status).strip()
+        project.remark = request.POST.get("remark", "").strip()
+        project.updated_by = request.user.username
+
+        if not project.org_name and project.org_code:
+            project.org_name = dict_map.get("ORG", {}).get(project.org_code, project.org_name)
+
+        try:
+            with transaction.atomic():
+                project.full_clean()
+                project.save()
+                ProjectMasterLog.objects.create(
+                    project_code=project.project_code,
+                    action="update",
+                    before_data=before,
+                    after_data={
+                        "project_name": project.project_name,
+                        "org_name": project.org_name,
+                        "org_code": project.org_code,
+                        "parent_pj_code": project.parent_pj_code,
+                        "province_code": project.province_code,
+                        "business_unit": project.business_unit,
+                        "dept": project.dept,
+                        "project_type": project.project_type,
+                        "org_mode": project.org_mode,
+                        "data_status": project.data_status,
+                        "is_execution_level": project.is_execution_level,
+                        "status": project.status,
+                        "remark": project.remark,
+                    },
+                    operator=request.user.username,
+                    source="update-panel",
+                )
+            messages.success(request, "更新成功")
+        except ValidationError as exc:
+            messages.error(request, f"更新失败：{exc}")
+        except Exception as exc:
+            messages.error(request, f"更新失败：{exc}")
+
     qs = ProjectMaster.objects.filter(is_deleted=False)
     search = {
         "project_code": request.GET.get("project_code", "").strip(),
@@ -209,6 +282,22 @@ def project_master_list(request):
         ProjectMasterLog.objects.filter(action="update").order_by("-created_at")[:10]
     )
 
+    update_code = request.GET.get("update_code", "").strip()
+    update_name = request.GET.get("update_name", "").strip()
+    update_candidates = ProjectMaster.objects.filter(is_deleted=False)
+    if update_code:
+        update_candidates = update_candidates.filter(project_code__icontains=update_code)
+    if update_name:
+        update_candidates = update_candidates.filter(project_name__icontains=update_name)
+    update_candidates = list(update_candidates.order_by("-created_at")[:20])
+
+    update_target_code = request.GET.get("update_target", "").strip()
+    update_target = None
+    if update_target_code:
+        update_target = ProjectMaster.objects.filter(
+            project_code=update_target_code, is_deleted=False
+        ).first()
+
     return render(
         request,
         "project_master_list.html",
@@ -218,6 +307,10 @@ def project_master_list(request):
             "latest_errors": latest_errors,
             "search": search,
             "recent_updates": recent_updates,
+            "update_candidates": update_candidates,
+            "update_target": update_target,
+            "update_code": update_code,
+            "update_name": update_name,
         },
     )
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>项目主数据管理</title>
+    <title>项目主数据管�?/title>
     <style>
         * {
             margin: 0;
@@ -518,7 +518,7 @@
     <div class="container" id="layoutRoot">
         <div class="sidebar" id="sidebar">
             <div class="menu-section">
-                <div class="menu-toggle" data-target="menu-system">系统管理<span>▸</span></div>
+                <div class="menu-toggle" data-target="menu-system">系统管理<span>�?/span></div>
                 <ul class="menu-list show" id="menu-system">
                     <li><a href="{% url 'user_list' %}">用户管理</a></li>
                     {% if request.user.is_staff %}
@@ -528,10 +528,10 @@
                 </ul>
             </div>
             <div class="menu-section">
-                <div class="menu-toggle" data-target="menu-projects">项目管理<span>▸</span></div>
+                <div class="menu-toggle" data-target="menu-projects">项目管理<span>�?/span></div>
                 <ul class="menu-list show" id="menu-projects">
                     <li>
-                        <a href="#" onclick="toggleSubMenu('menu-project-master')">项目主数据管理</a>
+                        <a href="#" onclick="toggleSubMenu('menu-project-master')">项目主数据管�?/a>
                         <ul class="menu-list show" id="menu-project-master">
                             <li><a href="#" onclick="showAddForm()">新增项目</a></li>
                             <li><a href="#" onclick="showSearchForm()">查询项目</a></li>
@@ -542,7 +542,7 @@
                 </ul>
             </div>
             <div class="menu-section">
-                <div class="menu-toggle" data-target="menu-report">数据统计<span>▸</span></div>
+                <div class="menu-toggle" data-target="menu-report">数据统计<span>�?/span></div>
                 <ul class="menu-list" id="menu-report">
                     <li><a href="#">项目概览</a></li>
                     <li><a href="#">导入记录</a></li>
@@ -565,7 +565,7 @@
             <div class="content-wrap">
                 <div class="page-header">
                     <button class="toggle-sidebar-btn" type="button" id="toggleSidebar">隐藏菜单</button>
-                    <h1>项目主数据管理</h1>
+                    <h1>项目主数据管�?/h1>
                 </div>
 
                 <div class="action-buttons">
@@ -588,7 +588,7 @@
                             <thead>
                                 <tr>
                                     <th>行号</th>
-                                    <th>字段名</th>
+                                    <th>字段�?/th>
                                     <th>错误原因</th>
                                 </tr>
                             </thead>
@@ -614,20 +614,20 @@
                     <form method="get">
                         <div class="form-grid">
                             <div class="field">
-                                <label>项目主数据编码</label>
+                                <label>项目主数据编�?/label>
                                 <input type="text" name="project_code" value="{{ search.project_code|default:'' }}" placeholder="例如：PJ0000000001">
                             </div>
                             <div class="field">
                                 <label>项目名称</label>
-                                <input type="text" name="project_name" value="{{ search.project_name|default:'' }}" placeholder="请输入项目名称">
+                                <input type="text" name="project_name" value="{{ search.project_name|default:'' }}" placeholder="请输入项目名�?>
                             </div>
                             <div class="field">
                                 <label>项目机构名称</label>
-                                <input type="text" name="org_name" value="{{ search.org_name|default:'' }}" placeholder="请输入项目机构名称">
+                                <input type="text" name="org_name" value="{{ search.org_name|default:'' }}" placeholder="请输入项目机构名�?>
                             </div>
                             <div class="field">
                                 <label>项目机构组织编码</label>
-                                <input type="text" name="org_code" value="{{ search.org_code|default:'' }}" placeholder="请输入组织编码">
+                                <input type="text" name="org_code" value="{{ search.org_code|default:'' }}" placeholder="请输入组织编�?>
                             </div>
                             <div class="field">
                                 <label>上级PJ编码</label>
@@ -679,9 +679,9 @@
                                 </select>
                             </div>
                             <div class="field">
-                                <label>主数据系统数据状态</label>
+                                <label>主数据系统数据状�?/label>
                                 <select name="data_status">
-                                    <option value="">请选择数据状态</option>
+                                    <option value="">请选择数据状�?/option>
                                     {% for item in dicts.DATA_STATUS %}
                                         <option value="{{ item.code }}" {% if search.data_status == item.code %}selected{% endif %}>{{ item.name }}</option>
                                     {% endfor %}
@@ -691,12 +691,12 @@
                                 <label>是否为执行层</label>
                                 <select name="is_execution_level">
                                     <option value="">全部</option>
-                                    <option value="true" {% if search.is_execution_level == "true" %}selected{% endif %}>是</option>
-                                    <option value="false" {% if search.is_execution_level == "false" %}selected{% endif %}>否</option>
+                                    <option value="true" {% if search.is_execution_level == "true" %}selected{% endif %}>�?/option>
+                                    <option value="false" {% if search.is_execution_level == "false" %}selected{% endif %}>�?/option>
                                 </select>
                             </div>
                             <div class="field">
-                                <label>状态</label>
+                                <label>状�?/label>
                                 <select name="status">
                                     <option value="">全部</option>
                                     <option value="启用" {% if search.status == "启用" %}selected{% endif %}>启用</option>
@@ -706,10 +706,10 @@
                             </div>
                             <div class="field">
                                 <label>项目年份</label>
-                                <input type="text" name="project_year" value="{{ search.project_year|default:'' }}" placeholder="例如：2026">
+                                <input type="text" name="project_year" value="{{ search.project_year|default:'' }}" placeholder="例如�?026">
                             </div>
                             <div class="field">
-                                <label>创建人</label>
+                                <label>创建�?/label>
                                 <input type="text" name="created_by" value="{{ search.created_by|default:'' }}" placeholder="请输入创建人">
                             </div>
                             <div class="field">
@@ -732,11 +732,11 @@
                     <form method="get" class="form-grid">
                         <div class="field">
                             <label>项目编码</label>
-                            <input type="text" name="update_code" value="{{ update_code|default:'' }}" placeholder="请输入项目编码">
+                            <input type="text" name="update_code" value="{{ update_code|default:'' }}" placeholder="请输入项目编�?>
                         </div>
                         <div class="field">
                             <label>项目名称</label>
-                            <input type="text" name="update_name" value="{{ update_name|default:'' }}" placeholder="请输入项目名称">
+                            <input type="text" name="update_name" value="{{ update_name|default:'' }}" placeholder="请输入项目名�?>
                         </div>
                         <div class="field field-sm" style="align-self:flex-end;">
                             <button class="btn-search" type="submit">查询</button>
@@ -843,7 +843,7 @@
                                 </select>
                             </div>
                             <div class="field">
-                                <label>数据状态</label>
+                                <label>数据状�?/label>
                                 <select name="data_status">
                                     <option value="{{ update_target.data_status }}">{{ update_target.data_status }}</option>
                                     {% for item in dicts.DATA_STATUS %}
@@ -852,14 +852,14 @@
                                 </select>
                             </div>
                             <div class="field field-sm">
-                                <label>是否执行层</label>
+                                <label>是否执行�?/label>
                                 <select name="is_execution_level">
-                                    <option value="false" {% if not update_target.is_execution_level %}selected{% endif %}>否</option>
-                                    <option value="true" {% if update_target.is_execution_level %}selected{% endif %}>是</option>
+                                    <option value="false" {% if not update_target.is_execution_level %}selected{% endif %}>�?/option>
+                                    <option value="true" {% if update_target.is_execution_level %}selected{% endif %}>�?/option>
                                 </select>
                             </div>
                             <div class="field field-sm">
-                                <label>状态</label>
+                                <label>状�?/label>
                                 <select name="status">
                                     <option value="启用" {% if update_target.status == "启用" %}selected{% endif %}>启用</option>
                                     <option value="停用" {% if update_target.status == "停用" %}selected{% endif %}>停用</option>
@@ -867,7 +867,7 @@
                                 </select>
                             </div>
                             <div class="field field-sm">
-                                <label>更新人</label>
+                                <label>更新�?/label>
                                 <input type="text" value="{{ request.user.username }}" readonly>
                             </div>
                         </div>
@@ -884,9 +884,9 @@
                                 <thead>
                                     <tr>
                                         <th>项目编码</th>
-                                        <th>修改前字段</th>
-                                        <th>修改后字段</th>
-                                        <th>更新人</th>
+                                        <th>修改前字�?/th>
+                                        <th>修改后字�?/th>
+                                        <th>更新�?/th>
                                         <th>更新日期</th>
                                     </tr>
                                 </thead>
@@ -894,8 +894,8 @@
                                 {% for log in recent_updates %}
                                     <tr>
                                         <td>{{ log.project_code }}</td>
-                                        <td><pre>{{ log.before_data|default:"无" }}</pre></td>
-                                        <td><pre>{{ log.after_data|default:"无" }}</pre></td>
+                                        <td><pre>{{ log.before_data|default:"�? }}</pre></td>
+                                        <td><pre>{{ log.after_data|default:"�? }}</pre></td>
                                         <td>{{ log.operator }}</td>
                                         <td>{{ log.created_at }}</td>
                                     </tr>
@@ -917,12 +917,12 @@
                         <input type="hidden" name="form_type" value="create">
                         <div class="form-grid">
                             <div class="field">
-                                <label><span class="required-star">*</span>项目主数据编码</label>
-                                <input type="text" name="project_code" placeholder="PJ + 10位数字" required>
+                                <label><span class="required-star">*</span>项目主数据编�?/label>
+                                <input type="text" name="project_code" placeholder="PJ + 10位数�? required>
                             </div>
                             <div class="field">
                                 <label><span class="required-star">*</span>项目名称</label>
-                                <input type="text" name="project_name" placeholder="请输入项目名称" required>
+                                <input type="text" name="project_name" placeholder="请输入项目名�? required>
                             </div>
                             <div class="field">
                                 <label><span class="required-star">*</span>项目机构</label>
@@ -940,7 +940,7 @@
                             </div>
                             <div class="field">
                                 <label>上级PJ编码</label>
-                                <input type="text" name="parent_pj_code" placeholder="可为空">
+                                <input type="text" name="parent_pj_code" placeholder="可为�?>
                             </div>
                             <div class="field">
                                 <label><span class="required-star">*</span>所在省</label>
@@ -989,9 +989,9 @@
                                 </select>
                             </div>
                             <div class="field">
-                                <label><span class="required-star">*</span>主数据系统数据状态</label>
+                                <label><span class="required-star">*</span>主数据系统数据状�?/label>
                                 <select name="data_status" required>
-                                    <option value="">选择数据状态</option>
+                                    <option value="">选择数据状�?/option>
                                     {% for item in dicts.DATA_STATUS %}
                                         <option value="{{ item.code }}">{{ item.name }}</option>
                                     {% endfor %}
@@ -1000,12 +1000,12 @@
                             <div class="field field-sm">
                                 <label><span class="required-star">*</span>是否为执行层</label>
                                 <select name="is_execution_level" required>
-                                    <option value="false">否</option>
-                                    <option value="true">是</option>
+                                    <option value="false">�?/option>
+                                    <option value="true">�?/option>
                                 </select>
                             </div>
                             <div class="field field-sm">
-                                <label><span class="required-star">*</span>状态</label>
+                                <label><span class="required-star">*</span>状�?/label>
                                 <select name="status" required>
                                     <option value="启用">启用</option>
                                     <option value="停用">停用</option>
@@ -1013,7 +1013,7 @@
                                 </select>
                             </div>
                             <div class="field field-sm">
-                                <label><span class="required-star">*</span>创建人</label>
+                                <label><span class="required-star">*</span>创建�?/label>
                                 <input type="text" name="created_by" value="{{ request.user.username }}" required>
                             </div>
                         </div>
@@ -1022,14 +1022,14 @@
                             <button type="submit" class="btn-add">保存</button>
                             <button type="button" class="btn-cancel" onclick="hideAddForm()">取消</button>
                         </div>
-                        <div class="hint">项目年份将从项目主数据编码第3-6位自动生成。</div>
+                        <div class="hint">项目年份将从项目主数据编码第3-6位自动生成�?/div>
                     </form>
                 </div>
 
                 <div class="data-table">
                     <div class="table-meta">
-                        <div>当前匹配：<span id="matchCount">0</span> 条</div>
-                        <div>总记录：<span id="totalCount">{{ projects|length }}</span> 条</div>
+                        <div>当前匹配�?span id="matchCount">0</span> �?/div>
+                        <div>总记录：<span id="totalCount">{{ projects|length }}</span> �?/div>
                     </div>
                     <div class="table-wrapper">
                         <table id="projectTable">
@@ -1042,29 +1042,29 @@
                                     <th data-sort="4">业务板块</th>
                                     <th data-sort="5">承担部门</th>
                                     <th data-sort="6">组织模式</th>
-                                    <th data-sort="7">数据状态</th>
-                                    <th data-sort="8">是否执行层</th>
+                                    <th data-sort="7">数据状�?/th>
+                                    <th data-sort="8">是否执行�?/th>
                                     <th data-sort="9">项目年份</th>
-                                    <th data-sort="10">创建人</th>
+                                    <th data-sort="10">创建�?/th>
                                     <th data-sort="11">项目类型</th>
-                                    <th data-sort="12">状态</th>
+                                    <th data-sort="12">状�?/th>
                                     <th data-sort="13">创建时间</th>
                                     <th data-sort="14">备注</th>
                                     <th>操作</th>
                                 </tr>
                                 <tr class="filter-row">
-                                    <th class="sticky-col col-1"><input type="text" data-filter="0" placeholder="筛选"></th>
-                                    <th class="sticky-col col-2"><input type="text" data-filter="1" placeholder="筛选"></th>
-                                    <th class="sticky-col col-3"><input type="text" data-filter="2" placeholder="筛选"></th>
-                                    <th><input type="text" data-filter="3" placeholder="筛选"></th>
-                                    <th><input type="text" data-filter="4" placeholder="筛选"></th>
-                                    <th><input type="text" data-filter="5" placeholder="筛选"></th>
-                                    <th><input type="text" data-filter="6" placeholder="筛选"></th>
-                                    <th><input type="text" data-filter="7" placeholder="筛选"></th>
-                                    <th><input type="text" data-filter="8" placeholder="筛选"></th>
-                                    <th><input type="text" data-filter="9" placeholder="筛选"></th>
-                                    <th><input type="text" data-filter="10" placeholder="筛选"></th>
-                                    <th><input type="text" data-filter="11" placeholder="筛选"></th>
+                                    <th class="sticky-col col-1"><input type="text" data-filter="0" placeholder="筛�?></th>
+                                    <th class="sticky-col col-2"><input type="text" data-filter="1" placeholder="筛�?></th>
+                                    <th class="sticky-col col-3"><input type="text" data-filter="2" placeholder="筛�?></th>
+                                    <th><input type="text" data-filter="3" placeholder="筛�?></th>
+                                    <th><input type="text" data-filter="4" placeholder="筛�?></th>
+                                    <th><input type="text" data-filter="5" placeholder="筛�?></th>
+                                    <th><input type="text" data-filter="6" placeholder="筛�?></th>
+                                    <th><input type="text" data-filter="7" placeholder="筛�?></th>
+                                    <th><input type="text" data-filter="8" placeholder="筛�?></th>
+                                    <th><input type="text" data-filter="9" placeholder="筛�?></th>
+                                    <th><input type="text" data-filter="10" placeholder="筛�?></th>
+                                    <th><input type="text" data-filter="11" placeholder="筛�?></th>
                                     <th>
                                         <select data-filter="12">
                                             <option value="">全部</option>
@@ -1073,8 +1073,8 @@
                                             <option value="作废">作废</option>
                                         </select>
                                     </th>
-                                    <th><input type="text" data-filter="13" placeholder="筛选"></th>
-                                    <th><input type="text" data-filter="14" placeholder="筛选"></th>
+                                    <th><input type="text" data-filter="13" placeholder="筛�?></th>
+                                    <th><input type="text" data-filter="14" placeholder="筛�?></th>
                                     <th>
                                         <button type="button" class="btn-reset-filter" id="resetTableFilter">清空</button>
                                     </th>
@@ -1091,7 +1091,7 @@
                                     <td>{{ project.dept_name }}</td>
                                     <td>{{ project.org_mode_name }}</td>
                                     <td>{{ project.data_status_name }}</td>
-                                    <td>{{ project.is_execution_level|yesno:"是,否" }}</td>
+                                    <td>{{ project.is_execution_level|yesno:"�?�? }}</td>
                                     <td>{{ project.project_year }}</td>
                                     <td>{{ project.created_by }}</td>
                                     <td>{{ project.project_type_name }}</td>
@@ -1102,7 +1102,7 @@
                                         <a class="btn-edit" href="{% url 'project_master_edit' project.project_code %}">修改</a>
                                         <form method="post" action="{% url 'project_master_delete' project.project_code %}" style="display:inline;">
                                             {% csrf_token %}
-                                            <button class="btn-delete" type="submit" onclick="return confirm('确定要删除项目 {{ project.project_code }} 吗？')">删除</button>
+                                            <button class="btn-delete" type="submit" onclick="return confirm('确定要删除项�?{{ project.project_code }} 吗？')">删除</button>
                                         </form>
                                     </td>
                                 </tr>
@@ -1123,8 +1123,6 @@
         function showAddForm() {
             document.getElementById('addForm').style.display = 'block';
             document.getElementById('searchForm').style.display = 'none';
-            document.getElementById('updatePanel').style.display = 'none';
-            document.querySelector('.data-table').style.display = 'block';
         }
 
         function hideAddForm() {
@@ -1135,7 +1133,6 @@
             document.getElementById('searchForm').style.display = 'block';
             document.getElementById('addForm').style.display = 'none';
             document.getElementById('updatePanel').style.display = 'none';
-            document.querySelector('.data-table').style.display = 'block';
             document.getElementById('searchForm').classList.remove('collapsed');
             const toggleBtn = document.getElementById('toggleSearchFields');
             if (toggleBtn) {
@@ -1156,13 +1153,6 @@
 
         function hideSearchForm() {
             document.getElementById('searchForm').style.display = 'none';
-        }
-
-        function toggleSubMenu(id) {
-            const target = document.getElementById(id);
-            if (target) {
-                target.classList.toggle('show');
-            }
         }
 
         function refreshList() {
@@ -1320,36 +1310,6 @@
             });
 
             applyFilters();
-        }
-        function showAddForm() {
-            document.getElementById('addForm').style.display = 'block';
-            document.getElementById('searchForm').style.display = 'none';
-            document.getElementById('updatePanel').style.display = 'none';
-            document.querySelector('.data-table').style.display = 'block';
-        }
-
-        function showSearchForm() {
-            document.getElementById('searchForm').style.display = 'block';
-            document.getElementById('addForm').style.display = 'none';
-            document.getElementById('updatePanel').style.display = 'none';
-            document.querySelector('.data-table').style.display = 'block';
-            document.getElementById('searchForm').classList.remove('collapsed');
-            const toggleBtn = document.getElementById('toggleSearchFields');
-            if (toggleBtn) {
-                toggleBtn.textContent = '收起';
-            }
-        }
-
-        function showUpdatePanel() {
-            document.getElementById('updatePanel').style.display = 'block';
-            document.getElementById('addForm').style.display = 'none';
-            document.getElementById('searchForm').style.display = 'none';
-            document.querySelector('.data-table').style.display = 'none';
-            document.getElementById('updatePanel').classList.remove('collapsed');
-            const toggleBtn = document.getElementById('toggleUpdatePanel');
-            if (toggleBtn) {
-                toggleBtn.textContent = '收起';
-            }
         }
     </script>
 </body>
