@@ -158,16 +158,19 @@
 
         .main-content {
             flex: 1;
-            padding: 8px 24px 20px;
+            padding: 8px 24px 0;
             position: relative;
+            display: flex;
+            flex-direction: column;
+            min-height: calc(100vh - 60px);
         }
 
         .watermark {
             position: fixed;
             inset: 0;
             pointer-events: none;
-            opacity: 0.07;
-            font-size: 16px;
+            opacity: 0.08;
+            font-size: 14px;
             color: #000;
             display: flex;
             flex-wrap: wrap;
@@ -176,8 +179,8 @@
         }
 
         .watermark span {
-            width: 240px;
-            height: 120px;
+            width: 180px;
+            height: 100px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -197,12 +200,12 @@
         }
 
         .toggle-sidebar-btn {
-            padding: 6px 10px;
+            padding: 4px 8px;
             border: 1px solid #dcdcdc;
             border-radius: 4px;
             background: #fff;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 12px;
             color: #333;
         }
 
@@ -483,7 +486,7 @@
 
         .table-wrapper {
             width: 100%;
-            max-height: 520px;
+            flex: 1;
             overflow: auto;
             scrollbar-gutter: stable both-edges;
         }
@@ -548,11 +551,13 @@
 
         .btn-edit,
         .btn-delete {
-            padding: 4px 8px;
+            padding: 6px 12px;
             border: none;
-            border-radius: 3px;
+            border-radius: 4px;
             cursor: pointer;
             color: white;
+            white-space: nowrap;
+            min-width: 48px;
         }
 
         .btn-edit { background-color: #3498db; }
@@ -1276,7 +1281,7 @@
                                     <td>{{ project.created_at }}</td>
                                     <td>{{ project.remark }}</td>
                                     <td>
-                                        <div style="display: flex; gap: 8px; justify-content: center;">
+                                        <div style="display: flex; gap: 16px; justify-content: center;">
                                             <a class="btn-edit" href="{% url 'project_master_edit' project.project_code %}">修改</a>
                                             <button class="btn-delete" type="button" onclick="submitDeleteApproval('{{ project.project_code }}', '{{ project.project_name }}')">删除</button>
                                         </div>
