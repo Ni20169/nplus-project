@@ -283,12 +283,12 @@
         .form-grid {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px 12px;
+            gap: 8px 10px;
         }
 
         .form-grid .field {
-            flex: 1 1 320px;
-            min-width: 260px;
+            flex: 1 1 240px;
+            min-width: 220px;
         }
 
         .form-actions {
@@ -381,6 +381,7 @@
             width: 100%;
             border-collapse: collapse;
             min-width: 1600px;
+            table-layout: auto;
         }
 
         th, td {
@@ -388,7 +389,8 @@
             text-align: left;
             border-bottom: 1px solid #eee;
             font-size: 13px;
-            min-width: 120px;
+            min-width: 90px;
+            white-space: normal;
         }
 
         th {
@@ -423,9 +425,9 @@
             z-index: 3;
         }
 
-        .col-1 { left: 0; min-width: 140px; }
-        .col-2 { left: 140px; min-width: 160px; }
-        .col-3 { left: 300px; min-width: 160px; }
+        .col-1 { left: 0; min-width: 120px; }
+        .col-2 { left: 120px; min-width: 140px; }
+        .col-3 { left: 260px; min-width: 140px; }
 
         .add-form {
             font-size: 13px;
@@ -592,15 +594,6 @@
                                 </select>
                             </div>
                             <div class="field">
-                                <label>所在市</label>
-                                <select name="city_code">
-                                    <option value="">请选择所在市</option>
-                                    {% for item in dicts.CITY %}
-                                        <option value="{{ item.code }}" {% if search.city_code == item.code %}selected{% endif %}>{{ item.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="field">
                                 <label>业务板块</label>
                                 <select name="business_unit">
                                     <option value="">请选择业务板块</option>
@@ -723,15 +716,7 @@
                                     {% endfor %}
                                 </select>
                             </div>
-                            <div class="field">
-                                <label><span class="required-star">*</span>所在市</label>
-                                <select name="city_code" id="citySelect" required>
-                                    <option value="">选择所在市</option>
-                                    {% for item in dicts.CITY %}
-                                        <option value="{{ item.code }}" data-parent="{{ item.parent_code }}">{{ item.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
+                            <input type="hidden" name="city_code" id="citySelect" value="">
                             <div class="field">
                                 <label><span class="required-star">*</span>业务板块</label>
                                 <select name="business_unit" required>
@@ -819,18 +804,17 @@
                                     <th class="sticky-col col-2" data-sort="1">项目名称</th>
                                     <th class="sticky-col col-3" data-sort="2">机构名称</th>
                                     <th data-sort="3">所在省</th>
-                                    <th data-sort="4">所在市</th>
-                                    <th data-sort="5">业务板块</th>
-                                    <th data-sort="6">承担部门</th>
-                                    <th data-sort="7">组织模式</th>
-                                    <th data-sort="8">数据状态</th>
-                                    <th data-sort="9">是否执行层</th>
-                                    <th data-sort="10">项目年份</th>
-                                    <th data-sort="11">创建人</th>
-                                    <th data-sort="12">项目类型</th>
-                                    <th data-sort="13">状态</th>
-                                    <th data-sort="14">创建时间</th>
-                                    <th data-sort="15">备注</th>
+                                    <th data-sort="4">业务板块</th>
+                                    <th data-sort="5">承担部门</th>
+                                    <th data-sort="6">组织模式</th>
+                                    <th data-sort="7">数据状态</th>
+                                    <th data-sort="8">是否执行层</th>
+                                    <th data-sort="9">项目年份</th>
+                                    <th data-sort="10">创建人</th>
+                                    <th data-sort="11">项目类型</th>
+                                    <th data-sort="12">状态</th>
+                                    <th data-sort="13">创建时间</th>
+                                    <th data-sort="14">备注</th>
                                     <th>操作</th>
                                 </tr>
                                 <tr class="filter-row">
@@ -846,17 +830,16 @@
                                     <th><input type="text" data-filter="9" placeholder="筛选"></th>
                                     <th><input type="text" data-filter="10" placeholder="筛选"></th>
                                     <th><input type="text" data-filter="11" placeholder="筛选"></th>
-                                    <th><input type="text" data-filter="12" placeholder="筛选"></th>
                                     <th>
-                                        <select data-filter="13">
+                                        <select data-filter="12">
                                             <option value="">全部</option>
                                             <option value="启用">启用</option>
                                             <option value="停用">停用</option>
                                             <option value="作废">作废</option>
                                         </select>
                                     </th>
+                                    <th><input type="text" data-filter="13" placeholder="筛选"></th>
                                     <th><input type="text" data-filter="14" placeholder="筛选"></th>
-                                    <th><input type="text" data-filter="15" placeholder="筛选"></th>
                                     <th>
                                         <button type="button" class="btn-reset-filter" id="resetTableFilter">清空</button>
                                     </th>
@@ -869,7 +852,6 @@
                                     <td class="sticky-col col-2">{{ project.project_name }}</td>
                                     <td class="sticky-col col-3">{{ project.org_name }}</td>
                                     <td>{{ project.province_name }}</td>
-                                    <td>{{ project.city_name }}</td>
                                     <td>{{ project.business_unit_name }}</td>
                                     <td>{{ project.dept_name }}</td>
                                     <td>{{ project.org_mode_name }}</td>

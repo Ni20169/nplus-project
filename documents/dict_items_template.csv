@@ -5,5 +5,7 @@ DEPT,DEPT001,示例部门一,示例部门一,,1,true,示例
 PROJECT_TYPE,PT001,示例类型一,示例类型一,,1,true,示例
 ORG_MODE,OM001,示例组织模式一,示例组织模式一,,1,true,示例
 DATA_STATUS,ENABLED,启用,启用,,1,true,示例
+DATA_STATUS,DISABLED,停用,停用,,2,true,示例
+DATA_STATUS,INVALID,作废,作废,,3,true,示例
 PROVINCE,110000,北京市,北京市,,1,true,示例
 CITY,110100,北京市,北京市,110000,1,true,示例
