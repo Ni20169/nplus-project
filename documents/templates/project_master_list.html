@@ -246,6 +246,12 @@
             color: #fff;
             font-weight: 600;
         }
+        .btn-update {
+            background-color: #16a085;
+            border-color: #16a085;
+            color: #fff;
+            font-weight: 600;
+        }
         .btn-refresh { background-color: #f39c12; }
         .btn-export { background-color: #1abc9c; }
         .btn-import { background-color: #9b59b6; }
@@ -640,7 +646,7 @@
                 <div class="action-buttons">
                     <button class="btn-add" onclick="showAddForm()">新增项目</button>
                     <button class="btn-search" onclick="showSearchForm()">查询项目</button>
-                    <button class="btn-search" onclick="showUpdatePanel()">信息更新</button>
+                    <button class="btn-update" onclick="showUpdatePanel()">信息更新</button>
                     <button class="btn-refresh" onclick="refreshList()">项目列表</button>
                     <a class="btn-export" href="{% url 'export_project_template' %}">导出Excel模板</a>
                     <form method="post" action="{% url 'import_project_master' %}" enctype="multipart/form-data" class="import-group">
@@ -831,6 +837,17 @@
                                 </select>
                             </div>
                             <div class="field">
+                                <label><span class="required-star">*</span>项目类型</label>
+                                <select name="project_type" required>
+                                    <option value="">选择项目类型</option>
+                                    {% for item in dicts.PROJECT_TYPE %}
+                                        <option value="{{ item.code }}">{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-grid">
+                            <div class="field">
                                 <label><span class="required-star">*</span>业务板块</label>
                                 <select name="business_unit" required>
                                     <option value="">选择业务板块</option>
@@ -844,15 +861,6 @@
                                 <select name="dept" required>
                                     <option value="">选择项目承担部门</option>
                                     {% for item in dicts.DEPT %}
-                                        <option value="{{ item.code }}">{{ item.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="field">
-                                <label><span class="required-star">*</span>项目类型</label>
-                                <select name="project_type" required>
-                                    <option value="">选择项目类型</option>
-                                    {% for item in dicts.PROJECT_TYPE %}
                                         <option value="{{ item.code }}">{{ item.name }}</option>
                                     {% endfor %}
                                 </select>
