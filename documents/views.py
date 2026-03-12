@@ -358,6 +358,9 @@ def project_master_list(request):
         search["remark"],
     ])
 
+    # 检查是否是新增项目表单提交后的显示
+    show_add_form = request.method == "POST" and request.POST.get("form_type") == "create"
+
     return render(
         request,
         "project_master_list.html",
@@ -371,6 +374,7 @@ def project_master_list(request):
             "update_code": update_code,
             "show_update_panel": show_update_panel,
             "show_search_form": has_search_params,
+            "show_add_form": show_add_form,
             "update_now": timezone.localtime().strftime("%Y-%m-%d %H:%M"),
             "all_projects": all_projects,
             "pending_approvals": pending_approvals,

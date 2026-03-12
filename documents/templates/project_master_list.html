@@ -1222,7 +1222,7 @@
                     </form>
                 </div>
 
-                <div class="search-form add-form" id="addForm" style="display: block;">
+                <div class="search-form add-form" id="addForm" style="display: {% if show_add_form %}block{% else %}none{% endif %};">
                     <h3>新增项目</h3>
                     <form method="post">
                         {% csrf_token %}
