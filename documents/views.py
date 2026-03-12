@@ -205,6 +205,10 @@ def project_master_list(request):
     if latest_batch:
         latest_errors = list(latest_batch.errors.all())
 
+    recent_updates = list(
+        ProjectMasterLog.objects.filter(action="update").order_by("-created_at")[:10]
+    )
+
     return render(
         request,
         "project_master_list.html",
@@ -213,6 +217,7 @@ def project_master_list(request):
             "dicts": dicts,
             "latest_errors": latest_errors,
             "search": search,
+            "recent_updates": recent_updates,
         },
     )
 

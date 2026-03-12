@@ -255,6 +255,34 @@
             display: none;
         }
 
+        .update-panel {
+            margin-bottom: 16px;
+            padding: 16px;
+            background-color: #f7f9fc;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+        }
+
+        .update-panel h3 {
+            margin-bottom: 10px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .update-panel.collapsed .update-table {
+            display: none;
+        }
+
+        .update-table pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-break: break-all;
+            font-family: inherit;
+            font-size: 12px;
+        }
+
         .search-form input,
         .search-form select,
         .search-form textarea {
@@ -499,6 +527,7 @@
                 <ul class="menu-list show" id="menu-projects">
                     <li><a href="#" onclick="showAddForm()">新增项目</a></li>
                     <li><a href="#" onclick="showSearchForm()">查询项目</a></li>
+                    <li><a href="#" onclick="showUpdatePanel()">信息更新</a></li>
                     <li><a href="#" onclick="refreshList()">项目列表</a></li>
                 </ul>
             </div>
@@ -683,6 +712,43 @@
                             <a class="btn-cancel" href="{% url 'project_master_list' %}">取消</a>
                         </div>
                     </form>
+                </div>
+
+                <div class="update-panel" id="updatePanel" style="display: none;">
+                    <h3>
+                        信息更新
+                        <span class="collapse-btn" id="toggleUpdatePanel">收起</span>
+                    </h3>
+                    <div class="update-table">
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>项目编码</th>
+                                        <th>修改前字段</th>
+                                        <th>修改后字段</th>
+                                        <th>更新人</th>
+                                        <th>更新日期</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for log in recent_updates %}
+                                    <tr>
+                                        <td>{{ log.project_code }}</td>
+                                        <td><pre>{{ log.before_data|default:"无" }}</pre></td>
+                                        <td><pre>{{ log.after_data|default:"无" }}</pre></td>
+                                        <td>{{ log.operator }}</td>
+                                        <td>{{ log.created_at }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5">暂无更新记录</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="search-form add-form" id="addForm" style="display: none;">
@@ -907,8 +973,20 @@
         function showSearchForm() {
             document.getElementById('searchForm').style.display = 'block';
             document.getElementById('addForm').style.display = 'none';
+            document.getElementById('updatePanel').style.display = 'none';
             document.getElementById('searchForm').classList.remove('collapsed');
             const toggleBtn = document.getElementById('toggleSearchFields');
+            if (toggleBtn) {
+                toggleBtn.textContent = '收起';
+            }
+        }
+
+        function showUpdatePanel() {
+            document.getElementById('updatePanel').style.display = 'block';
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('searchForm').style.display = 'none';
+            document.getElementById('updatePanel').classList.remove('collapsed');
+            const toggleBtn = document.getElementById('toggleUpdatePanel');
             if (toggleBtn) {
                 toggleBtn.textContent = '收起';
             }
@@ -972,6 +1050,15 @@
                 const form = document.getElementById('searchForm');
                 form.classList.toggle('collapsed');
                 toggleSearchFields.textContent = form.classList.contains('collapsed') ? '展开' : '收起';
+            });
+        }
+
+        const toggleUpdatePanel = document.getElementById('toggleUpdatePanel');
+        if (toggleUpdatePanel) {
+            toggleUpdatePanel.addEventListener('click', () => {
+                const panel = document.getElementById('updatePanel');
+                panel.classList.toggle('collapsed');
+                toggleUpdatePanel.textContent = panel.classList.contains('collapsed') ? '展开' : '收起';
             });
         }
 
