@@ -1251,7 +1251,7 @@
                                 <label>上级 PJ 编码</label>
                                 <input type="text" name="parent_pj_code" placeholder="可为空">
                             </div>
-                            <div class="field">
+                            <div class="field field-flex">
                                 <label><span class="required-star">*</span>所在省</label>
                                 <select name="province_code" id="provinceSelect" required>
                                     <option value="">选择所在省</option>
@@ -1260,7 +1260,7 @@
                                     {% endfor %}
                                 </select>
                             </div>
-                            <div class="field field-wide">
+                            <div class="field field-flex">
                                 <label><span class="required-star">*</span>项目类型</label>
                                 <select name="project_type" required>
                                     <option value="">选择项目类型</option>
@@ -1315,8 +1315,8 @@
                                 </select>
                             </div>
                             <div class="field field-flex">
-                                <label><span class="required-star">*</span>创建人</label>
-                                <input type="text" name="created_by" value="{{ request.user.username }}" required>
+                                <label>创建人</label>
+                                <input type="text" name="created_by" value="{{ request.user.username }}" readonly style="background-color: #f5f5f5; cursor: not-allowed;">
                             </div>
                         </div>
                         <textarea name="remark" placeholder="备注"></textarea>
