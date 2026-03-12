@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 
 from django.contrib import messages
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -61,6 +61,11 @@ def home(request):
         messages.error(request, "用户名或密码错误")
 
     return render(request, "home.html")
+
+
+def logout_view(request):
+    logout(request)
+    return redirect("home")
 
 
 @login_required
