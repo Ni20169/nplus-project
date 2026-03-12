@@ -420,5 +420,52 @@ def import_project_master(request):
 
 @login_required
 def user_list(request):
+    if not request.user.is_staff:
+        if request.method == "POST":
+            messages.error(request, "无权限执行该操作")
+            return redirect("user_list")
+        users = User.objects.filter(id=request.user.id)
+        return render(request, "user_list.html", {"users": users})
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+        if action == "create":
+            username = request.POST.get("username", "").strip()
+            email = request.POST.get("email", "").strip()
+            password = request.POST.get("password", "").strip()
+            is_staff = request.POST.get("is_staff") == "true"
+            if not username or not password:
+                messages.error(request, "用户名和密码不能为空")
+            elif User.objects.filter(username=username).exists():
+                messages.error(request, "用户名已存在")
+            else:
+                user = User.objects.create(username=username, email=email, is_staff=is_staff, is_active=True)
+                user.set_password(password)
+                user.save(update_fields=["password"])
+                messages.success(request, "用户创建成功")
+
+        elif action == "toggle":
+            user_id = request.POST.get("user_id")
+            user = get_object_or_404(User, id=user_id)
+            if user == request.user:
+                messages.error(request, "不能禁用当前登录用户")
+            else:
+                user.is_active = not user.is_active
+                user.save(update_fields=["is_active"])
+                messages.success(request, "用户状态已更新")
+
+        elif action == "reset":
+            user_id = request.POST.get("user_id")
+            new_password = request.POST.get("new_password", "").strip()
+            user = get_object_or_404(User, id=user_id)
+            if not new_password:
+                messages.error(request, "新密码不能为空")
+            else:
+                user.set_password(new_password)
+                user.save(update_fields=["password"])
+                messages.success(request, "密码已重置")
+
+        return redirect("user_list")
+
     users = User.objects.all().order_by("username")
     return render(request, "user_list.html", {"users": users})

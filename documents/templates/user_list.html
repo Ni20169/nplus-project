@@ -28,7 +28,7 @@
             inset: 0;
             pointer-events: none;
             opacity: 0.08;
-            font-size: 36px;
+            font-size: 26px;
             color: #000;
             display: flex;
             flex-wrap: wrap;
@@ -61,6 +61,32 @@
             background-color: #f3f6f9;
             font-weight: 600;
         }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .form-row input, .form-row select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 6px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+            font-size: 12px;
+        }
+        .btn-create { background-color: #2ecc71; }
+        .btn-toggle { background-color: #f39c12; }
+        .btn-reset { background-color: #3498db; }
     </style>
 </head>
 <body>
@@ -72,6 +98,28 @@
     <div class="container">
         <div class="content">
             <h1>用户管理</h1>
+            {% if messages %}
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            {% endif %}
+            {% if request.user.is_staff %}
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create">
+                <div class="form-row">
+                    <input type="text" name="username" placeholder="用户名" required>
+                    <input type="email" name="email" placeholder="邮箱">
+                    <input type="text" name="password" placeholder="初始密码" required>
+                    <select name="is_staff">
+                        <option value="false">普通用户</option>
+                        <option value="true">管理员</option>
+                    </select>
+                </div>
+                <button class="btn btn-create" type="submit">新增用户</button>
+            </form>
+            {% endif %}
+
             <table>
                 <thead>
                     <tr>
@@ -81,6 +129,7 @@
                         <th>是否管理员</th>
                         <th>最后登录</th>
                         <th>创建时间</th>
+                        {% if request.user.is_staff %}<th>操作</th>{% endif %}
                     </tr>
                 </thead>
                 <tbody>
@@ -92,6 +141,25 @@
                         <td>{{ user.is_staff|yesno:"是,否" }}</td>
                         <td>{{ user.last_login }}</td>
                         <td>{{ user.date_joined }}</td>
+                        {% if request.user.is_staff %}
+                        <td>
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="toggle">
+                                <input type="hidden" name="user_id" value="{{ user.id }}">
+                                <button class="btn btn-toggle" type="submit">
+                                    {% if user.is_active %}禁用{% else %}启用{% endif %}
+                                </button>
+                            </form>
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="reset">
+                                <input type="hidden" name="user_id" value="{{ user.id }}">
+                                <input type="text" name="new_password" placeholder="新密码" style="width:120px;">
+                                <button class="btn btn-reset" type="submit">重置</button>
+                            </form>
+                        </td>
+                        {% endif %}
                     </tr>
                     {% empty %}
                     <tr>
