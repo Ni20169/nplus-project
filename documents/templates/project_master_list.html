@@ -24,13 +24,24 @@
             min-height: 100vh;
         }
 
+        .container.sidebar-hidden .sidebar {
+            width: 0;
+            min-width: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .container.sidebar-hidden .resize-handle {
+            display: none;
+        }
+
         .sidebar {
             width: 240px;
             min-width: 200px;
             max-width: 360px;
             background-color: #2f3542;
             color: white;
-            padding: 20px 16px 20px 20px;
+            padding: 16px 16px 20px 20px;
             position: relative;
         }
 
@@ -89,7 +100,7 @@
 
         .main-content {
             flex: 1;
-            padding: 8px 24px 16px;
+            padding: 8px 24px 20px;
             position: relative;
         }
 
@@ -97,31 +108,48 @@
             position: fixed;
             inset: 0;
             pointer-events: none;
-            opacity: 0.05;
-            font-size: 18px;
+            opacity: 0.07;
+            font-size: 16px;
             color: #000;
             display: flex;
             flex-wrap: wrap;
             transform: rotate(-20deg);
-            z-index: 0;
+            z-index: 4;
         }
 
         .watermark span {
-            width: 320px;
-            height: 140px;
+            width: 240px;
+            height: 120px;
             display: flex;
             align-items: center;
             justify-content: center;
             text-transform: uppercase;
         }
 
-        .main-content > * {
+        .content-wrap {
             position: relative;
-            z-index: 1;
+            z-index: 3;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .toggle-sidebar-btn {
+            padding: 6px 10px;
+            border: 1px solid #dcdcdc;
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 13px;
+            color: #333;
         }
 
         .main-content h1 {
-            margin: 0 0 8px 0;
+            margin: 0;
             font-size: 20px;
             color: #1f2d3d;
         }
@@ -130,6 +158,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
+            align-items: center;
             margin-bottom: 8px;
         }
 
@@ -151,12 +180,27 @@
         .btn-export { background-color: #1abc9c; }
         .btn-import { background-color: #9b59b6; }
 
+        .import-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .import-group input[type="file"] {
+            font-size: 13px;
+        }
+
         .search-form {
             margin-bottom: 16px;
             padding: 16px;
-            background-color: white;
+            background-color: rgba(255,255,255,0.9);
             border-radius: 6px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+        }
+
+        .search-form h3 {
+            margin-bottom: 10px;
+            font-size: 16px;
         }
 
         .search-form input,
@@ -196,17 +240,22 @@
             gap: 8px;
         }
 
-        .form-actions .btn-add,
+        .form-actions .btn-search,
         .form-actions .btn-cancel {
             padding: 8px 14px;
             font-size: 14px;
             border-radius: 4px;
+            min-width: 96px;
         }
 
         .btn-cancel {
             background-color: #95a5a6;
             color: white;
             border: none;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .field label {
@@ -217,14 +266,14 @@
             margin-bottom: 4px;
         }
 
-        .required {
+        .required-star {
             color: #e74c3c;
-            margin-left: 4px;
             font-weight: 700;
+            margin-right: 4px;
         }
 
         .data-table {
-            background-color: white;
+            background-color: rgba(255,255,255,0.9);
             border-radius: 6px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.06);
             padding: 8px;
@@ -300,18 +349,20 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container" id="layoutRoot">
         <div class="sidebar" id="sidebar">
             <div class="menu-section">
-                <div class="menu-toggle" data-target="menu-system">系统管理<span>▾</span></div>
+                <div class="menu-toggle" data-target="menu-system">系统管理<span>▸</span></div>
                 <ul class="menu-list show" id="menu-system">
                     <li><a href="{% url 'user_list' %}">用户管理</a></li>
-                    <li><a href="#">权限管理</a></li>
-                    <li><a href="#">系统设置</a></li>
+                    {% if request.user.is_staff %}
+                        <li><a href="#">权限管理</a></li>
+                        <li><a href="#">系统设置</a></li>
+                    {% endif %}
                 </ul>
             </div>
             <div class="menu-section">
-                <div class="menu-toggle" data-target="menu-projects">项目管理<span>▾</span></div>
+                <div class="menu-toggle" data-target="menu-projects">项目管理<span>▸</span></div>
                 <ul class="menu-list show" id="menu-projects">
                     <li><a href="#" onclick="showAddForm()">新增项目</a></li>
                     <li><a href="#" onclick="showSearchForm()">查询项目</a></li>
@@ -319,7 +370,7 @@
                 </ul>
             </div>
             <div class="menu-section">
-                <div class="menu-toggle" data-target="menu-report">数据统计<span>▾</span></div>
+                <div class="menu-toggle" data-target="menu-report">数据统计<span>▸</span></div>
                 <ul class="menu-list" id="menu-report">
                     <li><a href="#">项目概览</a></li>
                     <li><a href="#">导入记录</a></li>
@@ -335,238 +386,343 @@
                 {% endfor %}
             </div>
 
-            <h1>项目主数据管理</h1>
-
-            <div class="action-buttons">
-                <button class="btn-add" onclick="showAddForm()">新增项目</button>
-                <button class="btn-search" onclick="showSearchForm()">查询项目</button>
-                <button class="btn-refresh" onclick="refreshList()">刷新列表</button>
-                <a class="btn-export" href="{% url 'export_project_template' %}">导出Excel模板</a>
-                <form method="post" action="{% url 'import_project_master' %}" enctype="multipart/form-data" style="display:flex; gap:8px; align-items:center;">
-                    {% csrf_token %}
-                    <input type="file" name="import_file" accept=".xlsx" required>
-                    <button class="btn-import" type="submit">批量导入</button>
-                </form>
-            </div>
-
-            {% if latest_errors %}
-            <div class="error-panel">
-                <h3>导入错误（最近一次）</h3>
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>行号</th>
-                                <th>字段名</th>
-                                <th>错误原因</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for err in latest_errors %}
-                            <tr>
-                                <td>{{ err.row_number }}</td>
-                                <td>{{ err.field_name }}</td>
-                                <td>{{ err.error_message }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+            <div class="content-wrap">
+                <div class="page-header">
+                    <button class="toggle-sidebar-btn" type="button" id="toggleSidebar">隐藏菜单</button>
+                    <h1>项目主数据管理</h1>
                 </div>
-            </div>
-            {% endif %}
 
-            <div class="search-form" id="searchForm" style="display: none;">
-                <h3>项目查询</h3>
-                <div class="form-grid">
-                    <input type="text" placeholder="项目编码">
-                    <input type="text" placeholder="项目名称">
-                    <input type="text" placeholder="机构名称">
+                <div class="action-buttons">
+                    <button class="btn-add" onclick="showAddForm()">新增项目</button>
+                    <button class="btn-search" onclick="showSearchForm()">查询项目</button>
+                    <button class="btn-refresh" onclick="refreshList()">刷新列表</button>
+                    <a class="btn-export" href="{% url 'export_project_template' %}">导出Excel模板</a>
+                    <form method="post" action="{% url 'import_project_master' %}" enctype="multipart/form-data" class="import-group">
+                        {% csrf_token %}
+                        <button class="btn-import" type="submit">批量导入</button>
+                        <input type="file" name="import_file" accept=".xlsx" required>
+                    </form>
                 </div>
-                <div class="form-actions">
-                    <button class="btn-search" type="button">查询</button>
-                    <button type="button" class="btn-cancel" onclick="hideSearchForm()">取消</button>
-                </div>
-            </div>
 
-            <div class="search-form" id="addForm" style="display: none;">
-                <h3>新增项目</h3>
-                <form method="post">
-                    {% csrf_token %}
-                    <input type="hidden" name="form_type" value="create">
-                    <div class="form-grid">
-                        <div class="field">
-                            <label>项目主数据编码<span class="required">*</span></label>
-                            <input type="text" name="project_code" placeholder="PJ+10位数字" required>
-                        </div>
-                        <div class="field">
-                            <label>项目名称<span class="required">*</span></label>
-                            <input type="text" name="project_name" placeholder="请输入项目名称" required>
-                        </div>
-
-                        <div class="field">
-                            <label>项目机构<span class="required">*</span></label>
-                            <select name="org_code" id="orgSelect" required>
-                                <option value="">选择项目机构</option>
-                                {% for item in dicts.ORG %}
-                                    <option value="{{ item.code }}" data-name="{{ item.name }}">{{ item.name }}</option>
+                {% if latest_errors %}
+                <div class="error-panel">
+                    <h3>导入错误（最近一次）</h3>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>行号</th>
+                                    <th>字段名</th>
+                                    <th>错误原因</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for err in latest_errors %}
+                                <tr>
+                                    <td>{{ err.row_number }}</td>
+                                    <td>{{ err.field_name }}</td>
+                                    <td>{{ err.error_message }}</td>
+                                </tr>
                                 {% endfor %}
-                            </select>
-                        </div>
-                        <div class="field">
-                            <label>项目机构组织编码<span class="required">*</span></label>
-                            <input type="text" name="org_code_display" id="orgCodeDisplay" placeholder="自动带出" readonly>
-                            <input type="hidden" name="org_name" id="orgNameHidden">
-                        </div>
-                        <div class="field">
-                            <label>上级PJ编码</label>
-                            <input type="text" name="parent_pj_code" placeholder="可为空">
-                        </div>
-
-                        <div class="field">
-                            <label>所在省<span class="required">*</span></label>
-                            <select name="province_code" id="provinceSelect" required>
-                                <option value="">选择所在省</option>
-                                {% for item in dicts.PROVINCE %}
-                                    <option value="{{ item.code }}">{{ item.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="field">
-                            <label>所在市<span class="required">*</span></label>
-                            <select name="city_code" id="citySelect" required>
-                                <option value="">选择所在市</option>
-                                {% for item in dicts.CITY %}
-                                    <option value="{{ item.code }}" data-parent="{{ item.parent_code }}">{{ item.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="field">
-                            <label>业务板块<span class="required">*</span></label>
-                            <select name="business_unit" required>
-                                <option value="">选择业务板块</option>
-                                {% for item in dicts.BUSINESS_UNIT %}
-                                    <option value="{{ item.code }}">{{ item.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="field">
-                            <label>项目承担部门<span class="required">*</span></label>
-                            <select name="dept" required>
-                                <option value="">选择项目承担部门</option>
-                                {% for item in dicts.DEPT %}
-                                    <option value="{{ item.code }}">{{ item.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="field">
-                            <label>项目类型<span class="required">*</span></label>
-                            <select name="project_type" required>
-                                <option value="">选择项目类型</option>
-                                {% for item in dicts.PROJECT_TYPE %}
-                                    <option value="{{ item.code }}">{{ item.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="field">
-                            <label>项目组织模式<span class="required">*</span></label>
-                            <select name="org_mode" required>
-                                <option value="">选择项目组织模式</option>
-                                {% for item in dicts.ORG_MODE %}
-                                    <option value="{{ item.code }}">{{ item.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="field">
-                            <label>数据状态<span class="required">*</span></label>
-                            <select name="data_status" required>
-                                <option value="">选择数据状态</option>
-                                {% for item in dicts.DATA_STATUS %}
-                                    <option value="{{ item.code }}">{{ item.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="field">
-                            <label>是否为执行层<span class="required">*</span></label>
-                            <select name="is_execution_level" required>
-                                <option value="false">否</option>
-                                <option value="true">是</option>
-                            </select>
-                        </div>
-
-                        <div class="field">
-                            <label>状态<span class="required">*</span></label>
-                            <select name="status" required>
-                                <option value="启用">启用</option>
-                                <option value="停用">停用</option>
-                                <option value="作废">作废</option>
-                            </select>
-                        </div>
-
-                        <div class="field">
-                            <label>创建人<span class="required">*</span></label>
-                            <input type="text" name="created_by" value="{{ request.user.username }}" required>
-                        </div>
+                            </tbody>
+                        </table>
                     </div>
-                    <textarea name="remark" placeholder="备注"></textarea>
-                    <div class="form-actions">
-                        <button type="submit" class="btn-add">保存</button>
-                        <button type="button" class="btn-cancel" onclick="hideAddForm()">取消</button>
-                    </div>
-                    <div class="hint">项目年份会从项目主数据编码第3-6位自动生成</div>
-                </form>
-            </div>
+                </div>
+                {% endif %}
 
-            <div class="data-table">
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>项目编码</th>
-                                <th>项目名称</th>
-                                <th>机构名称</th>
-                                <th>所在省</th>
-                                <th>所在市</th>
-                                <th>业务板块</th>
-                                <th>项目类型</th>
-                                <th>状态</th>
-                                <th>创建时间</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for project in projects %}
-                            <tr>
-                                <td>{{ project.project_code }}</td>
-                                <td>{{ project.project_name }}</td>
-                                <td>{{ project.org_name }}</td>
-                                <td>{{ project.province_name }}</td>
-                                <td>{{ project.city_name }}</td>
-                                <td>{{ project.business_unit_name }}</td>
-                                <td>{{ project.project_type_name }}</td>
-                                <td>{{ project.status }}</td>
-                                <td>{{ project.created_at }}</td>
-                                <td>
-                                    <a class="btn-edit" href="{% url 'project_master_edit' project.project_code %}">修改</a>
-                                    <form method="post" action="{% url 'project_master_delete' project.project_code %}" style="display:inline;">
-                                        {% csrf_token %}
-                                        <button class="btn-delete" type="submit" onclick="return confirm('确定要删除项目 {{ project.project_code }} 吗？')">删除</button>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="10">暂无数据</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="search-form" id="searchForm" style="display: none;">
+                    <h3>项目查询</h3>
+                    <form method="get">
+                        <div class="form-grid">
+                            <div class="field">
+                                <label>项目主数据编码</label>
+                                <input type="text" name="project_code" value="{{ search.project_code|default:'' }}" placeholder="例如：PJ0000000001">
+                            </div>
+                            <div class="field">
+                                <label>项目名称</label>
+                                <input type="text" name="project_name" value="{{ search.project_name|default:'' }}" placeholder="请输入项目名称">
+                            </div>
+                            <div class="field">
+                                <label>项目机构名称</label>
+                                <input type="text" name="org_name" value="{{ search.org_name|default:'' }}" placeholder="请输入项目机构名称">
+                            </div>
+                            <div class="field">
+                                <label>项目机构组织编码</label>
+                                <input type="text" name="org_code" value="{{ search.org_code|default:'' }}" placeholder="请输入组织编码">
+                            </div>
+                            <div class="field">
+                                <label>上级PJ编码</label>
+                                <input type="text" name="parent_pj_code" value="{{ search.parent_pj_code|default:'' }}" placeholder="请输入上级PJ编码">
+                            </div>
+                            <div class="field">
+                                <label>所在省</label>
+                                <select name="province_code">
+                                    <option value="">请选择所在省</option>
+                                    {% for item in dicts.PROVINCE %}
+                                        <option value="{{ item.code }}" {% if search.province_code == item.code %}selected{% endif %}>{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>所在市</label>
+                                <select name="city_code">
+                                    <option value="">请选择所在市</option>
+                                    {% for item in dicts.CITY %}
+                                        <option value="{{ item.code }}" {% if search.city_code == item.code %}selected{% endif %}>{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>业务板块</label>
+                                <select name="business_unit">
+                                    <option value="">请选择业务板块</option>
+                                    {% for item in dicts.BUSINESS_UNIT %}
+                                        <option value="{{ item.code }}" {% if search.business_unit == item.code %}selected{% endif %}>{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>项目承担部门</label>
+                                <select name="dept">
+                                    <option value="">请选择项目承担部门</option>
+                                    {% for item in dicts.DEPT %}
+                                        <option value="{{ item.code }}" {% if search.dept == item.code %}selected{% endif %}>{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>项目类型</label>
+                                <select name="project_type">
+                                    <option value="">请选择项目类型</option>
+                                    {% for item in dicts.PROJECT_TYPE %}
+                                        <option value="{{ item.code }}" {% if search.project_type == item.code %}selected{% endif %}>{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>项目组织模式</label>
+                                <select name="org_mode">
+                                    <option value="">请选择项目组织模式</option>
+                                    {% for item in dicts.ORG_MODE %}
+                                        <option value="{{ item.code }}" {% if search.org_mode == item.code %}selected{% endif %}>{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>主数据系统数据状态</label>
+                                <select name="data_status">
+                                    <option value="">请选择数据状态</option>
+                                    {% for item in dicts.DATA_STATUS %}
+                                        <option value="{{ item.code }}" {% if search.data_status == item.code %}selected{% endif %}>{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>是否为执行层</label>
+                                <select name="is_execution_level">
+                                    <option value="">全部</option>
+                                    <option value="true" {% if search.is_execution_level == "true" %}selected{% endif %}>是</option>
+                                    <option value="false" {% if search.is_execution_level == "false" %}selected{% endif %}>否</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>状态</label>
+                                <select name="status">
+                                    <option value="">全部</option>
+                                    <option value="启用" {% if search.status == "启用" %}selected{% endif %}>启用</option>
+                                    <option value="停用" {% if search.status == "停用" %}selected{% endif %}>停用</option>
+                                    <option value="作废" {% if search.status == "作废" %}selected{% endif %}>作废</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>项目年份</label>
+                                <input type="text" name="project_year" value="{{ search.project_year|default:'' }}" placeholder="例如：2026">
+                            </div>
+                            <div class="field">
+                                <label>创建人</label>
+                                <input type="text" name="created_by" value="{{ search.created_by|default:'' }}" placeholder="请输入创建人">
+                            </div>
+                            <div class="field">
+                                <label>备注</label>
+                                <input type="text" name="remark" value="{{ search.remark|default:'' }}" placeholder="请输入备注关键词">
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn-search" type="submit">查询</button>
+                            <a class="btn-cancel" href="{% url 'project_master_list' %}">取消</a>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="search-form" id="addForm" style="display: none;">
+                    <h3>新增项目</h3>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="create">
+                        <div class="form-grid">
+                            <div class="field">
+                                <label><span class="required-star">*</span>项目主数据编码</label>
+                                <input type="text" name="project_code" placeholder="PJ + 10位数字" required>
+                            </div>
+                            <div class="field">
+                                <label><span class="required-star">*</span>项目名称</label>
+                                <input type="text" name="project_name" placeholder="请输入项目名称" required>
+                            </div>
+                            <div class="field">
+                                <label><span class="required-star">*</span>项目机构</label>
+                                <select name="org_code" id="orgSelect" required>
+                                    <option value="">选择项目机构</option>
+                                    {% for item in dicts.ORG %}
+                                        <option value="{{ item.code }}" data-name="{{ item.name }}">{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label><span class="required-star">*</span>项目机构组织编码</label>
+                                <input type="text" name="org_code_display" id="orgCodeDisplay" placeholder="自动带出" readonly>
+                                <input type="hidden" name="org_name" id="orgNameHidden">
+                            </div>
+                            <div class="field">
+                                <label>上级PJ编码</label>
+                                <input type="text" name="parent_pj_code" placeholder="可为空">
+                            </div>
+                            <div class="field">
+                                <label><span class="required-star">*</span>所在省</label>
+                                <select name="province_code" id="provinceSelect" required>
+                                    <option value="">选择所在省</option>
+                                    {% for item in dicts.PROVINCE %}
+                                        <option value="{{ item.code }}">{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label><span class="required-star">*</span>所在市</label>
+                                <select name="city_code" id="citySelect" required>
+                                    <option value="">选择所在市</option>
+                                    {% for item in dicts.CITY %}
+                                        <option value="{{ item.code }}" data-parent="{{ item.parent_code }}">{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label><span class="required-star">*</span>业务板块</label>
+                                <select name="business_unit" required>
+                                    <option value="">选择业务板块</option>
+                                    {% for item in dicts.BUSINESS_UNIT %}
+                                        <option value="{{ item.code }}">{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label><span class="required-star">*</span>项目承担部门</label>
+                                <select name="dept" required>
+                                    <option value="">选择项目承担部门</option>
+                                    {% for item in dicts.DEPT %}
+                                        <option value="{{ item.code }}">{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label><span class="required-star">*</span>项目类型</label>
+                                <select name="project_type" required>
+                                    <option value="">选择项目类型</option>
+                                    {% for item in dicts.PROJECT_TYPE %}
+                                        <option value="{{ item.code }}">{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label><span class="required-star">*</span>项目组织模式</label>
+                                <select name="org_mode" required>
+                                    <option value="">选择项目组织模式</option>
+                                    {% for item in dicts.ORG_MODE %}
+                                        <option value="{{ item.code }}">{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label><span class="required-star">*</span>主数据系统数据状态</label>
+                                <select name="data_status" required>
+                                    <option value="">选择数据状态</option>
+                                    {% for item in dicts.DATA_STATUS %}
+                                        <option value="{{ item.code }}">{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label><span class="required-star">*</span>是否为执行层</label>
+                                <select name="is_execution_level" required>
+                                    <option value="false">否</option>
+                                    <option value="true">是</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label><span class="required-star">*</span>状态</label>
+                                <select name="status" required>
+                                    <option value="启用">启用</option>
+                                    <option value="停用">停用</option>
+                                    <option value="作废">作废</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label><span class="required-star">*</span>创建人</label>
+                                <input type="text" name="created_by" value="{{ request.user.username }}" required>
+                            </div>
+                        </div>
+                        <textarea name="remark" placeholder="备注"></textarea>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-add">保存</button>
+                            <button type="button" class="btn-cancel" onclick="hideAddForm()">取消</button>
+                        </div>
+                        <div class="hint">项目年份将从项目主数据编码第3-6位自动生成。</div>
+                    </form>
+                </div>
+
+                <div class="data-table">
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>项目编码</th>
+                                    <th>项目名称</th>
+                                    <th>机构名称</th>
+                                    <th>所在省</th>
+                                    <th>所在市</th>
+                                    <th>业务板块</th>
+                                    <th>项目类型</th>
+                                    <th>状态</th>
+                                    <th>创建时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for project in projects %}
+                                <tr>
+                                    <td>{{ project.project_code }}</td>
+                                    <td>{{ project.project_name }}</td>
+                                    <td>{{ project.org_name }}</td>
+                                    <td>{{ project.province_name }}</td>
+                                    <td>{{ project.city_name }}</td>
+                                    <td>{{ project.business_unit_name }}</td>
+                                    <td>{{ project.project_type_name }}</td>
+                                    <td>{{ project.status }}</td>
+                                    <td>{{ project.created_at }}</td>
+                                    <td>
+                                        <a class="btn-edit" href="{% url 'project_master_edit' project.project_code %}">修改</a>
+                                        <form method="post" action="{% url 'project_master_delete' project.project_code %}" style="display:inline;">
+                                            {% csrf_token %}
+                                            <button class="btn-delete" type="submit" onclick="return confirm('确定要删除项目 {{ project.project_code }} 吗？')">删除</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="10">暂无数据</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -592,7 +748,7 @@
         }
 
         function refreshList() {
-            location.reload();
+            location.href = "{% url 'project_master_list' %}";
         }
 
         const orgSelect = document.getElementById('orgSelect');
@@ -630,15 +786,26 @@
             });
         });
 
+        const layoutRoot = document.getElementById('layoutRoot');
+        const toggleSidebarBtn = document.getElementById('toggleSidebar');
+        if (toggleSidebarBtn) {
+            toggleSidebarBtn.addEventListener('click', () => {
+                layoutRoot.classList.toggle('sidebar-hidden');
+                toggleSidebarBtn.textContent = layoutRoot.classList.contains('sidebar-hidden') ? '显示菜单' : '隐藏菜单';
+            });
+        }
+
         const sidebar = document.getElementById('sidebar');
         const handle = document.getElementById('resizeHandle');
         let isResizing = false;
 
-        handle.addEventListener('mousedown', (e) => {
-            isResizing = true;
-            document.body.style.cursor = 'col-resize';
-            e.preventDefault();
-        });
+        if (handle) {
+            handle.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                document.body.style.cursor = 'col-resize';
+                e.preventDefault();
+            });
+        }
 
         document.addEventListener('mousemove', (e) => {
             if (!isResizing) return;
