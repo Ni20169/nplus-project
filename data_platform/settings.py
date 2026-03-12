@@ -86,7 +86,7 @@ DATABASES = {
         'NAME': 'project_db',             # 云端数据库名
         'USER': 'project_user',           # 云端数据库用�?
         'PASSWORD': '@@@nmz1995',  # 云端数据库密�?
-        'HOST': '127.0.0.1',           # 云服务器公网 IP
+        'HOST': '39.106.48.25',           # 云服务器公网 IP
         'PORT': '5432',                    # PostgreSQL 默认端口
     }
 }
