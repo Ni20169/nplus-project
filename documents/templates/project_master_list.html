@@ -1455,11 +1455,16 @@
         // 全局函数定义，确保 onclick 可以调用
         function showAddForm() {
             console.log('showAddForm called');
-            document.getElementById('addForm').style.display = 'block';
-            document.getElementById('searchForm').style.display = 'none';
-            document.getElementById('updatePanel').style.display = 'none';
-            document.getElementById('approvalPanel').style.display = 'none';
-            document.querySelector('.data-table').style.display = 'none';
+            try {
+                document.getElementById('addForm').style.display = 'block';
+                document.getElementById('searchForm').style.display = 'none';
+                document.getElementById('updatePanel').style.display = 'none';
+                document.getElementById('approvalPanel').style.display = 'none';
+                document.querySelector('.data-table').style.display = 'none';
+                console.log('showAddForm completed successfully');
+            } catch (error) {
+                console.error('Error in showAddForm:', error);
+            }
         }
 
         function hideAddForm() {
@@ -1512,29 +1517,45 @@
 
         function showSearchForm() {
             console.log('showSearchForm called');
-            document.getElementById('searchForm').style.display = 'block';
-            document.getElementById('addForm').style.display = 'none';
-            document.getElementById('updatePanel').style.display = 'none';
-            document.getElementById('approvalPanel').style.display = 'none';
-            document.querySelector('.data-table').style.display = 'block';
-            document.getElementById('searchForm').classList.remove('collapsed');
-            const toggleBtn = document.getElementById('toggleSearchFields');
-            if (toggleBtn) {
-                toggleBtn.textContent = '收起';
+            console.log('searchForm element:', document.getElementById('searchForm'));
+            console.log('addForm element:', document.getElementById('addForm'));
+            console.log('updatePanel element:', document.getElementById('updatePanel'));
+            console.log('approvalPanel element:', document.getElementById('approvalPanel'));
+            console.log('data-table element:', document.querySelector('.data-table'));
+            
+            try {
+                document.getElementById('searchForm').style.display = 'block';
+                document.getElementById('addForm').style.display = 'none';
+                document.getElementById('updatePanel').style.display = 'none';
+                document.getElementById('approvalPanel').style.display = 'none';
+                document.querySelector('.data-table').style.display = 'block';
+                document.getElementById('searchForm').classList.remove('collapsed');
+                const toggleBtn = document.getElementById('toggleSearchFields');
+                if (toggleBtn) {
+                    toggleBtn.textContent = '收起';
+                }
+                console.log('showSearchForm completed successfully');
+            } catch (error) {
+                console.error('Error in showSearchForm:', error);
             }
         }
 
         function showUpdatePanel() {
             console.log('showUpdatePanel called');
-            document.getElementById('updatePanel').style.display = 'block';
-            document.getElementById('addForm').style.display = 'none';
-            document.getElementById('searchForm').style.display = 'none';
-            document.getElementById('approvalPanel').style.display = 'none';
-            document.querySelector('.data-table').style.display = 'none';
-            document.getElementById('updatePanel').classList.remove('collapsed');
-            const toggleBtn = document.getElementById('toggleUpdatePanel');
-            if (toggleBtn) {
-                toggleBtn.textContent = '收起';
+            try {
+                document.getElementById('updatePanel').style.display = 'block';
+                document.getElementById('addForm').style.display = 'none';
+                document.getElementById('searchForm').style.display = 'none';
+                document.getElementById('approvalPanel').style.display = 'none';
+                document.querySelector('.data-table').style.display = 'none';
+                document.getElementById('updatePanel').classList.remove('collapsed');
+                const toggleBtn = document.getElementById('toggleUpdatePanel');
+                if (toggleBtn) {
+                    toggleBtn.textContent = '收起';
+                }
+                console.log('showUpdatePanel completed successfully');
+            } catch (error) {
+                console.error('Error in showUpdatePanel:', error);
             }
         }
 
@@ -1558,11 +1579,16 @@
 
         function refreshList() {
             console.log('refreshList called');
-            document.getElementById('addForm').style.display = 'none';
-            document.getElementById('searchForm').style.display = 'none';
-            document.getElementById('updatePanel').style.display = 'none';
-            document.getElementById('approvalPanel').style.display = 'none';
-            document.querySelector('.data-table').style.display = 'block';
+            try {
+                document.getElementById('addForm').style.display = 'none';
+                document.getElementById('searchForm').style.display = 'none';
+                document.getElementById('updatePanel').style.display = 'none';
+                document.getElementById('approvalPanel').style.display = 'none';
+                document.querySelector('.data-table').style.display = 'block';
+                console.log('refreshList completed successfully');
+            } catch (error) {
+                console.error('Error in refreshList:', error);
+            }
         }
 
         document.addEventListener('DOMContentLoaded', function() {
