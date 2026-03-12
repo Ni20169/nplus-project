@@ -334,16 +334,6 @@ def project_master_list(request):
     # 获取所有项目用于下拉选择
     all_projects = list(ProjectMaster.objects.filter(is_deleted=False).order_by("-created_at")[:500])
     
-    # 获取唯一值用于筛选下拉框
-    unique_provinces = list(ProjectMaster.objects.filter(is_deleted=False).values_list('province_name', flat=True).distinct())
-    unique_business_units = list(ProjectMaster.objects.filter(is_deleted=False).values_list('business_unit_name', flat=True).distinct())
-    unique_depts = list(ProjectMaster.objects.filter(is_deleted=False).values_list('dept_name', flat=True).distinct())
-    unique_org_modes = list(ProjectMaster.objects.filter(is_deleted=False).values_list('org_mode_name', flat=True).distinct())
-    unique_data_statuses = list(ProjectMaster.objects.filter(is_deleted=False).values_list('data_status_name', flat=True).distinct())
-    unique_project_years = list(ProjectMaster.objects.filter(is_deleted=False).values_list('project_year', flat=True).distinct())
-    unique_created_bys = list(ProjectMaster.objects.filter(is_deleted=False).values_list('created_by', flat=True).distinct())
-    unique_project_types = list(ProjectMaster.objects.filter(is_deleted=False).values_list('project_type_name', flat=True).distinct())
-    
     # 获取审批数据
     from .models import ProjectApproval
     pending_approvals = ProjectApproval.objects.filter(status="pending").order_by("-submit_time")
@@ -374,14 +364,6 @@ def project_master_list(request):
             "all_projects": all_projects,
             "pending_approvals": pending_approvals,
             "processed_approvals": processed_approvals,
-            "unique_provinces": unique_provinces,
-            "unique_business_units": unique_business_units,
-            "unique_depts": unique_depts,
-            "unique_org_modes": unique_org_modes,
-            "unique_data_statuses": unique_data_statuses,
-            "unique_project_years": unique_project_years,
-            "unique_created_bys": unique_created_bys,
-            "unique_project_types": unique_project_types,
         },
     )
 
