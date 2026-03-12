@@ -640,6 +640,7 @@
                             <li><a href="#" onclick="refreshList()">项目列表</a></li>
                         </ul>
                     </li>
+                    <li><a href="{% url 'approval_list' %}">审批管理</a></li>
                 </ul>
             </div>
             <div class="menu-section">
@@ -1275,11 +1276,10 @@
                                     <td>{{ project.created_at }}</td>
                                     <td>{{ project.remark }}</td>
                                     <td>
-                                        <a class="btn-edit" href="{% url 'project_master_edit' project.project_code %}">修改</a>
-                                        <form method="post" action="{% url 'project_master_delete' project.project_code %}" style="display:inline;">
-                                            {% csrf_token %}
-                                            <button class="btn-delete" type="submit" onclick="return confirm('确定要删除项目 {{ project.project_code }} 吗？')">删除</button>
-                                        </form>
+                                        <div style="display: flex; gap: 8px; justify-content: center;">
+                                            <a class="btn-edit" href="{% url 'project_master_edit' project.project_code %}">修改</a>
+                                            <button class="btn-delete" type="button" onclick="submitDeleteApproval('{{ project.project_code }}', '{{ project.project_name }}')">删除</button>
+                                        </div>
                                     </td>
                                 </tr>
                                 {% empty %}
@@ -1305,6 +1305,37 @@
 
         function hideAddForm() {
             document.getElementById('addForm').style.display = 'none';
+        }
+
+        function submitDeleteApproval(projectCode, projectName) {
+            const note = prompt(`确定要删除项目 "${projectName}" (${projectCode}) 吗？\n\n请输入删除说明（选填）：`);
+            if (note === null) return; // 用户点击取消
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{% url "submit_delete_approval" %}';
+            form.style.display = 'none';
+
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = 'csrfmiddlewaretoken';
+            csrfToken.value = '{{ csrf_token }}';
+            form.appendChild(csrfToken);
+
+            const codeInput = document.createElement('input');
+            codeInput.type = 'hidden';
+            codeInput.name = 'project_code';
+            codeInput.value = projectCode;
+            form.appendChild(codeInput);
+
+            const noteInput = document.createElement('input');
+            noteInput.type = 'hidden';
+            noteInput.name = 'change_note';
+            noteInput.value = note;
+            form.appendChild(noteInput);
+
+            document.body.appendChild(form);
+            form.submit();
         }
 
         function showSearchForm() {

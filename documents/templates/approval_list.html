@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>审批管理 - 项目主数据管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #e0f7fa 0%, #bbdefb 100%);
+            min-height: 100vh;
+            color: #2c3e50;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px 30px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .back-link {
+            color: #3498db;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px 30px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e3f2fd;
+        }
+
+        .approval-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .approval-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .approval-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e3f2fd;
+        }
+
+        .approval-table tr:hover {
+            background: #f5f7fa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-approved {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .badge-delete {
+            background: #fee;
+            color: #c33;
+        }
+
+        .badge-update {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .btn {
+            padding: 6px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-approve {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-approve:hover {
+            background: #229954;
+        }
+
+        .btn-reject {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-reject:hover {
+            background: #c0392b;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .note-input {
+            width: 200px;
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+
+        .messages {
+            margin-bottom: 20px;
+        }
+
+        .message {
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .message-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        .message-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>审批管理</h1>
+            <a href="{% url 'project_master_list' %}" class="back-link">← 返回项目列表</a>
+        </div>
+
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="message message-{{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- 待审批列表 -->
+        <div class="section">
+            <h2 class="section-title">待审批申请</h2>
+            {% if pending_approvals %}
+            <table class="approval-table">
+                <thead>
+                    <tr>
+                        <th>审批单号</th>
+                        <th>项目编码</th>
+                        <th>审批类型</th>
+                        <th>提交人</th>
+                        <th>提交时间</th>
+                        <th>修改说明</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for approval in pending_approvals %}
+                    <tr>
+                        <td>{{ approval.id }}</td>
+                        <td>{{ approval.project_code }}</td>
+                        <td>
+                            <span class="badge badge-{{ approval.approval_type }}">
+                                {{ approval.get_approval_type_display }}
+                            </span>
+                        </td>
+                        <td>{{ approval.submitter }}</td>
+                        <td>{{ approval.submit_time|date:"Y-m-d H:i" }}</td>
+                        <td>{{ approval.change_note|default:"-" }}</td>
+                        <td>
+                            {% if request.user.username == approval.approver %}
+                            <form method="post" action="{% url 'approve_action' approval.id %}" style="display: flex; gap: 8px; align-items: center;">
+                                {% csrf_token %}
+                                <input type="text" name="approve_note" placeholder="审批意见（选填）" class="note-input">
+                                <div class="btn-group">
+                                    <button type="submit" name="action" value="approve" class="btn btn-approve">批准</button>
+                                    <button type="submit" name="action" value="reject" class="btn btn-reject">拒绝</button>
+                                </div>
+                            </form>
+                            {% else %}
+                            <span style="color: #7f8c8d;">等待 {{ approval.approver }} 审批</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <p>暂无待审批的申请</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- 已处理列表 -->
+        <div class="section">
+            <h2 class="section-title">已处理申请（最近50条）</h2>
+            {% if processed_approvals %}
+            <table class="approval-table">
+                <thead>
+                    <tr>
+                        <th>审批单号</th>
+                        <th>项目编码</th>
+                        <th>审批类型</th>
+                        <th>提交人</th>
+                        <th>审批结果</th>
+                        <th>审批人</th>
+                        <th>审批时间</th>
+                        <th>审批意见</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for approval in processed_approvals %}
+                    <tr>
+                        <td>{{ approval.id }}</td>
+                        <td>{{ approval.project_code }}</td>
+                        <td>
+                            <span class="badge badge-{{ approval.approval_type }}">
+                                {{ approval.get_approval_type_display }}
+                            </span>
+                        </td>
+                        <td>{{ approval.submitter }}</td>
+                        <td>
+                            <span class="badge badge-{{ approval.status }}">
+                                {{ approval.get_status_display }}
+                            </span>
+                        </td>
+                        <td>{{ approval.approver }}</td>
+                        <td>{{ approval.approve_time|date:"Y-m-d H:i" }}</td>
+                        <td>{{ approval.approve_note|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <p>暂无已处理的申请</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

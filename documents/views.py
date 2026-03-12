@@ -652,21 +652,121 @@ def project_master_edit(request, project_code):
 
 
 @login_required
-def project_master_delete(request, project_code):
+@login_required
+def submit_delete_approval(request):
+    """提交删除审批申请"""
+    if request.method != "POST":
+        return redirect("project_master_list")
+
+    project_code = request.POST.get("project_code", "").strip()
+    change_note = request.POST.get("change_note", "").strip()
+
     project = get_object_or_404(ProjectMaster, project_code=project_code, is_deleted=False)
-    if request.method == "POST":
-        project.is_deleted = True
-        project.updated_by = request.user.username
-        project.save(update_fields=["is_deleted", "updated_by"])
-        ProjectMasterLog.objects.create(
-            project_code=project.project_code,
-            action="delete",
-            before_data={"project_code": project.project_code},
-            operator=request.user.username,
-            source="web",
-        )
-        messages.success(request, "项目已删除")
+
+    # 检查是否已有待审批的删除申请
+    existing = ProjectApproval.objects.filter(
+        project_code=project_code,
+        approval_type="delete",
+        status="pending"
+    ).first()
+
+    if existing:
+        messages.warning(request, f"项目 {project_code} 已有一个待审批的删除申请，请勿重复提交")
+        return redirect("project_master_list")
+
+    # 创建审批记录
+    before_data = {
+        "project_code": project.project_code,
+        "project_name": project.project_name,
+        "org_name": project.org_name,
+        "status": project.status,
+    }
+
+    approval = ProjectApproval.objects.create(
+        project_code=project_code,
+        approval_type="delete",
+        before_data=before_data,
+        change_note=change_note,
+        submitter=request.user.username,
+        approver="倪明珠",
+        status="pending",
+    )
+
+    messages.success(request, f"删除申请已提交，等待倪明珠审批。审批单号：{approval.id}")
     return redirect("project_master_list")
+
+
+@login_required
+def approval_list(request):
+    """审批列表页面"""
+    # 获取待审批的记录
+    pending_approvals = ProjectApproval.objects.filter(status="pending").order_by("-submit_time")
+
+    # 获取已审批的记录
+    processed_approvals = ProjectApproval.objects.filter(
+        status__in=["approved", "rejected"]
+    ).order_by("-approve_time")[:50]
+
+    context = {
+        "pending_approvals": pending_approvals,
+        "processed_approvals": processed_approvals,
+    }
+    return render(request, "approval_list.html", context)
+
+
+@login_required
+def approve_action(request, approval_id):
+    """处理审批"""
+    if request.method != "POST":
+        return redirect("approval_list")
+
+    approval = get_object_or_404(ProjectApproval, id=approval_id, status="pending")
+
+    # 检查当前用户是否为审批人
+    if request.user.username != approval.approver:
+        messages.error(request, "您没有权限审批此申请")
+        return redirect("approval_list")
+
+    action = request.POST.get("action")
+    approve_note = request.POST.get("approve_note", "").strip()
+
+    if action == "approve":
+        # 执行实际的删除操作
+        if approval.approval_type == "delete":
+            project = ProjectMaster.objects.filter(
+                project_code=approval.project_code,
+                is_deleted=False
+            ).first()
+
+            if project:
+                project.is_deleted = True
+                project.updated_by = approval.submitter
+                project.save(update_fields=["is_deleted", "updated_by"])
+
+                ProjectMasterLog.objects.create(
+                    project_code=project.project_code,
+                    action="delete",
+                    before_data=approval.before_data,
+                    operator=approval.submitter,
+                    source="approval",
+                )
+
+        approval.status = "approved"
+        approval.approve_time = timezone.now()
+        approval.approve_note = approve_note
+        approval.save()
+
+        messages.success(request, f"已批准 {approval.submitter} 的{approval.get_approval_type_display()}申请")
+
+    elif action == "reject":
+        approval.status = "rejected"
+        approval.approve_time = timezone.now()
+        approval.approve_note = approve_note
+        approval.save()
+
+        messages.success(request, f"已拒绝 {approval.submitter} 的{approval.get_approval_type_display()}申请")
+
+    return redirect("approval_list")
 
 
 @login_required
