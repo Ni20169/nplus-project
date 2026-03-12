@@ -252,12 +252,22 @@ def project_master_list(request):
         if list_filter["created_by"]:
             qs = qs.filter(created_by__icontains=list_filter["created_by"])
         
-        search = {k: "" for k in [
-            "project_code", "project_name", "org_name", "parent_pj_code",
-            "province_code", "business_unit", "dept", "project_type",
-            "org_mode", "data_status", "is_execution_level", "project_year",
-            "created_by", "remark"
-        ]}
+        search = {
+            "project_code": "",
+            "project_name": "",
+            "org_name": "",
+            "parent_pj_code": "",
+            "province_code": "",
+            "business_unit": "",
+            "dept": "",
+            "project_type": "",
+            "org_mode": "",
+            "data_status": "",
+            "is_execution_level": "",
+            "project_year": "",
+            "created_by": "",
+            "remark": "",
+        }
     else:
         # 查询项目筛选
         search = {
@@ -308,10 +318,17 @@ def project_master_list(request):
         if search["remark"]:
             qs = qs.filter(remark__icontains=search["remark"])
         
-        list_filter = {k: "" for k in [
-            "project_code", "project_name", "org_name", "province_code",
-            "business_unit", "dept", "data_status", "project_year", "created_by"
-        ]}
+        list_filter = {
+            "project_code": "",
+            "project_name": "",
+            "org_name": "",
+            "province_code": "",
+            "business_unit": "",
+            "dept": "",
+            "data_status": "",
+            "project_year": "",
+            "created_by": "",
+        }
 
     projects = list(qs.order_by("-created_at"))
     name_map = _dict_name_map(dicts)
