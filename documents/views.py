@@ -798,9 +798,20 @@ def user_list(request):
             new_password = request.POST.get("new_password", "").strip()
             target = get_object_or_404(User, id=user_id)
             if new_password:
-                target.set_password(new_password)
-                target.save(update_fields=["password"])
-                messages.success(request, "密码已重置")
+                # 密码复杂度验证
+                import re
+                if len(new_password) < 8:
+                    messages.error(request, "密码长度至少8位")
+                elif not re.search(r'[A-Z]', new_password):
+                    messages.error(request, "密码必须包含大写字母")
+                elif not re.search(r'[a-z]', new_password):
+                    messages.error(request, "密码必须包含小写字母")
+                elif not re.search(r'[0-9]', new_password):
+                    messages.error(request, "密码必须包含数字")
+                else:
+                    target.set_password(new_password)
+                    target.save(update_fields=["password"])
+                    messages.success(request, f"用户 {target.username} 的密码已重置")
             else:
                 messages.error(request, "请输入新密码")
         return redirect("user_list")

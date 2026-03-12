@@ -285,8 +285,8 @@
                                         {% csrf_token %}
                                         <input type="hidden" name="action" value="reset">
                                         <input type="hidden" name="user_id" value="{{ user.id }}">
-                                        <input type="text" name="new_password" placeholder="新密码" style="width:120px;">
-                                        <button class="btn btn-reset" type="submit">重置</button>
+                                        <input type="text" name="new_password" placeholder="8位以上，含大小写+数字" style="width:180px;" title="密码要求：至少8位，包含大写字母、小写字母和数字">
+                                        <button class="btn btn-reset" type="submit">重置密码</button>
                                     </form>
                                 </td>
                                 {% endif %}
