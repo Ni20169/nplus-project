@@ -231,7 +231,7 @@
             position: sticky;
             top: 0;
             background: #fff;
-            z-index: 100;
+            z-index: 10;
             box-shadow: 0 2px 2px rgba(0,0,0,0.1);
         }
 
@@ -247,7 +247,7 @@
             position: sticky;
             top: 0;
             background: inherit;
-            z-index: 100;
+            z-index: 10;
         }
 
         /* 固定列 */
@@ -255,7 +255,7 @@
         table td.sticky-col {
             position: sticky;
             left: 0;
-            background: inherit;
+            background: #fff;
             z-index: 5;
         }
 
@@ -278,7 +278,7 @@
         }
 
         table thead th.sticky-col {
-            z-index: 101;
+            z-index: 11;
         }
 
         table thead th.col-1 {
@@ -1047,16 +1047,11 @@
                             </div>
                             <div class="field">
                                 <label>所在省</label>
-                                <select name="province_code">
-                                    <option value="">请选择所在省</option>
-                                    {% for item in dicts.PROVINCE %}
-                                        <option value="{{ item.code }}" {% if search.province_code == item.code %}selected{% endif %}>{{ item.name }}</option>
-                                    {% endfor %}
-                                </select>
+                                <input type="text" name="province_code" placeholder="输入省份关键词搜索">
                             </div>
                             <div class="field">
                                 <label>业务板块</label>
-                                <select name="business_unit">
+                                <select name="business_unit" multiple size="3">
                                     <option value="">请选择业务板块</option>
                                     {% for item in dicts.BUSINESS_UNIT %}
                                         <option value="{{ item.code }}" {% if search.business_unit == item.code %}selected{% endif %}>{{ item.name }}</option>
@@ -1065,16 +1060,11 @@
                             </div>
                             <div class="field">
                                 <label>项目承担部门</label>
-                                <select name="dept">
-                                    <option value="">请选择项目承担部门</option>
-                                    {% for item in dicts.DEPT %}
-                                        <option value="{{ item.code }}" {% if search.dept == item.code %}selected{% endif %}>{{ item.name }}</option>
-                                    {% endfor %}
-                                </select>
+                                <input type="text" name="dept" placeholder="输入部门关键词搜索">
                             </div>
                             <div class="field">
                                 <label>项目类型</label>
-                                <select name="project_type">
+                                <select name="project_type" multiple size="3">
                                     <option value="">请选择项目类型</option>
                                     {% for item in dicts.PROJECT_TYPE %}
                                         <option value="{{ item.code }}" {% if search.project_type == item.code %}selected{% endif %}>{{ item.name }}</option>
@@ -1083,7 +1073,7 @@
                             </div>
                             <div class="field">
                                 <label>项目组织模式</label>
-                                <select name="org_mode">
+                                <select name="org_mode" multiple size="3">
                                     <option value="">请选择项目组织模式</option>
                                     {% for item in dicts.ORG_MODE %}
                                         <option value="{{ item.code }}" {% if search.org_mode == item.code %}selected{% endif %}>{{ item.name }}</option>
@@ -1092,7 +1082,7 @@
                             </div>
                             <div class="field">
                                 <label>主数据系统数据状态</label>
-                                <select name="data_status">
+                                <select name="data_status" multiple size="3">
                                     <option value="">请选择数据状态</option>
                                     {% for item in dicts.DATA_STATUS %}
                                         <option value="{{ item.code }}" {% if search.data_status == item.code %}selected{% endif %}>{{ item.name }}</option>
@@ -1101,35 +1091,28 @@
                             </div>
                             <div class="field">
                                 <label>是否为执行层</label>
-                                <select name="is_execution_level">
+                                <select name="is_execution_level" multiple size="3">
                                     <option value="">全部</option>
-                                    <option value="true" {% if search.is_execution_level == "true" %}selected{% endif %}>是</option>
-                                    <option value="false" {% if search.is_execution_level == "false" %}selected{% endif %}>否</option>
+                                    <option value="true">是</option>
+                                    <option value="false">否</option>
                                 </select>
                             </div>
                             <div class="field">
                                 <label>状态</label>
-                                <select name="status">
+                                <select name="status" multiple size="3">
                                     <option value="">全部</option>
-                                    <option value="启用" {% if search.status == "启用" %}selected{% endif %}>启用</option>
-                                    <option value="停用" {% if search.status == "停用" %}selected{% endif %}>停用</option>
-                                    <option value="作废" {% if search.status == "作废" %}selected{% endif %}>作废</option>
+                                    <option value="启用">启用</option>
+                                    <option value="停用">停用</option>
+                                    <option value="作废">作废</option>
                                 </select>
                             </div>
                             <div class="field">
                                 <label>项目年份</label>
-                                <input type="text" name="project_year" value="{{ search.project_year|default:'' }}" placeholder="例如：2026">
+                                <input type="text" name="project_year" placeholder="输入年份关键词搜索">
                             </div>
                             <div class="field">
                                 <label>创建人</label>
-                                <select name="created_by">
-                                    <option value="">请选择创建人</option>
-                                    {% for project in all_projects %}
-                                        <option value="{{ project.created_by }}" {% if search.created_by == project.created_by %}selected{% endif %}>
-                                            {{ project.created_by }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
+                                <input type="text" name="created_by" placeholder="输入创建人关键词搜索">
                             </div>
                             <div class="field">
                                 <label>备注</label>
