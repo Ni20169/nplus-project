@@ -425,6 +425,11 @@
             min-width: 180px;
         }
 
+        .form-grid-row .field-wide {
+            flex: 1 1 0;
+            min-width: 180px;
+        }
+
         .form-grid-row .field-flex {
             flex: 1 1 0;
             min-width: 140px;
@@ -857,7 +862,7 @@
                                     {% endfor %}
                                 </select>
                             </div>
-                            <div class="field">
+                            <div class="field field-wide">
                                 <label><span class="required-star">*</span>项目类型</label>
                                 <select name="project_type" required>
                                     <option value="">选择项目类型</option>
