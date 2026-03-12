@@ -1452,239 +1452,235 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-        // 信息更新页签联动逻辑
-        const updateCodeSelect = document.getElementById('updateCodeSelect');
-        const updateNameSelect = document.getElementById('updateNameSelect');
-        const updateTargetSelect = document.getElementById('updateTargetSelect');
-        
-        if (updateCodeSelect && updateTargetSelect) {
-            updateCodeSelect.addEventListener('change', function() {
-                const selectedCode = this.value;
-                if (selectedCode) {
-                    updateTargetSelect.value = selectedCode;
-                } else {
-                    updateTargetSelect.value = '';
-                }
-            });
-        }
-        
-        if (updateNameSelect && updateTargetSelect) {
-            updateNameSelect.addEventListener('change', function() {
-                const selectedName = this.value;
-                if (selectedName) {
-                    // 根据项目名称找到对应的项目编码
-                    for (let option of updateTargetSelect.options) {
-                        if (option.text.includes(selectedName)) {
-                            updateTargetSelect.value = option.value;
-                            break;
-                        }
+            // 信息更新页签联动逻辑
+            const updateCodeSelect = document.getElementById('updateCodeSelect');
+            const updateNameSelect = document.getElementById('updateNameSelect');
+            const updateTargetSelect = document.getElementById('updateTargetSelect');
+            
+            if (updateCodeSelect && updateTargetSelect) {
+                updateCodeSelect.addEventListener('change', function() {
+                    const selectedCode = this.value;
+                    if (selectedCode) {
+                        updateTargetSelect.value = selectedCode;
+                    } else {
+                        updateTargetSelect.value = '';
                     }
+                });
+            }
+            
+            if (updateNameSelect && updateTargetSelect) {
+                updateNameSelect.addEventListener('change', function() {
+                    const selectedName = this.value;
+                    if (selectedName) {
+                        for (let option of updateTargetSelect.options) {
+                            if (option.text.includes(selectedName)) {
+                                updateTargetSelect.value = option.value;
+                                break;
+                            }
+                        }
+                    } else {
+                        updateTargetSelect.value = '';
+                    }
+                });
+            }
+
+            function showAddForm() {
+                document.getElementById('addForm').style.display = 'block';
+                document.getElementById('searchForm').style.display = 'none';
+                document.getElementById('updatePanel').style.display = 'none';
+                document.querySelector('.data-table').style.display = 'block';
+            }
+
+            function hideAddForm() {
+                document.getElementById('addForm').style.display = 'none';
+            }
+
+            function showApprovalPanel() {
+                document.getElementById('approvalPanel').style.display = 'block';
+                document.getElementById('addForm').style.display = 'none';
+                document.getElementById('searchForm').style.display = 'none';
+                document.getElementById('updatePanel').style.display = 'none';
+                document.querySelector('.data-table').style.display = 'block';
+            }
+
+            function hideApprovalPanel() {
+                document.getElementById('approvalPanel').style.display = 'none';
+            }
+
+            function submitDeleteApproval(projectCode, projectName) {
+                const note = prompt(`确定要删除项目 "${projectName}" (${projectCode}) 吗？\n\n请输入删除说明（选填）：`);
+                if (note === null) return;
+
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{% url "submit_delete_approval" %}';
+                form.style.display = 'none';
+
+                const csrfToken = document.createElement('input');
+                csrfToken.type = 'hidden';
+                csrfToken.name = 'csrfmiddlewaretoken';
+                csrfToken.value = '{{ csrf_token }}';
+                form.appendChild(csrfToken);
+
+                const codeInput = document.createElement('input');
+                codeInput.type = 'hidden';
+                codeInput.name = 'project_code';
+                codeInput.value = projectCode;
+                form.appendChild(codeInput);
+
+                const noteInput = document.createElement('input');
+                noteInput.type = 'hidden';
+                noteInput.name = 'change_note';
+                noteInput.value = note;
+                form.appendChild(noteInput);
+
+                document.body.appendChild(form);
+                form.submit();
+            }
+
+            function showSearchForm() {
+                document.getElementById('searchForm').style.display = 'block';
+                document.getElementById('addForm').style.display = 'none';
+                document.getElementById('updatePanel').style.display = 'none';
+                document.querySelector('.data-table').style.display = 'block';
+                document.getElementById('searchForm').classList.remove('collapsed');
+                const toggleBtn = document.getElementById('toggleSearchFields');
+                if (toggleBtn) {
+                    toggleBtn.textContent = '收起';
+                }
+            }
+
+            function showUpdatePanel() {
+                document.getElementById('updatePanel').style.display = 'block';
+                document.getElementById('addForm').style.display = 'none';
+                document.getElementById('searchForm').style.display = 'none';
+                document.querySelector('.data-table').style.display = 'block';
+                document.getElementById('updatePanel').classList.remove('collapsed');
+                const toggleBtn = document.getElementById('toggleUpdatePanel');
+                if (toggleBtn) {
+                    toggleBtn.textContent = '收起';
+                }
+            }
+
+            function hideSearchForm() {
+                document.getElementById('searchForm').style.display = 'none';
+            }
+
+            function hideUpdatePanel() {
+                document.getElementById('updatePanel').style.display = 'none';
+            }
+
+            function toggleSubMenu(id, triggerEl) {
+                const target = document.getElementById(id);
+                if (target) {
+                    const isOpen = target.classList.toggle('show');
+                    if (triggerEl) {
+                        triggerEl.classList.toggle('open', isOpen);
+                    }
+                }
+            }
+
+            function refreshList() {
+                location.href = "{% url 'project_master_list' %}";
+            }
+
+            document.querySelectorAll('.menu-toggle').forEach((toggle) => {
+                const targetId = toggle.getAttribute('data-target');
+                const target = document.getElementById(targetId);
+                if (target && target.classList.contains('show')) {
+                    toggle.classList.add('open');
+                }
+                toggle.addEventListener('click', () => {
+                    if (!target) return;
+                    const isOpen = target.classList.toggle('show');
+                    toggle.classList.toggle('open', isOpen);
+                });
+            });
+
+            const layoutRoot = document.getElementById('layoutRoot');
+            const toggleSidebarBtn = document.getElementById('toggleSidebar');
+            if (toggleSidebarBtn) {
+                toggleSidebarBtn.addEventListener('click', () => {
+                    layoutRoot.classList.toggle('sidebar-hidden');
+                    toggleSidebarBtn.textContent = layoutRoot.classList.contains('sidebar-hidden') ? '显示菜单' : '隐藏菜单';
+                });
+            }
+
+            const toggleSearchFields = document.getElementById('toggleSearchFields');
+            if (toggleSearchFields) {
+                toggleSearchFields.addEventListener('click', () => {
+                    const form = document.getElementById('searchForm');
+                    form.classList.toggle('collapsed');
+                    toggleSearchFields.textContent = form.classList.contains('collapsed') ? '展开' : '收起';
+                });
+            }
+
+            const toggleUpdatePanel = document.getElementById('toggleUpdatePanel');
+            if (toggleUpdatePanel) {
+                toggleUpdatePanel.addEventListener('click', () => {
+                    const panel = document.getElementById('updatePanel');
+                    panel.classList.toggle('collapsed');
+                    toggleUpdatePanel.textContent = panel.classList.contains('collapsed') ? '展开' : '收起';
+                });
+            }
+
+            const updateTargetSelect = document.getElementById('updateTargetSelect');
+            if (updateTargetSelect) {
+                updateTargetSelect.addEventListener('change', () => {
+                    if (updateTargetSelect.value) {
+                        updateTargetSelect.form.submit();
+                    }
+                });
+            }
+
+            const addUpdateRowBtn = document.getElementById('addUpdateRow');
+            const updateTemplates = document.getElementById('updateFieldTemplates');
+            const requiredUpdateFields = new Set([
+                'project_name',
+                'province_code',
+                'business_unit',
+                'dept',
+                'project_type',
+                'org_mode',
+                'data_status',
+                'is_execution_level',
+                'status'
+            ]);
+
+            function applyUpdateFieldTemplate(row) {
+                const keySelect = row.querySelector('.update-field-key');
+                const valueCell = row.querySelector('.update-value-cell');
+                if (!keySelect || !valueCell) return;
+                const fieldKey = keySelect.value;
+                let control = null;
+                if (updateTemplates) {
+                    const template = updateTemplates.querySelector(`[data-field="${fieldKey}"]`);
+                    if (template) {
+                        control = template.cloneNode(true);
+                    }
+                }
+                valueCell.innerHTML = '<label>新值</label>';
+                if (!control) {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.name = 'update_field_value';
+                    input.placeholder = '填写新值';
+                    control = input;
+                }
+                control.name = 'update_field_value';
+                if (requiredUpdateFields.has(fieldKey)) {
+                    control.required = true;
                 } else {
-                    updateTargetSelect.value = '';
+                    control.required = false;
                 }
-            });
-        }
-
-        function showAddForm() {
-            document.getElementById('addForm').style.display = 'block';
-            document.getElementById('searchForm').style.display = 'none';
-            document.getElementById('updatePanel').style.display = 'none';
-            document.querySelector('.data-table').style.display = 'block';
-        }
-
-        function hideAddForm() {
-            document.getElementById('addForm').style.display = 'none';
-        }
-
-        function showApprovalPanel() {
-            document.getElementById('approvalPanel').style.display = 'block';
-            document.getElementById('addForm').style.display = 'none';
-            document.getElementById('searchForm').style.display = 'none';
-            document.getElementById('updatePanel').style.display = 'none';
-            document.querySelector('.data-table').style.display = 'block';
-        }
-
-        function hideApprovalPanel() {
-            document.getElementById('approvalPanel').style.display = 'none';
-        }
-
-        function submitDeleteApproval(projectCode, projectName) {
-            const note = prompt(`确定要删除项目 "${projectName}" (${projectCode}) 吗？\n\n请输入删除说明（选填）：`);
-            if (note === null) return; // 用户点击取消
-
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '{% url "submit_delete_approval" %}';
-            form.style.display = 'none';
-
-            const csrfToken = document.createElement('input');
-            csrfToken.type = 'hidden';
-            csrfToken.name = 'csrfmiddlewaretoken';
-            csrfToken.value = '{{ csrf_token }}';
-            form.appendChild(csrfToken);
-
-            const codeInput = document.createElement('input');
-            codeInput.type = 'hidden';
-            codeInput.name = 'project_code';
-            codeInput.value = projectCode;
-            form.appendChild(codeInput);
-
-            const noteInput = document.createElement('input');
-            noteInput.type = 'hidden';
-            noteInput.name = 'change_note';
-            noteInput.value = note;
-            form.appendChild(noteInput);
-
-            document.body.appendChild(form);
-            form.submit();
-        }
-
-        function showSearchForm() {
-            document.getElementById('searchForm').style.display = 'block';
-            document.getElementById('addForm').style.display = 'none';
-            document.getElementById('updatePanel').style.display = 'none';
-            document.querySelector('.data-table').style.display = 'block';
-            document.getElementById('searchForm').classList.remove('collapsed');
-            const toggleBtn = document.getElementById('toggleSearchFields');
-            if (toggleBtn) {
-                toggleBtn.textContent = '收起';
+                valueCell.appendChild(control);
             }
-        }
 
-        function showUpdatePanel() {
-            document.getElementById('updatePanel').style.display = 'block';
-            document.getElementById('addForm').style.display = 'none';
-            document.getElementById('searchForm').style.display = 'none';
-            document.querySelector('.data-table').style.display = 'block';
-            document.getElementById('updatePanel').classList.remove('collapsed');
-            const toggleBtn = document.getElementById('toggleUpdatePanel');
-            if (toggleBtn) {
-                toggleBtn.textContent = '收起';
-            }
-        }
-
-        function hideSearchForm() {
-            document.getElementById('searchForm').style.display = 'none';
-        }
-
-        function hideUpdatePanel() {
-            document.getElementById('updatePanel').style.display = 'none';
-        }
-
-        function toggleSubMenu(id, triggerEl) {
-            const target = document.getElementById(id);
-            if (target) {
-                const isOpen = target.classList.toggle('show');
-                if (triggerEl) {
-                    triggerEl.classList.toggle('open', isOpen);
-                }
-            }
-        }
-
-        function refreshList() {
-            location.href = "{% url 'project_master_list' %}";
-        }
-
-
-
-
-        document.querySelectorAll('.menu-toggle').forEach((toggle) => {
-            const targetId = toggle.getAttribute('data-target');
-            const target = document.getElementById(targetId);
-            if (target && target.classList.contains('show')) {
-                toggle.classList.add('open');
-            }
-            toggle.addEventListener('click', () => {
-                if (!target) return;
-                const isOpen = target.classList.toggle('show');
-                toggle.classList.toggle('open', isOpen);
+            document.querySelectorAll('.update-field-key').forEach((select) => {
+                select.addEventListener('change', () => {
+                    applyUpdateFieldTemplate(select.closest('.form-grid'));
+                });
             });
-        });
-
-        const layoutRoot = document.getElementById('layoutRoot');
-        const toggleSidebarBtn = document.getElementById('toggleSidebar');
-        if (toggleSidebarBtn) {
-            toggleSidebarBtn.addEventListener('click', () => {
-                layoutRoot.classList.toggle('sidebar-hidden');
-                toggleSidebarBtn.textContent = layoutRoot.classList.contains('sidebar-hidden') ? '显示菜单' : '隐藏菜单';
-            });
-        }
-
-        const toggleSearchFields = document.getElementById('toggleSearchFields');
-        if (toggleSearchFields) {
-            toggleSearchFields.addEventListener('click', () => {
-                const form = document.getElementById('searchForm');
-                form.classList.toggle('collapsed');
-                toggleSearchFields.textContent = form.classList.contains('collapsed') ? '展开' : '收起';
-            });
-        }
-
-        const toggleUpdatePanel = document.getElementById('toggleUpdatePanel');
-        if (toggleUpdatePanel) {
-            toggleUpdatePanel.addEventListener('click', () => {
-                const panel = document.getElementById('updatePanel');
-                panel.classList.toggle('collapsed');
-                toggleUpdatePanel.textContent = panel.classList.contains('collapsed') ? '展开' : '收起';
-            });
-        }
-
-        const updateTargetSelect = document.getElementById('updateTargetSelect');
-        if (updateTargetSelect) {
-            updateTargetSelect.addEventListener('change', () => {
-                if (updateTargetSelect.value) {
-                    updateTargetSelect.form.submit();
-                }
-            });
-        }
-
-        const addUpdateRowBtn = document.getElementById('addUpdateRow');
-        const updateTemplates = document.getElementById('updateFieldTemplates');
-        const requiredUpdateFields = new Set([
-            'project_name',
-            'province_code',
-            'business_unit',
-            'dept',
-            'project_type',
-            'org_mode',
-            'data_status',
-            'is_execution_level',
-            'status'
-        ]);
-
-        function applyUpdateFieldTemplate(row) {
-            const keySelect = row.querySelector('.update-field-key');
-            const valueCell = row.querySelector('.update-value-cell');
-            if (!keySelect || !valueCell) return;
-            const fieldKey = keySelect.value;
-            let control = null;
-            if (updateTemplates) {
-                const template = updateTemplates.querySelector(`[data-field="${fieldKey}"]`);
-                if (template) {
-                    control = template.cloneNode(true);
-                }
-            }
-            valueCell.innerHTML = '<label>新值</label>';
-            if (!control) {
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.name = 'update_field_value';
-                input.placeholder = '填写新值';
-                control = input;
-            }
-            control.name = 'update_field_value';
-            if (requiredUpdateFields.has(fieldKey)) {
-                control.required = true;
-            } else {
-                control.required = false;
-            }
-            valueCell.appendChild(control);
-        }
-
-        document.querySelectorAll('.update-field-key').forEach((select) => {
-            select.addEventListener('change', () => {
-                applyUpdateFieldTemplate(select.closest('.form-grid'));
-            });
-        });
 
         if (addUpdateRowBtn) {
             addUpdateRowBtn.addEventListener('click', () => {
