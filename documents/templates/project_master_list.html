@@ -700,7 +700,7 @@
                         <div class="message {{ message.tags }}">{{ message }}</div>
                     {% endfor %}
                 </div>
-                {% endif %}</div>
+                {% endif %}
 
                 <!-- 审批管理面板 -->
                 <div class="search-form" id="approvalPanel" style="display: none;">
@@ -983,7 +983,7 @@
                     </form>
                 </div>
 
-                <div class="search-form add-form" id="addForm" style="display: none;">
+                <div class="search-form add-form" id="addForm" style="display: block;">
                     <h3>新增项目</h3>
                     <form method="post">
                         {% csrf_token %}

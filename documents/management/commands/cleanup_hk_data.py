@@ -44,29 +44,12 @@ class Command(BaseCommand):
 
         deleted_count = 0
         for project in hk_projects:
-            # 标记为删除
-            project.is_deleted = True
-            project.updated_by = "SYSTEM_CLEANUP"
-            project.updated_at = timezone.now()
-            project.save(update_fields=["is_deleted", "updated_by", "updated_at"])
-
-            # 记录日志
-            ProjectMasterLog.objects.create(
-                project_code=project.project_code,
-                action="delete",
-                before_data={
-                    "project_code": project.project_code,
-                    "project_name": project.project_name,
-                    "reason": "清理用户 HK 导入的问题数据"
-                },
-                operator="SYSTEM_CLEANUP",
-                source="cleanup",
-            )
+            # 物理删除
+            project.delete()
             deleted_count += 1
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"✓ 成功删除 {deleted_count} 个项目数据\n"
-                "所有数据已标记为删除状态，并记录了删除日志。"
+                f"✓ 成功删除 {deleted_count} 个项目数据"
             )
         )
