@@ -388,6 +388,43 @@ def export_project_template(request):
         "备注",
     ]
     ws.append(headers)
+
+    # 添加第二个子表：字典参考
+    ws_dict = wb.create_sheet(title="字典参考")
+    dict_headers = ["字典类型", "编码", "名称", "说明"]
+    ws_dict.append(dict_headers)
+
+    # 加载字典数据
+    dicts = _load_dicts()
+    dict_types_map = {
+        "PROVINCE": "所在省",
+        "BUSINESS_UNIT": "业务板块",
+        "DEPT": "项目承担部门",
+        "PROJECT_TYPE": "项目类型",
+        "ORG_MODE": "项目组织模式",
+        "DATA_STATUS": "数据状态",
+    }
+
+    for dict_type_code, type_name in dict_types_map.items():
+        items = dicts.get(dict_type_code, [])
+        for item in items:
+            ws_dict.append([
+                type_name,
+                item.code,
+                item.name,
+                item.remark or ""
+            ])
+
+    # 设置列宽
+    ws.column_dimensions['A'].width = 20
+    ws.column_dimensions['B'].width = 30
+    ws.column_dimensions['C'].width = 40
+
+    ws_dict.column_dimensions['A'].width = 15
+    ws_dict.column_dimensions['B'].width = 15
+    ws_dict.column_dimensions['C'].width = 50
+    ws_dict.column_dimensions['D'].width = 30
+
     response = HttpResponse(
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
