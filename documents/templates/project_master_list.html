@@ -1091,14 +1091,7 @@
                             </div>
                             <div class="field">
                                 <label>项目名称</label>
-                                <select name="project_name">
-                                    <option value="">请选择项目名称</option>
-                                    {% for project in all_projects %}
-                                        <option value="{{ project.project_name }}" {% if search.project_name == project.project_name %}selected{% endif %}>
-                                            {{ project.project_name }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
+                                <input type="text" name="project_name" value="{{ search.project_name|default:'' }}" placeholder="输入项目名称关键词搜索">
                             </div>
                             <div class="field">
                                 <label>项目机构名称</label>
