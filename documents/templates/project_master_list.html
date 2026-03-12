@@ -640,6 +640,7 @@
                 <div class="action-buttons">
                     <button class="btn-add" onclick="showAddForm()">新增项目</button>
                     <button class="btn-search" onclick="showSearchForm()">查询项目</button>
+                    <button class="btn-search" onclick="showUpdatePanel()">信息更新</button>
                     <button class="btn-refresh" onclick="refreshList()">项目列表</button>
                     <a class="btn-export" href="{% url 'export_project_template' %}">导出Excel模板</a>
                     <form method="post" action="{% url 'import_project_master' %}" enctype="multipart/form-data" class="import-group">
@@ -702,10 +703,7 @@
                                 <label>项目机构名称</label>
                                 <input type="text" name="org_name" value="{{ search.org_name|default:'' }}" placeholder="请输入项目机构名称">
                             </div>
-                            <div class="field">
-                                <label>项目机构组织编码</label>
-                                <input type="text" name="org_code" value="{{ search.org_code|default:'' }}" placeholder="请输入组织编码">
-                            </div>
+
                             <div class="field">
                                 <label>上级PJ编码</label>
                                 <input type="text" name="parent_pj_code" value="{{ search.parent_pj_code|default:'' }}" placeholder="请输入上级PJ编码">
@@ -801,191 +799,6 @@
                     </form>
                 </div>
 
-                <div class="update-panel" id="updatePanel" style="display: {% if show_update_panel %}block{% else %}none{% endif %};">
-                    <h3>
-                        信息更新
-                        <span class="collapse-btn" id="toggleUpdatePanel">收起</span>
-                    </h3>
-                    <form method="get" class="form-grid update-filter">
-                        <div class="field field-md">
-                            <label>项目编码</label>
-                            <input type="text" name="update_code" value="{{ update_code|default:'' }}" placeholder="请输入项目编码">
-                        </div>
-                        <div class="field field-md">
-                            <label>项目名称</label>
-                            <input type="text" name="update_name" value="{{ update_name|default:'' }}" placeholder="请输入项目名称">
-                        </div>
-                        <div class="field field-sm" style="align-self:flex-end;">
-                            <button class="btn-search" type="submit">查询</button>
-                        </div>
-                        <div class="field field-wide">
-                            <label>选择更新项目</label>
-                            <select name="update_target" id="updateTargetSelect">
-                                <option value="">请选择项目</option>
-                                {% for item in update_candidates %}
-                                    <option value="{{ item.project_code }}" {% if update_target and update_target.project_code == item.project_code %}selected{% endif %}>
-                                        {{ item.project_code }} - {{ item.project_name }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </form>
-                    {% if update_code or update_name %}
-                        {% if not update_candidates %}
-                            <div class="hint">暂无匹配项目</div>
-                        {% endif %}
-                    {% endif %}
-
-                    {% if update_target %}
-                    <form method="post" class="search-form update-form" style="margin-top: 12px;">
-                        {% csrf_token %}
-                        <input type="hidden" name="form_type" value="update">
-                        <input type="hidden" name="update_project_code" value="{{ update_target.project_code }}">
-                        <div class="form-grid">
-                            <div class="field field-sm">
-                                <label>项目编码</label>
-                                <input type="text" value="{{ update_target.project_code }}" readonly>
-                            </div>
-                            <div class="field">
-                                <label>项目名称</label>
-                                <input type="text" name="project_name" value="{{ update_target.project_name }}" required>
-                            </div>
-                            <div class="field">
-                                <label>项目机构</label>
-                                <select name="org_code" required>
-                                    <option value="{{ update_target.org_code }}">{{ update_target.org_name }}</option>
-                                    {% for item in dicts.ORG %}
-                                        <option value="{{ item.code }}" data-name="{{ item.name }}">{{ item.name }}</option>
-                                    {% endfor %}
-                                </select>
-                                <input type="hidden" name="org_name" value="{{ update_target.org_name }}">
-                            </div>
-                            <div class="field field-sm">
-                                <label>上级PJ编码</label>
-                                <input type="text" name="parent_pj_code" value="{{ update_target.parent_pj_code }}">
-                            </div>
-                            <div class="field">
-                                <label>所在省</label>
-                                <select name="province_code" required>
-                                    <option value="{{ update_target.province_code }}">{{ update_target.province_code }}</option>
-                                    {% for item in dicts.PROVINCE %}
-                                        <option value="{{ item.code }}">{{ item.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="field">
-                                <label>业务板块</label>
-                                <select name="business_unit" required>
-                                    <option value="{{ update_target.business_unit }}">{{ update_target.business_unit }}</option>
-                                    {% for item in dicts.BUSINESS_UNIT %}
-                                        <option value="{{ item.code }}">{{ item.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="field">
-                                <label>承担部门</label>
-                                <select name="dept" required>
-                                    <option value="{{ update_target.dept }}">{{ update_target.dept }}</option>
-                                    {% for item in dicts.DEPT %}
-                                        <option value="{{ item.code }}">{{ item.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="field">
-                                <label>项目类型</label>
-                                <select name="project_type" required>
-                                    <option value="{{ update_target.project_type }}">{{ update_target.project_type }}</option>
-                                    {% for item in dicts.PROJECT_TYPE %}
-                                        <option value="{{ item.code }}">{{ item.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="field">
-                                <label>项目组织模式</label>
-                                <select name="org_mode" required>
-                                    <option value="{{ update_target.org_mode }}">{{ update_target.org_mode }}</option>
-                                    {% for item in dicts.ORG_MODE %}
-                                        <option value="{{ item.code }}">{{ item.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="field">
-                                <label>数据状态</label>
-                                <select name="data_status" required>
-                                    <option value="{{ update_target.data_status }}">{{ update_target.data_status }}</option>
-                                    {% for item in dicts.DATA_STATUS %}
-                                        <option value="{{ item.code }}">{{ item.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="field field-sm">
-                                <label>是否执行层</label>
-                                <select name="is_execution_level" required>
-                                    <option value="false" {% if not update_target.is_execution_level %}selected{% endif %}>否</option>
-                                    <option value="true" {% if update_target.is_execution_level %}selected{% endif %}>是</option>
-                                </select>
-                            </div>
-                            <div class="field field-sm">
-                                <label>状态</label>
-                                <select name="status" required>
-                                    <option value="启用" {% if update_target.status == "启用" %}selected{% endif %}>启用</option>
-                                    <option value="停用" {% if update_target.status == "停用" %}selected{% endif %}>停用</option>
-                                    <option value="作废" {% if update_target.status == "作废" %}selected{% endif %}>作废</option>
-                                </select>
-                            </div>
-                            <div class="field field-sm">
-                                <label>更新人</label>
-                                <input type="text" value="{{ request.user.username }}" readonly>
-                            </div>
-                            <div class="field field-sm">
-                                <label>更新日期</label>
-                                <input type="text" value="{{ update_now }}" readonly>
-                            </div>
-                        </div>
-                        <textarea name="remark" placeholder="备注">{{ update_target.remark }}</textarea>
-                        <input type="text" name="update_note" placeholder="修改说明（选填）">
-                        <div class="form-actions">
-                            <button type="submit" class="btn-add">保存更新</button>
-                            <button type="button" class="btn-cancel" onclick="showUpdatePanel()">取消</button>
-                        </div>
-                    </form>
-                    {% endif %}
-                    <div class="update-table">
-                        <div class="table-wrapper">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>项目编码</th>
-                                        <th>选择要修改的字段</th>
-                                        <th>修改前字段信息</th>
-                                        <th>修改后字段信息</th>
-                                        <th>修改说明</th>
-                                        <th>更新人</th>
-                                        <th>更新日期</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                {% for log in recent_updates %}
-                                    <tr>
-                                        <td>{{ log.project_code }}</td>
-                                        <td>{{ log.changed_fields }}</td>
-                                        <td><pre>{{ log.before_summary }}</pre></td>
-                                        <td><pre>{{ log.after_summary }}</pre></td>
-                                        <td>{{ log.change_note|default:"-" }}</td>
-                                        <td>{{ log.operator }}</td>
-                                        <td>{{ log.created_at }}</td>
-                                    </tr>
-                                {% empty %}
-                                    <tr>
-                                        <td colspan="7">暂无更新记录</td>
-                                    </tr>
-                                {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="search-form add-form" id="addForm" style="display: none;">
                     <h3>新增项目</h3>
                     <form method="post">
@@ -1001,18 +814,8 @@
                                 <input type="text" name="project_name" placeholder="请输入项目名称" required>
                             </div>
                             <div class="field">
-                                <label><span class="required-star">*</span>项目机构</label>
-                                <select name="org_code" id="orgSelect" required>
-                                    <option value="">选择项目机构</option>
-                                    {% for item in dicts.ORG %}
-                                        <option value="{{ item.code }}" data-name="{{ item.name }}">{{ item.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="field">
-                                <label><span class="required-star">*</span>项目机构组织编码</label>
-                                <input type="text" name="org_code_display" id="orgCodeDisplay" placeholder="自动带出" readonly>
-                                <input type="hidden" name="org_name" id="orgNameHidden">
+                                <label><span class="required-star">*</span>项目机构名称</label>
+                                <input type="text" name="org_name" placeholder="请输入项目机构名称" required>
                             </div>
                             <div class="field">
                                 <label>上级PJ编码</label>
@@ -1099,6 +902,270 @@
                         </div>
                         <div class="hint">项目年份将从项目主数据编码第3-6位自动生成。</div>
                     </form>
+                </div>
+
+                <div class="update-panel" id="updatePanel" style="display: {% if show_update_panel %}block{% else %}none{% endif %};">
+                    <h3>
+                        信息更新
+                        <span class="collapse-btn" id="toggleUpdatePanel">收起</span>
+                    </h3>
+                    <form method="get" class="form-grid update-filter">
+                        <div class="field field-md">
+                            <label>项目编码</label>
+                            <input type="text" name="update_code" list="updateCodeList" value="{{ update_code|default:'' }}" placeholder="请输入项目编码">
+                        </div>
+                        <div class="field field-md">
+                            <label>项目名称</label>
+                            <input type="text" name="update_name" list="updateNameList" value="{{ update_name|default:'' }}" placeholder="请输入项目名称">
+                        </div>
+                        <div class="field field-sm" style="align-self:flex-end;">
+                            <button class="btn-search" type="submit">查询</button>
+                        </div>
+                        <div class="field field-wide">
+                            <label>选择更新项目</label>
+                            <select name="update_target" id="updateTargetSelect">
+                                <option value="">请选择项目</option>
+                                {% for item in update_candidates %}
+                                    <option value="{{ item.project_code }}" {% if update_target and update_target.project_code == item.project_code %}selected{% endif %}>
+                                        {{ item.project_code }} - {{ item.project_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <datalist id="updateCodeList">
+                            {% for item in update_candidates %}
+                                <option value="{{ item.project_code }}">{{ item.project_name }}</option>
+                            {% endfor %}
+                        </datalist>
+                        <datalist id="updateNameList">
+                            {% for item in update_candidates %}
+                                <option value="{{ item.project_name }}">{{ item.project_code }}</option>
+                            {% endfor %}
+                        </datalist>
+                    </form>
+                    {% if update_code or update_name %}
+                        {% if not update_candidates %}
+                            <div class="hint">暂无匹配项目</div>
+                        {% endif %}
+                    {% endif %}
+
+                    {% if update_target %}
+                    <form method="post" class="search-form update-form" style="margin-top: 12px;">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="update">
+                        <input type="hidden" name="update_project_code" value="{{ update_target.project_code }}">
+                        <div class="form-grid">
+                            <div class="field field-sm">
+                                <label>项目编码</label>
+                                <input type="text" value="{{ update_target.project_code }}" readonly>
+                            </div>
+                            <div class="field">
+                                <label>项目名称</label>
+                                <input type="text" name="project_name" value="{{ update_target.project_name }}" required>
+                            </div>
+                            <div class="field">
+                                <label>项目机构名称</label>
+                                <input type="text" name="org_name" value="{{ update_target.org_name }}" required>
+                            </div>
+                            <div class="field field-sm">
+                                <label>上级PJ编码</label>
+                                <input type="text" name="parent_pj_code" value="{{ update_target.parent_pj_code }}">
+                            </div>
+                            <div class="field">
+                                <label>所在省</label>
+                                <select name="province_code" required>
+                                    <option value="{{ update_target.province_code }}">{{ update_target.province_code }}</option>
+                                    {% for item in dicts.PROVINCE %}
+                                        <option value="{{ item.code }}">{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>业务板块</label>
+                                <select name="business_unit" required>
+                                    <option value="{{ update_target.business_unit }}">{{ update_target.business_unit }}</option>
+                                    {% for item in dicts.BUSINESS_UNIT %}
+                                        <option value="{{ item.code }}">{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>承担部门</label>
+                                <select name="dept" required>
+                                    <option value="{{ update_target.dept }}">{{ update_target.dept }}</option>
+                                    {% for item in dicts.DEPT %}
+                                        <option value="{{ item.code }}">{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>项目类型</label>
+                                <select name="project_type" required>
+                                    <option value="{{ update_target.project_type }}">{{ update_target.project_type }}</option>
+                                    {% for item in dicts.PROJECT_TYPE %}
+                                        <option value="{{ item.code }}">{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>项目组织模式</label>
+                                <select name="org_mode" required>
+                                    <option value="{{ update_target.org_mode }}">{{ update_target.org_mode }}</option>
+                                    {% for item in dicts.ORG_MODE %}
+                                        <option value="{{ item.code }}">{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>数据状态</label>
+                                <select name="data_status" required>
+                                    <option value="{{ update_target.data_status }}">{{ update_target.data_status }}</option>
+                                    {% for item in dicts.DATA_STATUS %}
+                                        <option value="{{ item.code }}">{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field field-sm">
+                                <label>是否执行层</label>
+                                <select name="is_execution_level" required>
+                                    <option value="false" {% if not update_target.is_execution_level %}selected{% endif %}>否</option>
+                                    <option value="true" {% if update_target.is_execution_level %}selected{% endif %}>是</option>
+                                </select>
+                            </div>
+                            <div class="field field-sm">
+                                <label>状态</label>
+                                <select name="status" required>
+                                    <option value="启用" {% if update_target.status == "启用" %}selected{% endif %}>启用</option>
+                                    <option value="停用" {% if update_target.status == "停用" %}selected{% endif %}>停用</option>
+                                    <option value="作废" {% if update_target.status == "作废" %}selected{% endif %}>作废</option>
+                                </select>
+                            </div>
+                            <div class="field field-sm">
+                                <label>更新人</label>
+                                <input type="text" value="{{ request.user.username }}" readonly>
+                            </div>
+                            <div class="field field-sm">
+                                <label>更新日期</label>
+                                <input type="text" value="{{ update_now }}" readonly>
+                            </div>
+                        </div>
+                        <div id="updateRows" class="form-grid" style="margin-top: 8px;">
+                            <div class="field field-sm">
+                                <label>字段</label>
+                                <select name="update_field_key" class="update-field-key">
+                                    <option value="">请选择字段</option>
+                                    <option value="project_name">项目名称</option>
+                                    <option value="parent_pj_code">上级PJ编码</option>
+                                    <option value="province_code">所在省</option>
+                                    <option value="business_unit">业务板块</option>
+                                    <option value="dept">承担部门</option>
+                                    <option value="project_type">项目类型</option>
+                                    <option value="org_mode">项目组织模式</option>
+                                    <option value="data_status">数据状态</option>
+                                    <option value="is_execution_level">是否执行层</option>
+                                    <option value="status">状态</option>
+                                    <option value="remark">备注</option>
+                                </select>
+                            </div>
+                            <div class="field update-value-cell">
+                                <label>新值</label>
+                                <input type="text" name="update_field_value" placeholder="填写新值">
+                            </div>
+                            <div class="field field-sm" style="align-self:flex-end;">
+                                <button class="btn-search" type="button" id="addUpdateRow">+ 新增行</button>
+                            </div>
+                        </div>
+                        <div id="updateFieldTemplates" style="display:none;">
+                            <select data-field="province_code">
+                                <option value="">请选择所在省</option>
+                                {% for item in dicts.PROVINCE %}
+                                    <option value="{{ item.code }}">{{ item.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <select data-field="business_unit">
+                                <option value="">请选择业务板块</option>
+                                {% for item in dicts.BUSINESS_UNIT %}
+                                    <option value="{{ item.code }}">{{ item.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <select data-field="dept">
+                                <option value="">请选择承担部门</option>
+                                {% for item in dicts.DEPT %}
+                                    <option value="{{ item.code }}">{{ item.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <select data-field="project_type">
+                                <option value="">请选择项目类型</option>
+                                {% for item in dicts.PROJECT_TYPE %}
+                                    <option value="{{ item.code }}">{{ item.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <select data-field="org_mode">
+                                <option value="">请选择项目组织模式</option>
+                                {% for item in dicts.ORG_MODE %}
+                                    <option value="{{ item.code }}">{{ item.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <select data-field="data_status">
+                                <option value="">请选择数据状态</option>
+                                {% for item in dicts.DATA_STATUS %}
+                                    <option value="{{ item.code }}">{{ item.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <select data-field="is_execution_level">
+                                <option value="">请选择</option>
+                                <option value="true">是</option>
+                                <option value="false">否</option>
+                            </select>
+                            <select data-field="status">
+                                <option value="">请选择状态</option>
+                                <option value="启用">启用</option>
+                                <option value="停用">停用</option>
+                                <option value="作废">作废</option>
+                            </select>
+                        </div>
+                        <textarea name="remark" placeholder="备注">{{ update_target.remark }}</textarea>
+                        <input type="text" name="update_note" placeholder="修改说明（选填）">
+                        <div class="form-actions">
+                            <button type="submit" class="btn-add">保存更新</button>
+                            <button type="button" class="btn-cancel" onclick="showUpdatePanel()">取消</button>
+                        </div>
+                    </form>
+                    {% endif %}
+                    <div class="update-table">
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>项目编码</th>
+                                        <th>选择要修改的字段</th>
+                                        <th>修改前字段信息</th>
+                                        <th>修改后字段信息</th>
+                                        <th>修改说明</th>
+                                        <th>更新人</th>
+                                        <th>更新日期</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                {% for log in recent_updates %}
+                                    <tr>
+                                        <td>{{ log.project_code }}</td>
+                                        <td>{{ log.changed_fields }}</td>
+                                        <td><pre>{{ log.before_summary }}</pre></td>
+                                        <td><pre>{{ log.after_summary }}</pre></td>
+                                        <td>{{ log.change_note|default:"-" }}</td>
+                                        <td>{{ log.operator }}</td>
+                                        <td>{{ log.created_at }}</td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="7">暂无更新记录</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="data-table" {% if show_update_panel %}style="display: none;"{% endif %}>
@@ -1222,7 +1289,7 @@
             document.getElementById('updatePanel').style.display = 'block';
             document.getElementById('addForm').style.display = 'none';
             document.getElementById('searchForm').style.display = 'none';
-            document.querySelector('.data-table').style.display = 'none';
+            document.querySelector('.data-table').style.display = 'block';
             document.getElementById('updatePanel').classList.remove('collapsed');
             const toggleBtn = document.getElementById('toggleUpdatePanel');
             if (toggleBtn) {
@@ -1248,16 +1315,7 @@
             location.href = "{% url 'project_master_list' %}";
         }
 
-        const orgSelect = document.getElementById('orgSelect');
-        const orgCodeDisplay = document.getElementById('orgCodeDisplay');
-        const orgNameHidden = document.getElementById('orgNameHidden');
-        if (orgSelect) {
-            orgSelect.addEventListener('change', () => {
-                const option = orgSelect.options[orgSelect.selectedIndex];
-                orgCodeDisplay.value = option.value || '';
-                orgNameHidden.value = option.getAttribute('data-name') || '';
-            });
-        }
+
 
 
         document.querySelectorAll('.menu-toggle').forEach((toggle) => {
@@ -1306,6 +1364,95 @@
                 if (updateTargetSelect.value) {
                     updateTargetSelect.form.submit();
                 }
+            });
+        }
+
+        const addUpdateRowBtn = document.getElementById('addUpdateRow');
+        const updateTemplates = document.getElementById('updateFieldTemplates');
+        const requiredUpdateFields = new Set([
+            'project_name',
+            'province_code',
+            'business_unit',
+            'dept',
+            'project_type',
+            'org_mode',
+            'data_status',
+            'is_execution_level',
+            'status'
+        ]);
+
+        function applyUpdateFieldTemplate(row) {
+            const keySelect = row.querySelector('.update-field-key');
+            const valueCell = row.querySelector('.update-value-cell');
+            if (!keySelect || !valueCell) return;
+            const fieldKey = keySelect.value;
+            let control = null;
+            if (updateTemplates) {
+                const template = updateTemplates.querySelector(`[data-field="${fieldKey}"]`);
+                if (template) {
+                    control = template.cloneNode(true);
+                }
+            }
+            valueCell.innerHTML = '<label>新值</label>';
+            if (!control) {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.name = 'update_field_value';
+                input.placeholder = '填写新值';
+                control = input;
+            }
+            control.name = 'update_field_value';
+            if (requiredUpdateFields.has(fieldKey)) {
+                control.required = true;
+            } else {
+                control.required = false;
+            }
+            valueCell.appendChild(control);
+        }
+
+        document.querySelectorAll('.update-field-key').forEach((select) => {
+            select.addEventListener('change', () => {
+                applyUpdateFieldTemplate(select.closest('.form-grid'));
+            });
+        });
+
+        if (addUpdateRowBtn) {
+            addUpdateRowBtn.addEventListener('click', () => {
+                const container = document.getElementById('updateRows');
+                if (!container) return;
+                const row = document.createElement('div');
+                row.className = 'form-grid';
+                row.innerHTML = `
+                    <div class="field field-sm">
+                        <label>字段</label>
+                        <select name="update_field_key" class="update-field-key">
+                            <option value="">请选择字段</option>
+                            <option value="project_name">项目名称</option>
+                            <option value="parent_pj_code">上级PJ编码</option>
+                            <option value="province_code">所在省</option>
+                            <option value="business_unit">业务板块</option>
+                            <option value="dept">承担部门</option>
+                            <option value="project_type">项目类型</option>
+                            <option value="org_mode">项目组织模式</option>
+                            <option value="data_status">数据状态</option>
+                            <option value="is_execution_level">是否执行层</option>
+                            <option value="status">状态</option>
+                            <option value="remark">备注</option>
+                        </select>
+                    </div>
+                    <div class="field update-value-cell">
+                        <label>新值</label>
+                        <input type="text" name="update_field_value" placeholder="填写新值">
+                    </div>
+                    <div class="field field-sm" style="align-self:flex-end;">
+                        <button class="btn-cancel" type="button">删除</button>
+                    </div>
+                `;
+                const delBtn = row.querySelector('button');
+                const newSelect = row.querySelector('.update-field-key');
+                newSelect.addEventListener('change', () => applyUpdateFieldTemplate(row));
+                delBtn.addEventListener('click', () => row.remove());
+                container.appendChild(row);
             });
         }
 

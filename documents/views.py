@@ -78,7 +78,6 @@ def project_master_list(request):
         project_data = {
             "project_code": request.POST.get("project_code", "").strip(),
             "project_name": request.POST.get("project_name", "").strip(),
-            "org_code": request.POST.get("org_code", "").strip(),
             "org_name": request.POST.get("org_name", "").strip(),
             "parent_pj_code": request.POST.get("parent_pj_code", "").strip() or None,
             "province_code": request.POST.get("province_code", "").strip(),
@@ -104,11 +103,6 @@ def project_master_list(request):
             project_data["project_year"] = project_data["project_code"][2:6]
         else:
             project_data["project_year"] = ""
-
-        if not project_data["org_name"] and project_data["org_code"]:
-            project_data["org_name"] = dict_map.get("ORG", {}).get(
-                project_data["org_code"], ""
-            )
 
         try:
             with transaction.atomic():
@@ -141,7 +135,6 @@ def project_master_list(request):
         before = {
             "project_name": project.project_name,
             "org_name": project.org_name,
-            "org_code": project.org_code,
             "parent_pj_code": project.parent_pj_code,
             "province_code": project.province_code,
             "business_unit": project.business_unit,
@@ -155,7 +148,6 @@ def project_master_list(request):
         }
 
         project.project_name = request.POST.get("project_name", project.project_name).strip()
-        project.org_code = request.POST.get("org_code", project.org_code).strip()
         project.org_name = request.POST.get("org_name", project.org_name).strip()
         project.parent_pj_code = request.POST.get("parent_pj_code", "").strip() or None
         project.province_code = request.POST.get("province_code", project.province_code).strip()
@@ -172,8 +164,26 @@ def project_master_list(request):
         project.updated_by = request.user.username
         change_note = request.POST.get("update_note", "").strip()
 
-        if not project.org_name and project.org_code:
-            project.org_name = dict_map.get("ORG", {}).get(project.org_code, project.org_name)
+        extra_keys = request.POST.getlist("update_field_key")
+        extra_vals = request.POST.getlist("update_field_value")
+        for key, val in zip(extra_keys, extra_vals):
+            if not key:
+                continue
+            val = (val or "").strip()
+            if val == "":
+                continue
+            if key == "is_execution_level":
+                project.is_execution_level = val in ["true", "True", "是", "1"]
+            elif key == "parent_pj_code":
+                project.parent_pj_code = val or None
+            elif key == "province_code":
+                project.province_code = val
+                if not project.city_code:
+                    project.city_code = val
+            elif key == "remark":
+                project.remark = val
+            elif hasattr(project, key):
+                setattr(project, key, val)
 
         try:
             with transaction.atomic():
@@ -186,7 +196,6 @@ def project_master_list(request):
                     after_data={
                         "project_name": project.project_name,
                         "org_name": project.org_name,
-                        "org_code": project.org_code,
                         "parent_pj_code": project.parent_pj_code,
                         "province_code": project.province_code,
                         "business_unit": project.business_unit,
@@ -214,7 +223,6 @@ def project_master_list(request):
         "project_code": request.GET.get("project_code", "").strip(),
         "project_name": request.GET.get("project_name", "").strip(),
         "org_name": request.GET.get("org_name", "").strip(),
-        "org_code": request.GET.get("org_code", "").strip(),
         "parent_pj_code": request.GET.get("parent_pj_code", "").strip(),
         "province_code": request.GET.get("province_code", "").strip(),
         "business_unit": request.GET.get("business_unit", "").strip(),
@@ -235,8 +243,6 @@ def project_master_list(request):
         qs = qs.filter(project_name__icontains=search["project_name"])
     if search["org_name"]:
         qs = qs.filter(org_name__icontains=search["org_name"])
-    if search["org_code"]:
-        qs = qs.filter(org_code__icontains=search["org_code"])
     if search["parent_pj_code"]:
         qs = qs.filter(parent_pj_code__icontains=search["parent_pj_code"])
     if search["province_code"]:
@@ -292,7 +298,6 @@ def project_master_list(request):
     field_labels = {
         "project_name": "项目名称",
         "org_name": "项目机构",
-        "org_code": "项目机构组织编码",
         "parent_pj_code": "上级PJ编码",
         "province_code": "所在省",
         "business_unit": "业务板块",
@@ -370,7 +375,6 @@ def export_project_template(request):
     headers = [
         "项目主数据编码",
         "项目名称",
-        "项目机构组织编码",
         "项目机构名称",
         "上级PJ编码",
         "所在省",
@@ -416,7 +420,6 @@ def import_project_master(request):
     header_map = {
         "项目主数据编码": "project_code",
         "项目名称": "project_name",
-        "项目机构组织编码": "org_code",
         "项目机构名称": "org_name",
         "上级PJ编码": "parent_pj_code",
         "所在省": "province_code",
@@ -440,7 +443,7 @@ def import_project_master(request):
     required_fields = [
         "project_code",
         "project_name",
-        "org_code",
+        "org_name",
         "province_code",
         "business_unit",
         "dept",
@@ -473,9 +476,7 @@ def import_project_master(request):
             failure += 1
             continue
 
-        row_data["org_name"] = row_data.get("org_name") or name_map.get("ORG", {}).get(
-            str(row_data.get("org_code")).strip(), ""
-        )
+
         row_data["city_code"] = row_data.get("city_code") or row_data.get("province_code")
         row_data["parent_pj_code"] = row_data.get("parent_pj_code") or None
         row_data["is_execution_level"] = str(row_data.get("is_execution_level")).strip() in [
@@ -535,7 +536,6 @@ def project_master_edit(request, project_code):
         before = {
             "project_name": project.project_name,
             "org_name": project.org_name,
-            "org_code": project.org_code,
             "parent_pj_code": project.parent_pj_code,
             "province_code": project.province_code,
             "city_code": project.city_code,
@@ -550,7 +550,6 @@ def project_master_edit(request, project_code):
         }
 
         project.project_name = request.POST.get("project_name", "").strip()
-        project.org_code = request.POST.get("org_code", "").strip()
         project.org_name = request.POST.get("org_name", "").strip()
         project.parent_pj_code = request.POST.get("parent_pj_code", "").strip() or None
         project.province_code = request.POST.get("province_code", "").strip()
@@ -565,10 +564,6 @@ def project_master_edit(request, project_code):
         project.remark = request.POST.get("remark", "").strip()
         project.updated_by = request.user.username
 
-        if not project.org_name and project.org_code:
-            name_map = _dict_name_map(dicts)
-            project.org_name = name_map.get("ORG", {}).get(project.org_code, "")
-
         try:
             with transaction.atomic():
                 project.full_clean()
@@ -580,7 +575,6 @@ def project_master_edit(request, project_code):
                     after_data={
                         "project_name": project.project_name,
                         "org_name": project.org_name,
-                        "org_code": project.org_code,
                         "parent_pj_code": project.parent_pj_code,
                         "province_code": project.province_code,
                         "city_code": project.city_code,
