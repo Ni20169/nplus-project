@@ -1451,6 +1451,110 @@
     </div>
 
     <script>
+        // 全局函数定义，确保 onclick 可以调用
+        function showAddForm() {
+            document.getElementById('addForm').style.display = 'block';
+            document.getElementById('searchForm').style.display = 'none';
+            document.getElementById('updatePanel').style.display = 'none';
+            document.getElementById('approvalPanel').style.display = 'none';
+            document.querySelector('.data-table').style.display = 'block';
+        }
+
+        function hideAddForm() {
+            document.getElementById('addForm').style.display = 'none';
+        }
+
+        function showApprovalPanel() {
+            document.getElementById('approvalPanel').style.display = 'block';
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('searchForm').style.display = 'none';
+            document.getElementById('updatePanel').style.display = 'none';
+            document.querySelector('.data-table').style.display = 'block';
+        }
+
+        function hideApprovalPanel() {
+            document.getElementById('approvalPanel').style.display = 'none';
+        }
+
+        function submitDeleteApproval(projectCode, projectName) {
+            const note = prompt(`确定要删除项目 "${projectName}" (${projectCode}) 吗？\n\n请输入删除说明（选填）：`);
+            if (note === null) return;
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{% url "submit_delete_approval" %}';
+            form.style.display = 'none';
+
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = 'csrfmiddlewaretoken';
+            csrfToken.value = '{{ csrf_token }}';
+            form.appendChild(csrfToken);
+
+            const codeInput = document.createElement('input');
+            codeInput.type = 'hidden';
+            codeInput.name = 'project_code';
+            codeInput.value = projectCode;
+            form.appendChild(codeInput);
+
+            const noteInput = document.createElement('input');
+            noteInput.type = 'hidden';
+            noteInput.name = 'change_note';
+            noteInput.value = note;
+            form.appendChild(noteInput);
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        function showSearchForm() {
+            document.getElementById('searchForm').style.display = 'block';
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('updatePanel').style.display = 'none';
+            document.getElementById('approvalPanel').style.display = 'none';
+            document.querySelector('.data-table').style.display = 'block';
+            document.getElementById('searchForm').classList.remove('collapsed');
+            const toggleBtn = document.getElementById('toggleSearchFields');
+            if (toggleBtn) {
+                toggleBtn.textContent = '收起';
+            }
+        }
+
+        function showUpdatePanel() {
+            document.getElementById('updatePanel').style.display = 'block';
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('searchForm').style.display = 'none';
+            document.getElementById('approvalPanel').style.display = 'none';
+            document.querySelector('.data-table').style.display = 'block';
+            document.getElementById('updatePanel').classList.remove('collapsed');
+            const toggleBtn = document.getElementById('toggleUpdatePanel');
+            if (toggleBtn) {
+                toggleBtn.textContent = '收起';
+            }
+        }
+
+        function hideSearchForm() {
+            document.getElementById('searchForm').style.display = 'none';
+        }
+
+        function hideUpdatePanel() {
+            document.getElementById('updatePanel').style.display = 'none';
+        }
+
+        function toggleSubMenu(id, triggerEl) {
+            const target = document.getElementById(id);
+            if (target) {
+                const isOpen = target.classList.toggle('show');
+                if (triggerEl) {
+                    triggerEl.classList.toggle('open', isOpen);
+                }
+            }
+        }
+
+        function refreshList() {
+            location.href = "{% url 'project_master_list' %}";
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             // 信息更新页签联动逻辑
             const updateCodeSelect = document.getElementById('updateCodeSelect');
@@ -1482,106 +1586,6 @@
                         updateTargetSelect.value = '';
                     }
                 });
-            }
-
-            function showAddForm() {
-                document.getElementById('addForm').style.display = 'block';
-                document.getElementById('searchForm').style.display = 'none';
-                document.getElementById('updatePanel').style.display = 'none';
-                document.querySelector('.data-table').style.display = 'block';
-            }
-
-            function hideAddForm() {
-                document.getElementById('addForm').style.display = 'none';
-            }
-
-            function showApprovalPanel() {
-                document.getElementById('approvalPanel').style.display = 'block';
-                document.getElementById('addForm').style.display = 'none';
-                document.getElementById('searchForm').style.display = 'none';
-                document.getElementById('updatePanel').style.display = 'none';
-                document.querySelector('.data-table').style.display = 'block';
-            }
-
-            function hideApprovalPanel() {
-                document.getElementById('approvalPanel').style.display = 'none';
-            }
-
-            function submitDeleteApproval(projectCode, projectName) {
-                const note = prompt(`确定要删除项目 "${projectName}" (${projectCode}) 吗？\n\n请输入删除说明（选填）：`);
-                if (note === null) return;
-
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '{% url "submit_delete_approval" %}';
-                form.style.display = 'none';
-
-                const csrfToken = document.createElement('input');
-                csrfToken.type = 'hidden';
-                csrfToken.name = 'csrfmiddlewaretoken';
-                csrfToken.value = '{{ csrf_token }}';
-                form.appendChild(csrfToken);
-
-                const codeInput = document.createElement('input');
-                codeInput.type = 'hidden';
-                codeInput.name = 'project_code';
-                codeInput.value = projectCode;
-                form.appendChild(codeInput);
-
-                const noteInput = document.createElement('input');
-                noteInput.type = 'hidden';
-                noteInput.name = 'change_note';
-                noteInput.value = note;
-                form.appendChild(noteInput);
-
-                document.body.appendChild(form);
-                form.submit();
-            }
-
-            function showSearchForm() {
-                document.getElementById('searchForm').style.display = 'block';
-                document.getElementById('addForm').style.display = 'none';
-                document.getElementById('updatePanel').style.display = 'none';
-                document.querySelector('.data-table').style.display = 'block';
-                document.getElementById('searchForm').classList.remove('collapsed');
-                const toggleBtn = document.getElementById('toggleSearchFields');
-                if (toggleBtn) {
-                    toggleBtn.textContent = '收起';
-                }
-            }
-
-            function showUpdatePanel() {
-                document.getElementById('updatePanel').style.display = 'block';
-                document.getElementById('addForm').style.display = 'none';
-                document.getElementById('searchForm').style.display = 'none';
-                document.querySelector('.data-table').style.display = 'block';
-                document.getElementById('updatePanel').classList.remove('collapsed');
-                const toggleBtn = document.getElementById('toggleUpdatePanel');
-                if (toggleBtn) {
-                    toggleBtn.textContent = '收起';
-                }
-            }
-
-            function hideSearchForm() {
-                document.getElementById('searchForm').style.display = 'none';
-            }
-
-            function hideUpdatePanel() {
-                document.getElementById('updatePanel').style.display = 'none';
-            }
-
-            function toggleSubMenu(id, triggerEl) {
-                const target = document.getElementById(id);
-                if (target) {
-                    const isOpen = target.classList.toggle('show');
-                    if (triggerEl) {
-                        triggerEl.classList.toggle('open', isOpen);
-                    }
-                }
-            }
-
-            function refreshList() {
-                location.href = "{% url 'project_master_list' %}";
             }
 
             document.querySelectorAll('.menu-toggle').forEach((toggle) => {
