@@ -89,7 +89,7 @@
 
         .main-content {
             flex: 1;
-            padding: 16px 24px;
+            padding: 8px 24px 16px;
             position: relative;
         }
 
@@ -97,8 +97,8 @@
             position: fixed;
             inset: 0;
             pointer-events: none;
-            opacity: 0.06;
-            font-size: 24px;
+            opacity: 0.05;
+            font-size: 18px;
             color: #000;
             display: flex;
             flex-wrap: wrap;
@@ -121,7 +121,7 @@
         }
 
         .main-content h1 {
-            margin-bottom: 12px;
+            margin: 0 0 8px 0;
             font-size: 20px;
             color: #1f2d3d;
         }
@@ -130,7 +130,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .action-buttons button,
@@ -171,6 +171,19 @@
             font-family: inherit;
         }
 
+        .search-form input::placeholder,
+        .search-form textarea::placeholder {
+            color: #b5b5b5;
+        }
+
+        .search-form select {
+            color: #333;
+        }
+
+        .search-form select option[value=""] {
+            color: #b5b5b5;
+        }
+
         .form-grid {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -199,8 +212,15 @@
         .field label {
             display: block;
             font-size: 13px;
-            color: #666;
+            color: #111;
+            font-weight: 600;
             margin-bottom: 4px;
+        }
+
+        .required {
+            color: #e74c3c;
+            margin-left: 4px;
+            font-weight: 700;
         }
 
         .data-table {
@@ -375,16 +395,16 @@
                     <input type="hidden" name="form_type" value="create">
                     <div class="form-grid">
                         <div class="field">
-                            <label>项目主数据编码</label>
+                            <label>项目主数据编码<span class="required">*</span></label>
                             <input type="text" name="project_code" placeholder="PJ+10位数字" required>
                         </div>
                         <div class="field">
-                            <label>项目名称</label>
+                            <label>项目名称<span class="required">*</span></label>
                             <input type="text" name="project_name" placeholder="请输入项目名称" required>
                         </div>
 
                         <div class="field">
-                            <label>项目机构</label>
+                            <label>项目机构<span class="required">*</span></label>
                             <select name="org_code" id="orgSelect" required>
                                 <option value="">选择项目机构</option>
                                 {% for item in dicts.ORG %}
@@ -393,7 +413,7 @@
                             </select>
                         </div>
                         <div class="field">
-                            <label>项目机构组织编码</label>
+                            <label>项目机构组织编码<span class="required">*</span></label>
                             <input type="text" name="org_code_display" id="orgCodeDisplay" placeholder="自动带出" readonly>
                             <input type="hidden" name="org_name" id="orgNameHidden">
                         </div>
@@ -403,7 +423,7 @@
                         </div>
 
                         <div class="field">
-                            <label>所在省</label>
+                            <label>所在省<span class="required">*</span></label>
                             <select name="province_code" id="provinceSelect" required>
                                 <option value="">选择所在省</option>
                                 {% for item in dicts.PROVINCE %}
@@ -413,7 +433,7 @@
                         </div>
 
                         <div class="field">
-                            <label>所在市</label>
+                            <label>所在市<span class="required">*</span></label>
                             <select name="city_code" id="citySelect" required>
                                 <option value="">选择所在市</option>
                                 {% for item in dicts.CITY %}
@@ -423,7 +443,7 @@
                         </div>
 
                         <div class="field">
-                            <label>业务板块</label>
+                            <label>业务板块<span class="required">*</span></label>
                             <select name="business_unit" required>
                                 <option value="">选择业务板块</option>
                                 {% for item in dicts.BUSINESS_UNIT %}
@@ -433,7 +453,7 @@
                         </div>
 
                         <div class="field">
-                            <label>项目承担部门</label>
+                            <label>项目承担部门<span class="required">*</span></label>
                             <select name="dept" required>
                                 <option value="">选择项目承担部门</option>
                                 {% for item in dicts.DEPT %}
@@ -443,7 +463,7 @@
                         </div>
 
                         <div class="field">
-                            <label>项目类型</label>
+                            <label>项目类型<span class="required">*</span></label>
                             <select name="project_type" required>
                                 <option value="">选择项目类型</option>
                                 {% for item in dicts.PROJECT_TYPE %}
@@ -453,7 +473,7 @@
                         </div>
 
                         <div class="field">
-                            <label>项目组织模式</label>
+                            <label>项目组织模式<span class="required">*</span></label>
                             <select name="org_mode" required>
                                 <option value="">选择项目组织模式</option>
                                 {% for item in dicts.ORG_MODE %}
@@ -463,7 +483,7 @@
                         </div>
 
                         <div class="field">
-                            <label>数据状态</label>
+                            <label>数据状态<span class="required">*</span></label>
                             <select name="data_status" required>
                                 <option value="">选择数据状态</option>
                                 {% for item in dicts.DATA_STATUS %}
@@ -473,7 +493,7 @@
                         </div>
 
                         <div class="field">
-                            <label>是否为执行层</label>
+                            <label>是否为执行层<span class="required">*</span></label>
                             <select name="is_execution_level" required>
                                 <option value="false">否</option>
                                 <option value="true">是</option>
@@ -481,7 +501,7 @@
                         </div>
 
                         <div class="field">
-                            <label>状态</label>
+                            <label>状态<span class="required">*</span></label>
                             <select name="status" required>
                                 <option value="启用">启用</option>
                                 <option value="停用">停用</option>
@@ -490,7 +510,7 @@
                         </div>
 
                         <div class="field">
-                            <label>创建人</label>
+                            <label>创建人<span class="required">*</span></label>
                             <input type="text" name="created_by" value="{{ request.user.username }}" required>
                         </div>
                     </div>
