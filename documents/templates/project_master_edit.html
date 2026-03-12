@@ -106,14 +106,7 @@
             <div class="form-grid">
                 <input type="text" name="project_name" value="{{ project.project_name }}" placeholder="项目名称" required>
 
-                <select name="org_code" id="orgSelect" required>
-                    <option value="{{ project.org_code }}">{{ project.org_name }}</option>
-                    {% for item in dicts.ORG %}
-                        <option value="{{ item.code }}" data-name="{{ item.name }}">{{ item.name }}</option>
-                    {% endfor %}
-                </select>
-                <input type="text" name="org_code_display" id="orgCodeDisplay" value="{{ project.org_code }}" readonly>
-                <input type="hidden" name="org_name" id="orgNameHidden" value="{{ project.org_name }}">
+                <input type="text" name="org_name" value="{{ project.org_name }}" placeholder="项目机构名称" required>
 
                 <input type="text" name="parent_pj_code" value="{{ project.parent_pj_code }}" placeholder="上级PJ编码（可为空）">
 
@@ -198,19 +191,6 @@
         {% endif %}
     </div>
 
-    <script>
-        const orgSelect = document.getElementById('orgSelect');
-        const orgCodeDisplay = document.getElementById('orgCodeDisplay');
-        const orgNameHidden = document.getElementById('orgNameHidden');
-        if (orgSelect) {
-            orgSelect.addEventListener('change', () => {
-                const option = orgSelect.options[orgSelect.selectedIndex];
-                orgCodeDisplay.value = option.value || '';
-                orgNameHidden.value = option.getAttribute('data-name') || '';
-            });
-        }
 
-        const provinceSelect = document.getElementById('provinceSelect');
-    </script>
 </body>
 </html>
