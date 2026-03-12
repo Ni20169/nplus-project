@@ -423,6 +423,10 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.06);
         }
 
+        .search-form.hidden {
+            display: none;
+        }
+
         .message-stack {
             margin: 8px 0 12px;
             display: grid;
@@ -1081,7 +1085,7 @@
                 </div>
                 {% endif %}
 
-                <div class="search-form" id="searchForm" style="display: {% if show_search_form %}block{% else %}none{% endif %};">
+                <div class="search-form{% if not show_search_form %} hidden{% endif %}" id="searchForm">
                     <h3>
                         项目查询
                         <span class="collapse-btn" id="toggleSearchFields">收起</span>
@@ -1236,7 +1240,7 @@
                     </form>
                 </div>
 
-                <div class="search-form add-form" id="addForm" style="display: {% if show_add_form %}block{% else %}none{% endif %};">
+                <div class="search-form add-form{% if not show_add_form %} hidden{% endif %}" id="addForm">
                     <h3>新增项目</h3>
                     <form method="post">
                         {% csrf_token %}
