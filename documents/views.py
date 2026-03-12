@@ -9,6 +9,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from openpyxl import Workbook, load_workbook
 
 from .models import DictType, ImportBatch, ImportError, ProjectMaster, ProjectMasterLog, UserProfile
@@ -169,6 +170,7 @@ def project_master_list(request):
         project.status = request.POST.get("status", project.status).strip()
         project.remark = request.POST.get("remark", "").strip()
         project.updated_by = request.user.username
+        change_note = request.POST.get("update_note", "").strip()
 
         if not project.org_name and project.org_code:
             project.org_name = dict_map.get("ORG", {}).get(project.org_code, project.org_name)
@@ -196,6 +198,7 @@ def project_master_list(request):
                         "status": project.status,
                         "remark": project.remark,
                     },
+                    change_note=change_note,
                     operator=request.user.username,
                     source="update-panel",
                 )
@@ -286,6 +289,40 @@ def project_master_list(request):
     recent_updates = list(
         ProjectMasterLog.objects.filter(action="update").order_by("-created_at")[:10]
     )
+    field_labels = {
+        "project_name": "项目名称",
+        "org_name": "项目机构",
+        "org_code": "项目机构组织编码",
+        "parent_pj_code": "上级PJ编码",
+        "province_code": "所在省",
+        "business_unit": "业务板块",
+        "dept": "项目承担部门",
+        "project_type": "项目类型",
+        "org_mode": "项目组织模式",
+        "data_status": "主数据系统数据状态",
+        "is_execution_level": "是否为执行层",
+        "status": "状态",
+        "remark": "备注",
+    }
+    for log in recent_updates:
+        before = log.before_data or {}
+        after = log.after_data or {}
+        changed = []
+        before_lines = []
+        after_lines = []
+        for key, label in field_labels.items():
+            before_val = before.get(key)
+            after_val = after.get(key)
+            if before_val != after_val:
+                changed.append(label)
+                if key == "is_execution_level":
+                    before_val = "是" if before_val else "否"
+                    after_val = "是" if after_val else "否"
+                before_lines.append(f"{label}：{before_val}")
+                after_lines.append(f"{label}：{after_val}")
+        log.changed_fields = "、".join(changed) if changed else "无"
+        log.before_summary = "\n".join(before_lines) if before_lines else "无"
+        log.after_summary = "\n".join(after_lines) if after_lines else "无"
 
     update_code = request.GET.get("update_code", "").strip()
     update_name = request.GET.get("update_name", "").strip()
@@ -320,6 +357,7 @@ def project_master_list(request):
             "update_code": update_code,
             "update_name": update_name,
             "show_update_panel": show_update_panel,
+            "update_now": timezone.localtime().strftime("%Y-%m-%d %H:%M"),
         },
     )
 

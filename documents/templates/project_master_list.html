@@ -848,11 +848,11 @@
                             </div>
                             <div class="field">
                                 <label>项目名称</label>
-                                <input type="text" name="project_name" value="{{ update_target.project_name }}">
+                                <input type="text" name="project_name" value="{{ update_target.project_name }}" required>
                             </div>
                             <div class="field">
                                 <label>项目机构</label>
-                                <select name="org_code">
+                                <select name="org_code" required>
                                     <option value="{{ update_target.org_code }}">{{ update_target.org_name }}</option>
                                     {% for item in dicts.ORG %}
                                         <option value="{{ item.code }}" data-name="{{ item.name }}">{{ item.name }}</option>
@@ -866,7 +866,7 @@
                             </div>
                             <div class="field">
                                 <label>所在省</label>
-                                <select name="province_code">
+                                <select name="province_code" required>
                                     <option value="{{ update_target.province_code }}">{{ update_target.province_code }}</option>
                                     {% for item in dicts.PROVINCE %}
                                         <option value="{{ item.code }}">{{ item.name }}</option>
@@ -875,7 +875,7 @@
                             </div>
                             <div class="field">
                                 <label>业务板块</label>
-                                <select name="business_unit">
+                                <select name="business_unit" required>
                                     <option value="{{ update_target.business_unit }}">{{ update_target.business_unit }}</option>
                                     {% for item in dicts.BUSINESS_UNIT %}
                                         <option value="{{ item.code }}">{{ item.name }}</option>
@@ -884,7 +884,7 @@
                             </div>
                             <div class="field">
                                 <label>承担部门</label>
-                                <select name="dept">
+                                <select name="dept" required>
                                     <option value="{{ update_target.dept }}">{{ update_target.dept }}</option>
                                     {% for item in dicts.DEPT %}
                                         <option value="{{ item.code }}">{{ item.name }}</option>
@@ -893,7 +893,7 @@
                             </div>
                             <div class="field">
                                 <label>项目类型</label>
-                                <select name="project_type">
+                                <select name="project_type" required>
                                     <option value="{{ update_target.project_type }}">{{ update_target.project_type }}</option>
                                     {% for item in dicts.PROJECT_TYPE %}
                                         <option value="{{ item.code }}">{{ item.name }}</option>
@@ -902,7 +902,7 @@
                             </div>
                             <div class="field">
                                 <label>项目组织模式</label>
-                                <select name="org_mode">
+                                <select name="org_mode" required>
                                     <option value="{{ update_target.org_mode }}">{{ update_target.org_mode }}</option>
                                     {% for item in dicts.ORG_MODE %}
                                         <option value="{{ item.code }}">{{ item.name }}</option>
@@ -911,7 +911,7 @@
                             </div>
                             <div class="field">
                                 <label>数据状态</label>
-                                <select name="data_status">
+                                <select name="data_status" required>
                                     <option value="{{ update_target.data_status }}">{{ update_target.data_status }}</option>
                                     {% for item in dicts.DATA_STATUS %}
                                         <option value="{{ item.code }}">{{ item.name }}</option>
@@ -920,14 +920,14 @@
                             </div>
                             <div class="field field-sm">
                                 <label>是否执行层</label>
-                                <select name="is_execution_level">
+                                <select name="is_execution_level" required>
                                     <option value="false" {% if not update_target.is_execution_level %}selected{% endif %}>否</option>
                                     <option value="true" {% if update_target.is_execution_level %}selected{% endif %}>是</option>
                                 </select>
                             </div>
                             <div class="field field-sm">
                                 <label>状态</label>
-                                <select name="status">
+                                <select name="status" required>
                                     <option value="启用" {% if update_target.status == "启用" %}selected{% endif %}>启用</option>
                                     <option value="停用" {% if update_target.status == "停用" %}selected{% endif %}>停用</option>
                                     <option value="作废" {% if update_target.status == "作废" %}selected{% endif %}>作废</option>
@@ -937,8 +937,13 @@
                                 <label>更新人</label>
                                 <input type="text" value="{{ request.user.username }}" readonly>
                             </div>
+                            <div class="field field-sm">
+                                <label>更新日期</label>
+                                <input type="text" value="{{ update_now }}" readonly>
+                            </div>
                         </div>
                         <textarea name="remark" placeholder="备注">{{ update_target.remark }}</textarea>
+                        <input type="text" name="update_note" placeholder="修改说明（选填）">
                         <div class="form-actions">
                             <button type="submit" class="btn-add">保存更新</button>
                             <button type="button" class="btn-cancel" onclick="showUpdatePanel()">取消</button>
@@ -951,8 +956,10 @@
                                 <thead>
                                     <tr>
                                         <th>项目编码</th>
-                                        <th>修改前字段</th>
-                                        <th>修改后字段</th>
+                                        <th>选择要修改的字段</th>
+                                        <th>修改前字段信息</th>
+                                        <th>修改后字段信息</th>
+                                        <th>修改说明</th>
                                         <th>更新人</th>
                                         <th>更新日期</th>
                                     </tr>
@@ -961,16 +968,18 @@
                                 {% for log in recent_updates %}
                                     <tr>
                                         <td>{{ log.project_code }}</td>
-                                        <td><pre>{{ log.before_data|default:"无" }}</pre></td>
-                                        <td><pre>{{ log.after_data|default:"无" }}</pre></td>
+                                        <td>{{ log.changed_fields }}</td>
+                                        <td><pre>{{ log.before_summary }}</pre></td>
+                                        <td><pre>{{ log.after_summary }}</pre></td>
+                                        <td>{{ log.change_note|default:"-" }}</td>
                                         <td>{{ log.operator }}</td>
                                         <td>{{ log.created_at }}</td>
                                     </tr>
-                                    {% empty %}
+                                {% empty %}
                                     <tr>
-                                        <td colspan="5">暂无更新记录</td>
+                                        <td colspan="7">暂无更新记录</td>
                                     </tr>
-                                    {% endfor %}
+                                {% endfor %}
                                 </tbody>
                             </table>
                         </div>

@@ -157,6 +157,7 @@ class ProjectMasterLog(models.Model):
     action = models.CharField("动作", max_length=10, choices=ACTION_CHOICES)
     before_data = models.JSONField("修改前", null=True, blank=True)
     after_data = models.JSONField("修改后", null=True, blank=True)
+    change_note = models.CharField("修改说明", max_length=200, blank=True)
     operator = models.CharField("操作人", max_length=50)
     source = models.CharField("来源", max_length=50, blank=True)
     created_at = models.DateTimeField("记录时间", auto_now_add=True)
