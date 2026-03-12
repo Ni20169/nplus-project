@@ -975,7 +975,13 @@
                                     <tr>
                                         <td>{{ approval.id }}</td>
                                         <td>{{ approval.project_code }}</td>
-                                        <td>{{ approval.before_data.project_name|default:"-" }}</td>
+                                        <td>
+                                            {% if approval.approval_type == 'import' %}
+                                                {{ approval.project_name }}
+                                            {% else %}
+                                                {{ approval.before_data.project_name|default:"-" }}
+                                            {% endif %}
+                                        </td>
                                         <td>{{ approval.get_approval_type_display }}</td>
                                         <td>{{ approval.submitter }}</td>
                                         <td>{{ approval.submit_time|date:"Y-m-d H:i" }}</td>
@@ -1557,6 +1563,120 @@
                     </div>
                 </div>
 
+                <!-- 项目列表筛选面板 -->
+                <div class="search-form" id="listFilterPanel" style="display: none;">
+                    <h3>
+                        项目列表筛选
+                        <span class="collapse-btn" id="toggleListFilter">收起</span>
+                    </h3>
+                    <form method="get" action="{% url 'project_master_list' %}">
+                        <input type="hidden" name="list_filter" value="1">
+                        <div class="form-grid">
+                            <div class="field">
+                                <label>项目编码</label>
+                                <input type="text" name="list_project_code" value="{{ list_filter.project_code|default:'' }}" placeholder="输入项目编码">
+                            </div>
+                            <div class="field">
+                                <label>项目名称</label>
+                                <input type="text" name="list_project_name" value="{{ list_filter.project_name|default:'' }}" placeholder="输入项目名称关键词">
+                            </div>
+                            <div class="field">
+                                <label>项目机构名称</label>
+                                <div class="multi-select-dropdown" id="listOrgNameDropdown">
+                                    <div class="multi-select-trigger" onclick="toggleMultiSelect('listOrgNameDropdown')">
+                                        <span class="placeholder">{% if list_filter.org_name %}{{ list_filter.org_name }}{% else %}选择项目机构{% endif %}</span>
+                                        <span class="caret">▼</span>
+                                    </div>
+                                    <div class="multi-select-panel">
+                                        <div class="multi-select-options">
+                                            {% for item in dicts.ORG %}
+                                            <label class="multi-select-option">
+                                                <input type="checkbox" name="list_org_name" value="{{ item.name }}" {% if list_filter.org_name == item.name %}checked{% endif %}>
+                                                <span>{{ item.name }}</span>
+                                            </label>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field field-flex">
+                                <label>所在省</label>
+                                <select name="list_province_code">
+                                    <option value="">选择所在省</option>
+                                    {% for item in dicts.PROVINCE %}
+                                    <option value="{{ item.code }}" {% if list_filter.province_code == item.code %}selected{% endif %}>{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field field-flex">
+                                <label>业务板块</label>
+                                <div class="multi-select-dropdown" id="listBusinessUnitDropdown">
+                                    <div class="multi-select-trigger" onclick="toggleMultiSelect('listBusinessUnitDropdown')">
+                                        <span class="placeholder">{% if list_filter.business_unit %}{{ list_filter.business_unit }}{% else %}选择业务板块{% endif %}</span>
+                                        <span class="caret">▼</span>
+                                    </div>
+                                    <div class="multi-select-panel">
+                                        <div class="multi-select-options">
+                                            {% for item in dicts.BUSINESS_UNIT %}
+                                            <label class="multi-select-option">
+                                                <input type="checkbox" name="list_business_unit" value="{{ item.code }}" {% if list_filter.business_unit == item.code %}checked{% endif %}>
+                                                <span>{{ item.name }}</span>
+                                            </label>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field field-flex">
+                                <label>承担部门</label>
+                                <div class="multi-select-dropdown" id="listDeptDropdown">
+                                    <div class="multi-select-trigger" onclick="toggleMultiSelect('listDeptDropdown')">
+                                        <span class="placeholder">{% if list_filter.dept %}{{ list_filter.dept }}{% else %}选择承担部门{% endif %}</span>
+                                        <span class="caret">▼</span>
+                                    </div>
+                                    <div class="multi-select-panel">
+                                        <div class="multi-select-options">
+                                            {% for item in dicts.DEPT %}
+                                            <label class="multi-select-option">
+                                                <input type="checkbox" name="list_dept" value="{{ item.code }}" {% if list_filter.dept == item.code %}checked{% endif %}>
+                                                <span>{{ item.name }}</span>
+                                            </label>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field field-flex">
+                                <label>数据状态</label>
+                                <select name="list_data_status">
+                                    <option value="">选择数据状态</option>
+                                    {% for item in dicts.DATA_STATUS %}
+                                    <option value="{{ item.code }}" {% if list_filter.data_status == item.code %}selected{% endif %}>{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field field-flex">
+                                <label>项目年份</label>
+                                <select name="list_project_year">
+                                    <option value="">全部</option>
+                                    {% for year in project_years %}
+                                    <option value="{{ year }}" {% if list_filter.project_year == year %}selected{% endif %}>{{ year }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>创建人</label>
+                                <input type="text" name="list_created_by" value="{{ list_filter.created_by|default:'' }}" placeholder="输入创建人">
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-submit">筛选</button>
+                            <a href="{% url 'project_master_list' %}?list_filter=1" class="btn-reset">重置</a>
+                            <a href="{% url 'export_project_list' %}?{{ list_export_params }}" class="btn-export">导出筛选结果</a>
+                        </div>
+                    </form>
+                </div>
+
                 <div class="data-table" id="dataTable">
                     <div class="table-meta">
                         <div>当前匹配：<span id="matchCount">0</span> 条</div>
@@ -1693,6 +1813,7 @@
                 document.getElementById('searchForm').style.display = 'none';
                 document.getElementById('updatePanel').style.display = 'none';
                 document.getElementById('approvalPanel').style.display = 'none';
+                document.getElementById('listFilterPanel').style.display = 'none';
                 document.querySelector('.data-table').style.display = 'none';
                 console.log('showAddForm completed successfully');
             } catch (error) {
@@ -1710,6 +1831,7 @@
             document.getElementById('addForm').style.display = 'none';
             document.getElementById('searchForm').style.display = 'none';
             document.getElementById('updatePanel').style.display = 'none';
+            document.getElementById('listFilterPanel').style.display = 'none';
             document.querySelector('.data-table').style.display = 'block';
         }
 
@@ -1761,6 +1883,7 @@
                 document.getElementById('addForm').style.display = 'none';
                 document.getElementById('updatePanel').style.display = 'none';
                 document.getElementById('approvalPanel').style.display = 'none';
+                document.getElementById('listFilterPanel').style.display = 'none';
                 document.querySelector('.data-table').style.display = 'block';
                 document.getElementById('searchForm').classList.remove('collapsed');
                 const toggleBtn = document.getElementById('toggleSearchFields');
@@ -1780,6 +1903,7 @@
                 document.getElementById('addForm').style.display = 'none';
                 document.getElementById('searchForm').style.display = 'none';
                 document.getElementById('approvalPanel').style.display = 'none';
+                document.getElementById('listFilterPanel').style.display = 'none';
                 document.querySelector('.data-table').style.display = 'none';
                 document.getElementById('updatePanel').classList.remove('collapsed');
                 const toggleBtn = document.getElementById('toggleUpdatePanel');
@@ -1817,6 +1941,7 @@
                 document.getElementById('searchForm').style.display = 'none';
                 document.getElementById('updatePanel').style.display = 'none';
                 document.getElementById('approvalPanel').style.display = 'none';
+                document.getElementById('listFilterPanel').style.display = 'block';
                 document.querySelector('.data-table').style.display = 'block';
                 console.log('refreshList completed successfully');
             } catch (error) {

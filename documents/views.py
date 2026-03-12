@@ -215,53 +215,103 @@ def project_master_list(request):
         show_update_panel = True
 
     qs = ProjectMaster.objects.filter(is_deleted=False)
-    search = {
-        "project_code": request.GET.get("project_code", "").strip(),
-        "project_name": request.GET.get("project_name", "").strip(),
-        "org_name": request.GET.get("org_name", "").strip(),
-        "parent_pj_code": request.GET.get("parent_pj_code", "").strip(),
-        "province_code": request.GET.get("province_code", "").strip(),
-        "business_unit": request.GET.get("business_unit", "").strip(),
-        "dept": request.GET.get("dept", "").strip(),
-        "project_type": request.GET.get("project_type", "").strip(),
-        "org_mode": request.GET.get("org_mode", "").strip(),
-        "data_status": request.GET.get("data_status", "").strip(),
-        "is_execution_level": request.GET.get("is_execution_level", "").strip(),
-        "project_year": request.GET.get("project_year", "").strip(),
-        "created_by": request.GET.get("created_by", "").strip(),
-        "remark": request.GET.get("remark", "").strip(),
-    }
+    
+    # 检查是否是项目列表筛选模式
+    is_list_filter = request.GET.get("list_filter") == "1"
+    
+    if is_list_filter:
+        # 项目列表独立筛选
+        list_filter = {
+            "project_code": request.GET.get("list_project_code", "").strip(),
+            "project_name": request.GET.get("list_project_name", "").strip(),
+            "org_name": request.GET.get("list_org_name", "").strip(),
+            "province_code": request.GET.get("list_province_code", "").strip(),
+            "business_unit": request.GET.get("list_business_unit", "").strip(),
+            "dept": request.GET.get("list_dept", "").strip(),
+            "data_status": request.GET.get("list_data_status", "").strip(),
+            "project_year": request.GET.get("list_project_year", "").strip(),
+            "created_by": request.GET.get("list_created_by", "").strip(),
+        }
+        
+        if list_filter["project_code"]:
+            qs = qs.filter(project_code__icontains=list_filter["project_code"])
+        if list_filter["project_name"]:
+            qs = qs.filter(project_name__icontains=list_filter["project_name"])
+        if list_filter["org_name"]:
+            qs = qs.filter(org_name__icontains=list_filter["org_name"])
+        if list_filter["province_code"]:
+            qs = qs.filter(province_code=list_filter["province_code"])
+        if list_filter["business_unit"]:
+            qs = qs.filter(business_unit=list_filter["business_unit"])
+        if list_filter["dept"]:
+            qs = qs.filter(dept=list_filter["dept"])
+        if list_filter["data_status"]:
+            qs = qs.filter(data_status=list_filter["data_status"])
+        if list_filter["project_year"]:
+            qs = qs.filter(project_year__icontains=list_filter["project_year"])
+        if list_filter["created_by"]:
+            qs = qs.filter(created_by__icontains=list_filter["created_by"])
+        
+        search = {k: "" for k in [
+            "project_code", "project_name", "org_name", "parent_pj_code",
+            "province_code", "business_unit", "dept", "project_type",
+            "org_mode", "data_status", "is_execution_level", "project_year",
+            "created_by", "remark"
+        ]}
+    else:
+        # 查询项目筛选
+        search = {
+            "project_code": request.GET.get("project_code", "").strip(),
+            "project_name": request.GET.get("project_name", "").strip(),
+            "org_name": request.GET.get("org_name", "").strip(),
+            "parent_pj_code": request.GET.get("parent_pj_code", "").strip(),
+            "province_code": request.GET.get("province_code", "").strip(),
+            "business_unit": request.GET.get("business_unit", "").strip(),
+            "dept": request.GET.get("dept", "").strip(),
+            "project_type": request.GET.get("project_type", "").strip(),
+            "org_mode": request.GET.get("org_mode", "").strip(),
+            "data_status": request.GET.get("data_status", "").strip(),
+            "is_execution_level": request.GET.get("is_execution_level", "").strip(),
+            "project_year": request.GET.get("project_year", "").strip(),
+            "created_by": request.GET.get("created_by", "").strip(),
+            "remark": request.GET.get("remark", "").strip(),
+        }
 
-    if search["project_code"]:
-        qs = qs.filter(project_code__icontains=search["project_code"])
-    if search["project_name"]:
-        qs = qs.filter(project_name__icontains=search["project_name"])
-    if search["org_name"]:
-        qs = qs.filter(org_name__icontains=search["org_name"])
-    if search["parent_pj_code"]:
-        qs = qs.filter(parent_pj_code__icontains=search["parent_pj_code"])
-    if search["province_code"]:
-        qs = qs.filter(province_code=search["province_code"])
-    if search["business_unit"]:
-        qs = qs.filter(business_unit=search["business_unit"])
-    if search["dept"]:
-        qs = qs.filter(dept=search["dept"])
-    if search["project_type"]:
-        qs = qs.filter(project_type=search["project_type"])
-    if search["org_mode"]:
-        qs = qs.filter(org_mode=search["org_mode"])
-    if search["data_status"]:
-        qs = qs.filter(data_status=search["data_status"])
-    if search["is_execution_level"] == "true":
-        qs = qs.filter(is_execution_level=True)
-    if search["is_execution_level"] == "false":
-        qs = qs.filter(is_execution_level=False)
-    if search["project_year"]:
-        qs = qs.filter(project_year__icontains=search["project_year"])
-    if search["created_by"]:
-        qs = qs.filter(created_by__icontains=search["created_by"])
-    if search["remark"]:
-        qs = qs.filter(remark__icontains=search["remark"])
+        if search["project_code"]:
+            qs = qs.filter(project_code__icontains=search["project_code"])
+        if search["project_name"]:
+            qs = qs.filter(project_name__icontains=search["project_name"])
+        if search["org_name"]:
+            qs = qs.filter(org_name__icontains=search["org_name"])
+        if search["parent_pj_code"]:
+            qs = qs.filter(parent_pj_code__icontains=search["parent_pj_code"])
+        if search["province_code"]:
+            qs = qs.filter(province_code=search["province_code"])
+        if search["business_unit"]:
+            qs = qs.filter(business_unit=search["business_unit"])
+        if search["dept"]:
+            qs = qs.filter(dept=search["dept"])
+        if search["project_type"]:
+            qs = qs.filter(project_type=search["project_type"])
+        if search["org_mode"]:
+            qs = qs.filter(org_mode=search["org_mode"])
+        if search["data_status"]:
+            qs = qs.filter(data_status=search["data_status"])
+        if search["is_execution_level"] == "true":
+            qs = qs.filter(is_execution_level=True)
+        if search["is_execution_level"] == "false":
+            qs = qs.filter(is_execution_level=False)
+        if search["project_year"]:
+            qs = qs.filter(project_year__icontains=search["project_year"])
+        if search["created_by"]:
+            qs = qs.filter(created_by__icontains=search["created_by"])
+        if search["remark"]:
+            qs = qs.filter(remark__icontains=search["remark"])
+        
+        list_filter = {k: "" for k in [
+            "project_code", "project_name", "org_name", "province_code",
+            "business_unit", "dept", "data_status", "project_year", "created_by"
+        ]}
 
     projects = list(qs.order_by("-created_at"))
     name_map = _dict_name_map(dicts)
@@ -360,6 +410,16 @@ def project_master_list(request):
 
     # 检查是否是新增项目表单提交后的显示
     show_add_form = request.method == "POST" and request.POST.get("form_type") == "create"
+    
+    # 构建项目列表导出参数
+    list_export_params = "&".join([f"{k}={v}" for k, v in list_filter.items() if v])
+    if list_export_params:
+        list_export_params = "list_filter=1&" + list_export_params
+    else:
+        list_export_params = "list_filter=1"
+    
+    # 获取项目年份列表
+    project_years = sorted(set([p.project_year for p in ProjectMaster.objects.filter(is_deleted=False).exclude(project_year="").values_list("project_year", flat=True)]), reverse=True)
 
     return render(
         request,
@@ -369,6 +429,10 @@ def project_master_list(request):
             "dicts": dicts,
             "latest_errors": latest_errors,
             "search": search,
+            "list_filter": list_filter,
+            "is_list_filter": is_list_filter,
+            "list_export_params": list_export_params,
+            "project_years": project_years,
             "recent_updates": recent_updates,
             "update_target": update_target,
             "update_code": update_code,
@@ -449,6 +513,92 @@ def export_project_template(request):
 
 
 @login_required
+def export_project_list(request):
+    """导出项目列表（支持筛选条件）"""
+    qs = ProjectMaster.objects.filter(is_deleted=False)
+    
+    # 应用筛选条件
+    if request.GET.get("list_filter") == "1":
+        if request.GET.get("list_project_code"):
+            qs = qs.filter(project_code__icontains=request.GET.get("list_project_code").strip())
+        if request.GET.get("list_project_name"):
+            qs = qs.filter(project_name__icontains=request.GET.get("list_project_name").strip())
+        if request.GET.get("list_org_name"):
+            qs = qs.filter(org_name__icontains=request.GET.get("list_org_name").strip())
+        if request.GET.get("list_province_code"):
+            qs = qs.filter(province_code=request.GET.get("list_province_code").strip())
+        if request.GET.get("list_business_unit"):
+            qs = qs.filter(business_unit=request.GET.get("list_business_unit").strip())
+        if request.GET.get("list_dept"):
+            qs = qs.filter(dept=request.GET.get("list_dept").strip())
+        if request.GET.get("list_data_status"):
+            qs = qs.filter(data_status=request.GET.get("list_data_status").strip())
+        if request.GET.get("list_project_year"):
+            qs = qs.filter(project_year__icontains=request.GET.get("list_project_year").strip())
+        if request.GET.get("list_created_by"):
+            qs = qs.filter(created_by__icontains=request.GET.get("list_created_by").strip())
+    
+    dicts = _load_dicts()
+    name_map = _dict_name_map(dicts)
+    
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "项目列表"
+    headers = [
+        "项目编码",
+        "项目名称",
+        "项目机构名称",
+        "上级PJ编码",
+        "所在省",
+        "所在市",
+        "业务板块",
+        "承担部门",
+        "项目类型",
+        "组织模式",
+        "数据状态",
+        "是否执行层",
+        "项目年份",
+        "创建人",
+        "创建时间",
+        "备注",
+    ]
+    ws.append(headers)
+    
+    for project in qs.order_by("-created_at"):
+        ws.append([
+            project.project_code,
+            project.project_name,
+            project.org_name,
+            project.parent_pj_code or "",
+            name_map.get("PROVINCE", {}).get(project.province_code, project.province_code),
+            name_map.get("CITY", {}).get(project.city_code, project.city_code or ""),
+            name_map.get("BUSINESS_UNIT", {}).get(project.business_unit, project.business_unit or ""),
+            name_map.get("DEPT", {}).get(project.dept, project.dept or ""),
+            name_map.get("PROJECT_TYPE", {}).get(project.project_type, project.project_type or ""),
+            name_map.get("ORG_MODE", {}).get(project.org_mode, project.org_mode or ""),
+            name_map.get("DATA_STATUS", {}).get(project.data_status, project.data_status or ""),
+            "是" if project.is_execution_level else "否",
+            project.project_year or "",
+            project.created_by or "",
+            project.created_at.strftime("%Y-%m-%d %H:%M") if project.created_at else "",
+            project.remark or "",
+        ])
+    
+    # 设置列宽
+    for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P']:
+        ws.column_dimensions[col].width = 20
+    ws.column_dimensions['B'].width = 30
+    ws.column_dimensions['C'].width = 30
+    
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = f"attachment; filename=project_list_{timezone.localtime().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    wb.save(response)
+    return response
+
+
+@login_required
 def import_project_master(request):
     if request.method != "POST":
         return redirect("project_master_list")
@@ -458,123 +608,51 @@ def import_project_master(request):
         messages.error(request, "请选择要导入的文件")
         return redirect("project_master_list")
 
-    dicts = _load_dicts()
-    name_map = _dict_name_map(dicts)
-    batch = ImportBatch.objects.create(
-        batch_no=uuid.uuid4().hex[:12],
-        source_file=file.name,
-        imported_by=request.user.username,
-    )
-
-    wb = load_workbook(file, data_only=True)
-    ws = wb.active
-    headers = [str(cell.value).strip() if cell.value else "" for cell in ws[1]]
-    header_map = {
-        "项目主数据编码": "project_code",
-        "项目名称": "project_name",
-        "项目机构名称": "org_name",
-        "上级PJ编码": "parent_pj_code",
-        "所在省": "province_code",
-        "所在市": "city_code",
-        "业务板块": "business_unit",
-        "项目承担部门": "dept",
-        "项目类型": "project_type",
-        "项目组织模式": "org_mode",
-        "主数据系统数据状态": "data_status",
-        "是否为执行层": "is_execution_level",
-        "备注": "remark",
-    }
-
-    field_idx = {}
-    for idx, header in enumerate(headers):
-        field = header_map.get(header)
-        if field:
-            field_idx[field] = idx
-
-    required_fields = [
-        "project_code",
-        "project_name",
-        "org_name",
-        "province_code",
-        "business_unit",
-        "dept",
-        "project_type",
-        "org_mode",
-        "data_status",
-        "is_execution_level",
-    ]
-
-    success = 0
-    failure = 0
-    total = 0
-
-    for row_index, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
-        total += 1
-        row_data = {}
-        for field, idx in field_idx.items():
-            row_data[field] = (row[idx] if idx < len(row) else "") or ""
-
-        missing = [field for field in required_fields if not row_data.get(field)]
-        if missing:
-            ImportError.objects.create(
-                batch=batch,
-                row_number=row_index,
-                field_name=",".join(missing),
-                error_message="必填字段缺失",
-                raw_data=row_data,
-            )
-            failure += 1
-            continue
-
-
-        row_data["city_code"] = row_data.get("city_code") or row_data.get("province_code")
-        row_data["parent_pj_code"] = row_data.get("parent_pj_code") or None
-        row_data["is_execution_level"] = str(row_data.get("is_execution_level")).strip() in [
-            "true",
-            "True",
-            "是",
-            "1",
-        ]
-        if row_data.get("project_code") and len(str(row_data.get("project_code"))) >= 6:
-            row_data["project_year"] = str(row_data.get("project_code"))[2:6]
-        else:
-            row_data["project_year"] = ""
-        row_data["created_by"] = request.user.username
-        row_data["updated_by"] = request.user.username
-
-        try:
-            with transaction.atomic():
-                project = ProjectMaster(**row_data)
-                project.full_clean()
-                project.save()
-                ProjectMasterLog.objects.create(
-                    project_code=project.project_code,
-                    action="import",
-                    after_data=row_data,
-                    operator=request.user.username,
-                    source="import",
-                )
-            success += 1
-        except Exception as exc:
-            ImportError.objects.create(
-                batch=batch,
-                row_number=row_index,
-                field_name="",
-                error_message=str(exc),
-                raw_data=row_data,
-            )
-            failure += 1
-
-    batch.total_count = total
-    batch.success_count = success
-    batch.fail_count = failure
-    batch.save(update_fields=["total_count", "success_count", "fail_count"])
-
-    if failure:
-        messages.warning(request, f"导入完成，成功 {success} 条，失败 {failure} 条。")
-    else:
-        messages.success(request, f"导入完成，成功 {success} 条。")
-    return redirect("project_master_list")
+    # 保存上传的文件到临时位置
+    import tempfile
+    import os
+    
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_file:
+        for chunk in file.chunks():
+            tmp_file.write(chunk)
+        tmp_file_path = tmp_file.name
+    
+    try:
+        # 验证文件内容
+        wb = load_workbook(tmp_file_path, data_only=True)
+        ws = wb.active
+        headers = [str(cell.value).strip() if cell.value else "" for cell in ws[1]]
+        
+        # 检查必要的列是否存在
+        required_columns = ["项目主数据编码", "项目名称"]
+        missing_columns = [col for col in required_columns if col not in headers]
+        if missing_columns:
+            os.unlink(tmp_file_path)
+            messages.error(request, f"导入文件缺少必要的列: {', '.join(missing_columns)}")
+            return redirect("project_master_list")
+        
+        # 统计导入数据条数
+        total_rows = ws.max_row - 1  # 减去表头
+        
+        # 创建导入审批记录
+        from .models import ProjectApproval
+        approval = ProjectApproval.objects.create(
+            project_code=f"IMPORT_{uuid.uuid4().hex[:8].upper()}",
+            project_name=f"批量导入 {total_rows} 条项目数据",
+            action_type="import",
+            submit_by=request.user.username,
+            note=f"导入文件: {file.name}, 预计导入 {total_rows} 条数据",
+            import_file_path=tmp_file_path,
+        )
+        
+        messages.success(request, f"导入申请已提交，共 {total_rows} 条数据，等待倪明珠审批。")
+        return redirect("project_master_list")
+        
+    except Exception as exc:
+        if os.path.exists(tmp_file_path):
+            os.unlink(tmp_file_path)
+        messages.error(request, f"导入文件验证失败: {str(exc)}")
+        return redirect("project_master_list")
 
 
 @login_required
@@ -760,6 +838,19 @@ def approve_action(request, approval_id):
                     operator=approval.submitter,
                     source="approval",
                 )
+        
+        # 执行导入操作
+        elif approval.approval_type == "import":
+            if approval.import_file_path and os.path.exists(approval.import_file_path):
+                try:
+                    _process_import_file(approval.import_file_path, approval.submitter)
+                    messages.success(request, f"导入文件已处理完成")
+                except Exception as exc:
+                    messages.error(request, f"导入处理失败: {str(exc)}")
+                    return redirect("approval_list")
+            else:
+                messages.error(request, "导入文件不存在或已过期")
+                return redirect("approval_list")
 
         approval.status = "approved"
         approval.approve_time = timezone.now()
@@ -769,6 +860,11 @@ def approve_action(request, approval_id):
         messages.success(request, f"已批准 {approval.submitter} 的{approval.get_approval_type_display()}申请")
 
     elif action == "reject":
+        # 如果拒绝导入申请，删除临时文件
+        if approval.approval_type == "import" and approval.import_file_path:
+            if os.path.exists(approval.import_file_path):
+                os.unlink(approval.import_file_path)
+        
         approval.status = "rejected"
         approval.approve_time = timezone.now()
         approval.approve_note = approve_note
@@ -777,6 +873,111 @@ def approve_action(request, approval_id):
         messages.success(request, f"已拒绝 {approval.submitter} 的{approval.get_approval_type_display()}申请")
 
     return redirect("approval_list")
+
+
+def _process_import_file(file_path, submitter):
+    """处理导入文件"""
+    from openpyxl import load_workbook
+    
+    dicts = _load_dicts()
+    name_map = _dict_name_map(dicts)
+    
+    wb = load_workbook(file_path, data_only=True)
+    ws = wb.active
+    headers = [str(cell.value).strip() if cell.value else "" for cell in ws[1]]
+    header_map = {
+        "项目主数据编码": "project_code",
+        "项目名称": "project_name",
+        "项目机构名称": "org_name",
+        "上级PJ编码": "parent_pj_code",
+        "所在省": "province_code",
+        "所在市": "city_code",
+        "业务板块": "business_unit",
+        "项目承担部门": "dept",
+        "项目类型": "project_type",
+        "项目组织模式": "org_mode",
+        "主数据系统数据状态": "data_status",
+        "是否为执行层": "is_execution_level",
+        "备注": "remark",
+    }
+
+    field_idx = {}
+    for idx, header in enumerate(headers):
+        field = header_map.get(header)
+        if field:
+            field_idx[field] = idx
+
+    required_fields = [
+        "project_code",
+        "project_name",
+        "org_name",
+        "province_code",
+        "business_unit",
+        "dept",
+        "project_type",
+        "org_mode",
+        "data_status",
+        "is_execution_level",
+    ]
+
+    success = 0
+    failure = 0
+
+    for row_index, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+        row_data = {}
+        for field, idx in field_idx.items():
+            row_data[field] = (row[idx] if idx < len(row) else "") or ""
+
+        missing = [field for field in required_fields if not row_data.get(field)]
+        if missing:
+            failure += 1
+            continue
+
+        row_data["city_code"] = row_data.get("city_code") or row_data.get("province_code")
+        row_data["parent_pj_code"] = row_data.get("parent_pj_code") or None
+        row_data["is_execution_level"] = str(row_data.get("is_execution_level")).strip() in [
+            "true", "True", "是", "1",
+        ]
+        if row_data.get("project_code") and len(str(row_data.get("project_code"))) >= 6:
+            row_data["project_year"] = str(row_data.get("project_code"))[2:6]
+        else:
+            row_data["project_year"] = ""
+        row_data["created_by"] = submitter
+        row_data["updated_by"] = submitter
+
+        try:
+            with transaction.atomic():
+                # 检查项目是否已存在
+                existing = ProjectMaster.objects.filter(project_code=row_data["project_code"]).first()
+                if existing:
+                    # 更新现有项目
+                    for key, value in row_data.items():
+                        setattr(existing, key, value)
+                    existing.save()
+                else:
+                    # 创建新项目
+                    project = ProjectMaster(**row_data)
+                    project.full_clean()
+                    project.save()
+                
+                ProjectMasterLog.objects.create(
+                    project_code=row_data["project_code"],
+                    action="import",
+                    after_data=row_data,
+                    operator=submitter,
+                    source="approval_import",
+                )
+            success += 1
+        except Exception:
+            failure += 1
+    
+    # 删除临时文件
+    os.unlink(file_path)
+    
+    if failure > 0:
+        raise Exception(f"导入完成，成功 {success} 条，失败 {failure} 条")
+    
+    return success
 
 
 @login_required
