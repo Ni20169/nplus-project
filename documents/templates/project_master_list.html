@@ -199,15 +199,15 @@
         }
 
         .btn-add {
-            background-color: rgba(127, 230, 168, 0.12);
-            border-color: #7fe6a8;
-            color: #24563a;
+            background-color: #2ecc71;
+            border-color: #2ecc71;
+            color: #fff;
             font-weight: 600;
         }
         .btn-search {
-            background-color: rgba(127, 182, 255, 0.14);
-            border-color: #7fb6ff;
-            color: #23477f;
+            background-color: #3498db;
+            border-color: #3498db;
+            color: #fff;
             font-weight: 600;
         }
         .btn-refresh { background-color: #f39c12; }
@@ -237,7 +237,7 @@
             font-size: 16px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: 8px;
         }
 
         .collapse-btn {
@@ -281,9 +281,14 @@
         }
 
         .form-grid {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 12px;
+        }
+
+        .form-grid .field {
+            flex: 1 1 320px;
+            min-width: 260px;
         }
 
         .form-actions {
