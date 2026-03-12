@@ -70,6 +70,23 @@
             font-weight: 600;
         }
 
+        .menu-toggle.level-1 {
+            color: #f39c12;
+            font-weight: 700;
+        }
+
+        .menu-toggle .caret,
+        .menu-level-2 .caret {
+            font-size: 12px;
+            opacity: 0.8;
+            transition: transform 0.2s ease;
+        }
+
+        .menu-toggle.open .caret,
+        .menu-level-2.open .caret {
+            transform: rotate(180deg);
+        }
+
         .menu-list {
             list-style: none;
             margin-top: 8px;
@@ -92,6 +109,20 @@
             padding: 6px 8px;
             border-radius: 4px;
             transition: background-color 0.2s;
+        }
+
+        .menu-level-2 {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 600;
+            background: rgba(255,255,255,0.04);
+        }
+
+        .menu-level-3 a {
+            padding-left: 14px;
+            font-size: 13px;
+            color: #ecf0f1;
         }
 
         .menu-list li a:hover {
@@ -237,6 +268,31 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.06);
         }
 
+        .message-stack {
+            margin: 8px 0 12px;
+            display: grid;
+            gap: 6px;
+        }
+
+        .message {
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            border: 1px solid transparent;
+        }
+
+        .message.success {
+            background: #eaf9f0;
+            border-color: #c8e6c9;
+            color: #2e7d32;
+        }
+
+        .message.error {
+            background: #fff1f1;
+            border-color: #ffd5d5;
+            color: #c0392b;
+        }
+
         .search-form h3 {
             margin-bottom: 10px;
             font-size: 16px;
@@ -276,7 +332,10 @@
             gap: 8px;
         }
 
-        .update-panel.collapsed .update-table {
+        .update-panel.collapsed .update-table,
+        .update-panel.collapsed .update-filter,
+        .update-panel.collapsed .update-form,
+        .update-panel.collapsed .hint {
             display: none;
         }
 
@@ -316,17 +375,18 @@
         .form-grid {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px 10px;
+            gap: 6px 8px;
         }
 
         .form-grid .field {
-            flex: 1 1 240px;
-            min-width: 220px;
+            flex: 1 1 200px;
+            min-width: 180px;
         }
 
         .form-grid .field-sm {
-            flex: 1 1 180px;
-            min-width: 160px;
+            flex: 0 0 150px;
+            min-width: 140px;
+            max-width: 180px;
         }
 
         .form-grid .field-md {
@@ -518,7 +578,7 @@
     <div class="container" id="layoutRoot">
         <div class="sidebar" id="sidebar">
             <div class="menu-section">
-                <div class="menu-toggle" data-target="menu-system">系统管理<span>▸</span></div>
+                <div class="menu-toggle level-1 open" data-target="menu-system">系统管理<span class="caret">▼</span></div>
                 <ul class="menu-list show" id="menu-system">
                     <li><a href="{% url 'user_list' %}">用户管理</a></li>
                     {% if request.user.is_staff %}
@@ -528,11 +588,11 @@
                 </ul>
             </div>
             <div class="menu-section">
-                <div class="menu-toggle" data-target="menu-projects">项目管理<span>▸</span></div>
+                <div class="menu-toggle level-1 open" data-target="menu-projects">项目管理<span class="caret">▼</span></div>
                 <ul class="menu-list show" id="menu-projects">
                     <li>
-                        <a href="#" onclick="toggleSubMenu('menu-project-master')">项目主数据管理</a>
-                        <ul class="menu-list show" id="menu-project-master">
+                        <a class="menu-level-2 open" href="#" onclick="toggleSubMenu('menu-project-master', this); return false;">项目主数据管理<span class="caret">▼</span></a>
+                        <ul class="menu-list show menu-level-3" id="menu-project-master">
                             <li><a href="#" onclick="showAddForm()">新增项目</a></li>
                             <li><a href="#" onclick="showSearchForm()">查询项目</a></li>
                             <li><a href="#" onclick="showUpdatePanel()">信息更新</a></li>
@@ -542,7 +602,7 @@
                 </ul>
             </div>
             <div class="menu-section">
-                <div class="menu-toggle" data-target="menu-report">数据统计<span>▸</span></div>
+                <div class="menu-toggle level-1" data-target="menu-report">数据统计<span class="caret">▼</span></div>
                 <ul class="menu-list" id="menu-report">
                     <li><a href="#">项目概览</a></li>
                     <li><a href="#">导入记录</a></li>
@@ -579,6 +639,14 @@
                         <input type="file" name="import_file" accept=".xlsx" required>
                     </form>
                 </div>
+
+                {% if messages %}
+                <div class="message-stack">
+                    {% for message in messages %}
+                        <div class="message {{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
 
                 {% if latest_errors %}
                 <div class="error-panel">
@@ -724,53 +792,41 @@
                     </form>
                 </div>
 
-                <div class="update-panel" id="updatePanel" style="display: none;">
+                <div class="update-panel" id="updatePanel" style="display: {% if show_update_panel %}block{% else %}none{% endif %};">
                     <h3>
                         信息更新
                         <span class="collapse-btn" id="toggleUpdatePanel">收起</span>
                     </h3>
-                    <form method="get" class="form-grid">
-                        <div class="field">
+                    <form method="get" class="form-grid update-filter">
+                        <div class="field field-md">
                             <label>项目编码</label>
                             <input type="text" name="update_code" value="{{ update_code|default:'' }}" placeholder="请输入项目编码">
                         </div>
-                        <div class="field">
+                        <div class="field field-md">
                             <label>项目名称</label>
                             <input type="text" name="update_name" value="{{ update_name|default:'' }}" placeholder="请输入项目名称">
+                        </div>
+                        <div class="field field-md">
+                            <label>选择更新项目</label>
+                            <select name="update_target" id="updateTargetSelect">
+                                <option value="">请选择项目</option>
+                                {% for item in update_candidates %}
+                                    <option value="{{ item.project_code }}" {% if update_target and update_target.project_code == item.project_code %}selected{% endif %}>
+                                        {{ item.project_code }} - {{ item.project_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
                         </div>
                         <div class="field field-sm" style="align-self:flex-end;">
                             <button class="btn-search" type="submit">查询</button>
                         </div>
                     </form>
-                    <div class="table-wrapper update-table">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>项目编码</th>
-                                    <th>项目名称</th>
-                                    <th>选择更新</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for item in update_candidates %}
-                                <tr>
-                                    <td>{{ item.project_code }}</td>
-                                    <td>{{ item.project_name }}</td>
-                                    <td>
-                                        <a class="btn-edit" href="?update_target={{ item.project_code }}">选择</a>
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="3">暂无匹配项目</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                    {% if (update_code or update_name) and not update_candidates %}
+                        <div class="hint">暂无匹配项目</div>
+                    {% endif %}
 
                     {% if update_target %}
-                    <form method="post" class="search-form" style="margin-top: 12px;">
+                    <form method="post" class="search-form update-form" style="margin-top: 12px;">
                         {% csrf_token %}
                         <input type="hidden" name="form_type" value="update">
                         <input type="hidden" name="update_project_code" value="{{ update_target.project_code }}">
@@ -951,7 +1007,6 @@
                                     {% endfor %}
                                 </select>
                             </div>
-                            <input type="hidden" name="city_code" id="citySelect" value="">
                             <div class="field">
                                 <label><span class="required-star">*</span>业务板块</label>
                                 <select name="business_unit" required>
@@ -1026,7 +1081,7 @@
                     </form>
                 </div>
 
-                <div class="data-table">
+                <div class="data-table" {% if show_update_panel %}style="display: none;"{% endif %}>
                     <div class="table-meta">
                         <div>当前匹配：<span id="matchCount">0</span> 条</div>
                         <div>总记录：<span id="totalCount">{{ projects|length }}</span> 条</div>
@@ -1147,6 +1202,7 @@
             document.getElementById('updatePanel').style.display = 'block';
             document.getElementById('addForm').style.display = 'none';
             document.getElementById('searchForm').style.display = 'none';
+            document.querySelector('.data-table').style.display = 'none';
             document.getElementById('updatePanel').classList.remove('collapsed');
             const toggleBtn = document.getElementById('toggleUpdatePanel');
             if (toggleBtn) {
@@ -1158,10 +1214,13 @@
             document.getElementById('searchForm').style.display = 'none';
         }
 
-        function toggleSubMenu(id) {
+        function toggleSubMenu(id, triggerEl) {
             const target = document.getElementById(id);
             if (target) {
-                target.classList.toggle('show');
+                const isOpen = target.classList.toggle('show');
+                if (triggerEl) {
+                    triggerEl.classList.toggle('open', isOpen);
+                }
             }
         }
 
@@ -1180,27 +1239,17 @@
             });
         }
 
-        const provinceSelect = document.getElementById('provinceSelect');
-        const citySelect = document.getElementById('citySelect');
-        if (provinceSelect && citySelect) {
-            provinceSelect.addEventListener('change', () => {
-                const province = provinceSelect.value;
-                Array.from(citySelect.options).forEach((opt) => {
-                    if (!opt.value) return;
-                    const parent = opt.getAttribute('data-parent');
-                    opt.style.display = parent === province ? 'block' : 'none';
-                });
-                citySelect.value = '';
-            });
-        }
 
         document.querySelectorAll('.menu-toggle').forEach((toggle) => {
+            const targetId = toggle.getAttribute('data-target');
+            const target = document.getElementById(targetId);
+            if (target && target.classList.contains('show')) {
+                toggle.classList.add('open');
+            }
             toggle.addEventListener('click', () => {
-                const targetId = toggle.getAttribute('data-target');
-                const target = document.getElementById(targetId);
-                if (target) {
-                    target.classList.toggle('show');
-                }
+                if (!target) return;
+                const isOpen = target.classList.toggle('show');
+                toggle.classList.toggle('open', isOpen);
             });
         });
 
@@ -1228,6 +1277,15 @@
                 const panel = document.getElementById('updatePanel');
                 panel.classList.toggle('collapsed');
                 toggleUpdatePanel.textContent = panel.classList.contains('collapsed') ? '展开' : '收起';
+            });
+        }
+
+        const updateTargetSelect = document.getElementById('updateTargetSelect');
+        if (updateTargetSelect) {
+            updateTargetSelect.addEventListener('change', () => {
+                if (updateTargetSelect.value) {
+                    updateTargetSelect.form.submit();
+                }
             });
         }
 

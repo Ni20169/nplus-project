@@ -124,13 +124,6 @@
                     {% endfor %}
                 </select>
 
-                <select name="city_code" id="citySelect" required>
-                    <option value="{{ project.city_code }}">{{ project.city_code }}</option>
-                    {% for item in dicts.CITY %}
-                        <option value="{{ item.code }}" data-parent="{{ item.parent_code }}">{{ item.name }}</option>
-                    {% endfor %}
-                </select>
-
                 <select name="business_unit" required>
                     <option value="{{ project.business_unit }}">{{ project.business_unit }}</option>
                     {% for item in dicts.BUSINESS_UNIT %}
@@ -218,18 +211,6 @@
         }
 
         const provinceSelect = document.getElementById('provinceSelect');
-        const citySelect = document.getElementById('citySelect');
-        if (provinceSelect && citySelect) {
-            provinceSelect.addEventListener('change', () => {
-                const province = provinceSelect.value;
-                Array.from(citySelect.options).forEach((opt) => {
-                    if (!opt.value) return;
-                    const parent = opt.getAttribute('data-parent');
-                    opt.style.display = parent === province ? 'block' : 'none';
-                });
-                citySelect.value = '';
-            });
-        }
     </script>
 </body>
 </html>

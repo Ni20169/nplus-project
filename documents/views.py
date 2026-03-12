@@ -96,6 +96,9 @@ def project_master_list(request):
             "remark": request.POST.get("remark", "").strip(),
         }
 
+        if not project_data["city_code"]:
+            project_data["city_code"] = project_data["province_code"]
+
         if project_data["project_code"] and len(project_data["project_code"]) >= 6:
             project_data["project_year"] = project_data["project_code"][2:6]
         else:
@@ -125,6 +128,8 @@ def project_master_list(request):
         except Exception as exc:
             messages.error(request, f"保存失败：{exc}")
 
+    show_update_panel = False
+
     if request.method == "POST" and request.POST.get("form_type") == "update":
         target_code = request.POST.get("update_project_code", "").strip()
         project = ProjectMaster.objects.filter(project_code=target_code, is_deleted=False).first()
@@ -153,6 +158,8 @@ def project_master_list(request):
         project.org_name = request.POST.get("org_name", project.org_name).strip()
         project.parent_pj_code = request.POST.get("parent_pj_code", "").strip() or None
         project.province_code = request.POST.get("province_code", project.province_code).strip()
+        if not project.city_code:
+            project.city_code = project.province_code
         project.business_unit = request.POST.get("business_unit", project.business_unit).strip()
         project.dept = request.POST.get("dept", project.dept).strip()
         project.project_type = request.POST.get("project_type", project.project_type).strip()
@@ -197,6 +204,7 @@ def project_master_list(request):
             messages.error(request, f"更新失败：{exc}")
         except Exception as exc:
             messages.error(request, f"更新失败：{exc}")
+        show_update_panel = True
 
     qs = ProjectMaster.objects.filter(is_deleted=False)
     search = {
@@ -206,7 +214,6 @@ def project_master_list(request):
         "org_code": request.GET.get("org_code", "").strip(),
         "parent_pj_code": request.GET.get("parent_pj_code", "").strip(),
         "province_code": request.GET.get("province_code", "").strip(),
-        "city_code": request.GET.get("city_code", "").strip(),
         "business_unit": request.GET.get("business_unit", "").strip(),
         "dept": request.GET.get("dept", "").strip(),
         "project_type": request.GET.get("project_type", "").strip(),
@@ -231,8 +238,6 @@ def project_master_list(request):
         qs = qs.filter(parent_pj_code__icontains=search["parent_pj_code"])
     if search["province_code"]:
         qs = qs.filter(province_code=search["province_code"])
-    if search["city_code"]:
-        qs = qs.filter(city_code=search["city_code"])
     if search["business_unit"]:
         qs = qs.filter(business_unit=search["business_unit"])
     if search["dept"]:
@@ -297,6 +302,9 @@ def project_master_list(request):
         update_target = ProjectMaster.objects.filter(
             project_code=update_target_code, is_deleted=False
         ).first()
+        show_update_panel = True
+    if update_code or update_name:
+        show_update_panel = True
 
     return render(
         request,
@@ -311,6 +319,7 @@ def project_master_list(request):
             "update_target": update_target,
             "update_code": update_code,
             "update_name": update_name,
+            "show_update_panel": show_update_panel,
         },
     )
 
@@ -327,7 +336,6 @@ def export_project_template(request):
         "项目机构名称",
         "上级PJ编码",
         "所在省",
-        "所在市",
         "业务板块",
         "项目承担部门",
         "项目类型",
@@ -396,7 +404,6 @@ def import_project_master(request):
         "project_name",
         "org_code",
         "province_code",
-        "city_code",
         "business_unit",
         "dept",
         "project_type",
@@ -431,6 +438,7 @@ def import_project_master(request):
         row_data["org_name"] = row_data.get("org_name") or name_map.get("ORG", {}).get(
             str(row_data.get("org_code")).strip(), ""
         )
+        row_data["city_code"] = row_data.get("city_code") or row_data.get("province_code")
         row_data["parent_pj_code"] = row_data.get("parent_pj_code") or None
         row_data["is_execution_level"] = str(row_data.get("is_execution_level")).strip() in [
             "true",
@@ -508,7 +516,7 @@ def project_master_edit(request, project_code):
         project.org_name = request.POST.get("org_name", "").strip()
         project.parent_pj_code = request.POST.get("parent_pj_code", "").strip() or None
         project.province_code = request.POST.get("province_code", "").strip()
-        project.city_code = request.POST.get("city_code", "").strip()
+        project.city_code = request.POST.get("city_code", "").strip() or project.province_code
         project.business_unit = request.POST.get("business_unit", "").strip()
         project.dept = request.POST.get("dept", "").strip()
         project.project_type = request.POST.get("project_type", "").strip()
