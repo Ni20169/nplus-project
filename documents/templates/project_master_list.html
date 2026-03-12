@@ -1099,14 +1099,22 @@
                             </div>
                             <div class="field">
                                 <label>项目机构名称</label>
-                                <select name="org_name">
-                                    <option value="">请选择项目机构</option>
-                                    {% for project in all_projects %}
-                                        <option value="{{ project.org_name }}" {% if search.org_name == project.org_name %}selected{% endif %}>
-                                            {{ project.org_name }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
+                                <div class="multi-select-dropdown" id="orgNameDropdown">
+                                    <div class="multi-select-trigger" onclick="toggleMultiSelect('orgNameDropdown')">
+                                        <span class="placeholder">{% if search.org_name %}{{ search.org_name }}{% else %}选择项目机构{% endif %}</span>
+                                        <span class="caret">▼</span>
+                                    </div>
+                                    <div class="multi-select-panel">
+                                        <div class="multi-select-options">
+                                            {% for item in dicts.ORG %}
+                                            <label class="multi-select-option">
+                                                <input type="checkbox" name="org_name" value="{{ item.name }}" {% if search.org_name == item.name %}checked{% endif %}>
+                                                <span>{{ item.name }}</span>
+                                            </label>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="field">
