@@ -624,6 +624,22 @@
             .form-grid { grid-template-columns: 1fr; }
             .sidebar { display: none; }
         }
+
+        .approval-status {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+
+        .status-approved {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
     </style>
 </head>
 <body>
@@ -786,7 +802,7 @@
                                         <td>{{ approval.get_approval_type_display }}</td>
                                         <td>{{ approval.submitter }}</td>
                                         <td>
-                                            <span style="padding: 2px 8px; border-radius: 10px; font-size: 11px; background: {% if approval.status == 'approved' %}#d4edda{% else %}#f8d7da{% endif %}; color: {% if approval.status == 'approved' %}#155724{% else %}#721c24{% endif %};">
+                                            <span class="approval-status {% if approval.status == 'approved' %}status-approved{% else %}status-rejected{% endif %}">
                                                 {{ approval.get_status_display }}
                                             </span>
                                         </td>
