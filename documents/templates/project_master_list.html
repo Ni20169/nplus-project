@@ -1943,11 +1943,17 @@
 
             const toggleSearchFields = document.getElementById('toggleSearchFields');
             if (toggleSearchFields) {
-                toggleSearchFields.addEventListener('click', () => {
+                toggleSearchFields.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     const form = document.getElementById('searchForm');
+                    console.log('Toggle clicked, form before:', form.classList.contains('collapsed'));
                     form.classList.toggle('collapsed');
+                    console.log('Toggle clicked, form after:', form.classList.contains('collapsed'));
                     toggleSearchFields.textContent = form.classList.contains('collapsed') ? '展开' : '收起';
                 });
+            } else {
+                console.log('toggleSearchFields not found');
             }
 
             const toggleUpdatePanel = document.getElementById('toggleUpdatePanel');
