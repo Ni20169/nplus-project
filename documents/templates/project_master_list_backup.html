@@ -22,9 +22,6 @@
         .container {
             display: flex;
             min-height: 100vh;
-            width: 100%;
-            max-width: 100%;
-            margin: 0 auto;
         }
 
         .container.sidebar-hidden .sidebar {
@@ -165,8 +162,7 @@
             position: relative;
             display: flex;
             flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
+            min-height: calc(100vh - 60px);
         }
 
         .watermark {
@@ -194,136 +190,13 @@
         .content-wrap {
             position: relative;
             z-index: 3;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .action-buttons {
-            flex-shrink: 0;
-        }
-
-        .search-form,
-        .data-table {
-            flex: 1;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-        }
-
-        .table-wrapper {
-            flex: 1;
-            overflow: auto;
-            scrollbar-gutter: stable both-edges;
-            position: relative;
-            max-height: calc(100vh - 250px);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 1600px;
-            table-layout: auto;
-            border-spacing: 0;
-        }
-
-        table thead {
-            position: sticky;
-            top: 0;
-            background: #fff;
-            z-index: 200;
-            box-shadow: 0 2px 2px rgba(0,0,0,0.1);
-        }
-
-        table thead tr:first-child {
-            background: #fff;
-        }
-
-        table thead tr.filter-row {
-            background: #f8f9fa;
-        }
-
-        table thead th {
-            position: sticky;
-            top: 0;
-            background: inherit;
-            z-index: 200;
-        }
-
-        /* 固定列 */
-        table th.sticky-col,
-        table td.sticky-col {
-            position: sticky;
-            left: 0;
-            background: #fff;
-            z-index: 5;
-        }
-
-        table th.col-1,
-        table td.col-1 {
-            left: 0;
-            z-index: 6;
-        }
-
-        table th.col-2,
-        table td.col-2 {
-            left: 120px;
-            z-index: 6;
-        }
-
-        table th.col-3,
-        table td.col-3 {
-            left: 280px;
-            z-index: 6;
-        }
-
-        table thead th.sticky-col {
-            z-index: 101;
-        }
-
-        table thead th.col-1 {
-            left: 0;
-        }
-
-        table thead th.col-2 {
-            left: 120px;
-        }
-
-        table thead th.col-3 {
-            left: 280px;
         }
 
         .page-header {
             display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 12px;
-            margin-bottom: 8px;
-            flex-shrink: 0;
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .header-right {
-            text-align: right;
-        }
-
-        .user-info {
-            display: flex;
             align-items: center;
             gap: 12px;
             margin-bottom: 8px;
-        }
-
-        .system-time {
-            font-size: 14px;
-            color: #666;
         }
 
         .toggle-sidebar-btn {
@@ -334,19 +207,6 @@
             cursor: pointer;
             font-size: 12px;
             color: #333;
-        }
-
-        .logout-btn {
-            color: #3498db;
-            text-decoration: none;
-            font-size: 14px;
-            padding: 4px 8px;
-            border-radius: 4px;
-            transition: background-color 0.2s;
-        }
-
-        .logout-btn:hover {
-            background-color: #e3f2fd;
         }
 
         .main-content h1 {
@@ -466,20 +326,9 @@
             background: #eef3ff;
         }
 
-        .search-form.collapsed {
-            padding-bottom: 8px !important;
-            flex: 0 0 auto !important;
-        }
-
         .search-form.collapsed .form-grid,
-        .search-form.collapsed .form-actions,
-        .search-form.collapsed form .form-grid,
-        .search-form.collapsed form .form-actions {
-            display: none !important;
-        }
-
-        .search-form.collapsed h3 {
-            margin-bottom: 0 !important;
+        .search-form.collapsed .form-actions {
+            display: none;
         }
 
         .update-panel {
@@ -547,85 +396,15 @@
             color: #b5b5b5;
         }
 
-        /* 多选下拉框样式 */
-        .multi-select {
-            position: relative;
-            width: 100%;
-        }
-
-        .multi-select-display {
-            width: 100%;
-            padding: 6px 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background: #fff;
-            cursor: pointer;
-            font-size: 13px;
-            min-height: 32px;
-            line-height: 1.4;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-        }
-
-        .multi-select-display:after {
-            content: '▼';
-            position: absolute;
-            right: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 10px;
-            color: #666;
-        }
-
-        .multi-select.open .multi-select-display:after {
-            content: '▲';
-        }
-
-        .multi-select-dropdown {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: #fff;
-            border: 1px solid #ddd;
-            border-top: none;
-            border-radius: 0 0 4px 4px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 1000;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-
-        .multi-select.open .multi-select-dropdown {
-            display: block;
-        }
-
-        .multi-select-option {
-            display: flex;
-            align-items: center;
-            padding: 6px 8px;
-            cursor: pointer;
-            font-size: 13px;
-        }
-
-        .multi-select-option:hover {
-            background: #f0f0f0;
-        }
-
-        .multi-select-option input[type="checkbox"] {
-            margin-right: 6px;
-            width: auto;
-        }
-
         .form-grid {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 12px 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 8px;
         }
 
         .form-grid .field {
-            min-width: 0;
+            flex: 0 0 16.6667%;
+            min-width: 180px;
         }
 
         .form-grid .field-sm {
@@ -837,41 +616,17 @@
             margin-bottom: 8px;
         }
 
-        @media (max-width: 1400px) {
-            .form-grid { grid-template-columns: repeat(4, 1fr); }
-        }
-
         @media (max-width: 1200px) {
-            .form-grid { grid-template-columns: repeat(3, 1fr); }
-        }
-
-        @media (max-width: 900px) {
-            .form-grid { grid-template-columns: repeat(2, 1fr); }
+            .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
 
         @media (max-width: 768px) {
             .form-grid { grid-template-columns: 1fr; }
             .sidebar { display: none; }
         }
-
-        .approval-status {
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 11px;
-        }
-
-        .status-approved {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .status-rejected {
-            background: #f8d7da;
-            color: #721c24;
-        }
     </style>
 </head>
-<body data-show-update-panel="{% if show_update_panel %}true{% else %}false{% endif %}">
+<body>
     <div class="container" id="layoutRoot">
         <div class="sidebar" id="sidebar">
             <div class="menu-section">
@@ -894,7 +649,6 @@
                             <li><a href="#" onclick="showSearchForm()">查询项目</a></li>
                             <li><a href="#" onclick="showUpdatePanel()">信息更新</a></li>
                             <li><a href="#" onclick="refreshList()">项目列表</a></li>
-                            <li><a href="#" onclick="showApprovalPanel()">审批管理</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -907,6 +661,10 @@
                 </ul>
             </div>
             <div class="resize-handle" id="resizeHandle"></div>
+            <div class="sidebar-footer">
+                <span>当前用户：{{ request.user.username }}</span>
+                <a class="logout-btn" href="{% url 'logout' %}">登出</a>
+            </div>
         </div>
 
         <div class="main-content">
@@ -918,17 +676,8 @@
 
             <div class="content-wrap">
                 <div class="page-header">
-                    <div class="header-left">
-                        <button class="toggle-sidebar-btn" type="button" id="toggleSidebar">隐藏菜单</button>
-                        <h1>项目主数据管理</h1>
-                    </div>
-                    <div class="header-right">
-                        <div class="user-info">
-                            <span>当前用户：{{ request.user.username }}</span>
-                            <a class="logout-btn" href="{% url 'logout' %}">登出</a>
-                        </div>
-                        <div class="system-time" id="systemTime"></div>
-                    </div>
+                    <button class="toggle-sidebar-btn" type="button" id="toggleSidebar">隐藏菜单</button>
+                    <h1>项目主数据管理</h1>
                 </div>
 
                 <div class="action-buttons">
@@ -1036,7 +785,7 @@
                                         <td>{{ approval.get_approval_type_display }}</td>
                                         <td>{{ approval.submitter }}</td>
                                         <td>
-                                            <span class="approval-status {% if approval.status == 'approved' %}status-approved{% else %}status-rejected{% endif %}">
+                                            <span style="padding: 2px 8px; border-radius: 10px; font-size: 11px; background: {% if approval.status == 'approved' %}#d4edda{% else %}#f8d7da{% endif %}; color: {% if approval.status == 'approved' %}#155724{% else %}#721c24{% endif %};">
                                                 {{ approval.get_status_display }}
                                             </span>
                                         </td>
@@ -1102,7 +851,14 @@
                             </div>
                             <div class="field">
                                 <label>项目名称</label>
-                                <input type="text" name="project_name" value="{{ search.project_name|default:'' }}" placeholder="输入项目名称关键词搜索">
+                                <select name="project_name">
+                                    <option value="">请选择项目名称</option>
+                                    {% for project in all_projects %}
+                                        <option value="{{ project.project_name }}" {% if search.project_name == project.project_name %}selected{% endif %}>
+                                            {{ project.project_name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
                             </div>
                             <div class="field">
                                 <label>项目机构名称</label>
@@ -1131,91 +887,89 @@
                             </div>
                             <div class="field">
                                 <label>所在省</label>
-                                <input type="text" name="province_code" placeholder="输入省份关键词搜索">
+                                <select name="province_code">
+                                    <option value="">请选择所在省</option>
+                                    {% for item in dicts.PROVINCE %}
+                                        <option value="{{ item.code }}" {% if search.province_code == item.code %}selected{% endif %}>{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
                             </div>
                             <div class="field">
                                 <label>业务板块</label>
-                                <div class="multi-select" data-name="business_unit">
-                                    <div class="multi-select-display" onclick="toggleMultiSelect(this)" data-default="请选择业务板块">请选择业务板块</div>
-                                    <div class="multi-select-dropdown">
-                                        {% for item in dicts.BUSINESS_UNIT %}
-                                            <label class="multi-select-option">
-                                                <input type="checkbox" value="{{ item.code }}" {% if search.business_unit == item.code %}checked{% endif %}>
-                                                <span>{{ item.name }}</span>
-                                            </label>
-                                        {% endfor %}
-                                    </div>
-                                </div>
+                                <select name="business_unit">
+                                    <option value="">请选择业务板块</option>
+                                    {% for item in dicts.BUSINESS_UNIT %}
+                                        <option value="{{ item.code }}" {% if search.business_unit == item.code %}selected{% endif %}>{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
                             </div>
                             <div class="field">
                                 <label>项目承担部门</label>
-                                <input type="text" name="dept" placeholder="输入部门关键词搜索">
+                                <select name="dept">
+                                    <option value="">请选择项目承担部门</option>
+                                    {% for item in dicts.DEPT %}
+                                        <option value="{{ item.code }}" {% if search.dept == item.code %}selected{% endif %}>{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
                             </div>
                             <div class="field">
                                 <label>项目类型</label>
-                                <div class="multi-select" data-name="project_type">
-                                    <div class="multi-select-display" onclick="toggleMultiSelect(this)" data-default="请选择项目类型">请选择项目类型</div>
-                                    <div class="multi-select-dropdown">
-                                        {% for item in dicts.PROJECT_TYPE %}
-                                            <label class="multi-select-option">
-                                                <input type="checkbox" value="{{ item.code }}" {% if search.project_type == item.code %}checked{% endif %}>
-                                                <span>{{ item.name }}</span>
-                                            </label>
-                                        {% endfor %}
-                                    </div>
-                                </div>
+                                <select name="project_type">
+                                    <option value="">请选择项目类型</option>
+                                    {% for item in dicts.PROJECT_TYPE %}
+                                        <option value="{{ item.code }}" {% if search.project_type == item.code %}selected{% endif %}>{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
                             </div>
                             <div class="field">
                                 <label>项目组织模式</label>
-                                <div class="multi-select" data-name="org_mode">
-                                    <div class="multi-select-display" onclick="toggleMultiSelect(this)" data-default="请选择项目组织模式">请选择项目组织模式</div>
-                                    <div class="multi-select-dropdown">
-                                        {% for item in dicts.ORG_MODE %}
-                                            <label class="multi-select-option">
-                                                <input type="checkbox" value="{{ item.code }}" {% if search.org_mode == item.code %}checked{% endif %}>
-                                                <span>{{ item.name }}</span>
-                                            </label>
-                                        {% endfor %}
-                                    </div>
-                                </div>
+                                <select name="org_mode">
+                                    <option value="">请选择项目组织模式</option>
+                                    {% for item in dicts.ORG_MODE %}
+                                        <option value="{{ item.code }}" {% if search.org_mode == item.code %}selected{% endif %}>{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
                             </div>
                             <div class="field">
                                 <label>主数据系统数据状态</label>
-                                <div class="multi-select" data-name="data_status">
-                                    <div class="multi-select-display" onclick="toggleMultiSelect(this)" data-default="请选择数据状态">请选择数据状态</div>
-                                    <div class="multi-select-dropdown">
-                                        {% for item in dicts.DATA_STATUS %}
-                                            <label class="multi-select-option">
-                                                <input type="checkbox" value="{{ item.code }}" {% if search.data_status == item.code %}checked{% endif %}>
-                                                <span>{{ item.name }}</span>
-                                            </label>
-                                        {% endfor %}
-                                    </div>
-                                </div>
+                                <select name="data_status">
+                                    <option value="">请选择数据状态</option>
+                                    {% for item in dicts.DATA_STATUS %}
+                                        <option value="{{ item.code }}" {% if search.data_status == item.code %}selected{% endif %}>{{ item.name }}</option>
+                                    {% endfor %}
+                                </select>
                             </div>
                             <div class="field">
                                 <label>是否为执行层</label>
-                                <div class="multi-select" data-name="is_execution_level">
-                                    <div class="multi-select-display" onclick="toggleMultiSelect(this)" data-default="全部">全部</div>
-                                    <div class="multi-select-dropdown">
-                                        <label class="multi-select-option">
-                                            <input type="checkbox" value="true">
-                                            <span>是</span>
-                                        </label>
-                                        <label class="multi-select-option">
-                                            <input type="checkbox" value="false">
-                                            <span>否</span>
-                                        </label>
-                                    </div>
-                                </div>
+                                <select name="is_execution_level">
+                                    <option value="">全部</option>
+                                    <option value="true" {% if search.is_execution_level == "true" %}selected{% endif %}>是</option>
+                                    <option value="false" {% if search.is_execution_level == "false" %}selected{% endif %}>否</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>状态</label>
+                                <select name="status">
+                                    <option value="">全部</option>
+                                    <option value="启用" {% if search.status == "启用" %}selected{% endif %}>启用</option>
+                                    <option value="停用" {% if search.status == "停用" %}selected{% endif %}>停用</option>
+                                    <option value="作废" {% if search.status == "作废" %}selected{% endif %}>作废</option>
+                                </select>
                             </div>
                             <div class="field">
                                 <label>项目年份</label>
-                                <input type="text" name="project_year" placeholder="输入年份关键词搜索">
+                                <input type="text" name="project_year" value="{{ search.project_year|default:'' }}" placeholder="例如：2026">
                             </div>
                             <div class="field">
                                 <label>创建人</label>
-                                <input type="text" name="created_by" placeholder="输入创建人关键词搜索">
+                                <select name="created_by">
+                                    <option value="">请选择创建人</option>
+                                    {% for project in all_projects %}
+                                        <option value="{{ project.created_by }}" {% if search.created_by == project.created_by %}selected{% endif %}>
+                                            {{ project.created_by }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
                             </div>
                             <div class="field">
                                 <label>备注</label>
@@ -1315,6 +1069,14 @@
                                 </select>
                             </div>
                             <div class="field field-flex">
+                                <label><span class="required-star">*</span>状态</label>
+                                <select name="status" required>
+                                    <option value="启用">启用</option>
+                                    <option value="停用">停用</option>
+                                    <option value="作废">作废</option>
+                                </select>
+                            </div>
+                            <div class="field field-flex">
                                 <label><span class="required-star">*</span>创建人</label>
                                 <input type="text" name="created_by" value="{{ request.user.username }}" required>
                             </div>
@@ -1328,29 +1090,54 @@
                     </form>
                 </div>
 
-                <div class="update-panel" id="updatePanel">
+                <div class="update-panel" id="updatePanel" style="display: {% if show_update_panel %}block{% else %}none{% endif %};">
                     <h3>
                         信息更新
                         <span class="collapse-btn" id="toggleUpdatePanel">收起</span>
                     </h3>
                     <div class="hint" style="margin-bottom: 12px; padding: 8px 12px; background: #e3f2fd; border-left: 3px solid #2196f3; border-radius: 4px;">
-                        请在下方选择要变更的项目
+                        选择要变更的项目信息，请选择项目编码或是项目名称
                     </div>
-                    <form method="get">
-                        <div class="form-grid-row">
-                            <div class="field">
-                                <label><span class="required-star">*</span>项目编码-名称</label>
-                                <select name="update_code" id="updateCodeSelect" required>
-                                    <option value="">请选择项目编码-名称</option>
-                                    {% for project in all_projects %}
-                                        <option value="{{ project.project_code }}" {% if update_code == project.project_code %}selected{% endif %}>
-                                            {{ project.project_code }} - {{ project.project_name }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
+                    <form method="get" class="form-grid update-filter">
+                        <div class="field field-md">
+                            <label>项目编码</label>
+                            <select name="update_code" id="updateCodeSelect">
+                                <option value="">请选择项目编码</option>
+                                {% for project in all_projects %}
+                                    <option value="{{ project.project_code }}" {% if update_code == project.project_code %}selected{% endif %}>
+                                        {{ project.project_code }} - {{ project.project_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="field field-md">
+                            <label>项目名称</label>
+                            <select name="update_name" id="updateNameSelect">
+                                <option value="">请选择项目名称</option>
+                                {% for project in all_projects %}
+                                    <option value="{{ project.project_name }}" {% if update_name == project.project_name %}selected{% endif %}>
+                                        {{ project.project_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="field field-wide">
+                            <label>选择更新项目</label>
+                            <select name="update_target" id="updateTargetSelect">
+                                <option value="">请选择项目</option>
+                                {% for item in update_candidates %}
+                                    <option value="{{ item.project_code }}" {% if update_target and update_target.project_code == item.project_code %}selected{% endif %}>
+                                        {{ item.project_code }} - {{ item.project_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
                         </div>
                     </form>
+                    {% if update_code or update_name %}
+                        {% if not update_candidates %}
+                            <div class="hint">暂无匹配项目</div>
+                        {% endif %}
+                    {% endif %}
 
                     {% if update_target %}
                     <form method="post" class="search-form update-form" style="margin-top: 12px;">
@@ -1436,6 +1223,14 @@
                                 </select>
                             </div>
                             <div class="field field-sm">
+                                <label>状态</label>
+                                <select name="status" required>
+                                    <option value="启用" {% if update_target.status == "启用" %}selected{% endif %}>启用</option>
+                                    <option value="停用" {% if update_target.status == "停用" %}selected{% endif %}>停用</option>
+                                    <option value="作废" {% if update_target.status == "作废" %}selected{% endif %}>作废</option>
+                                </select>
+                            </div>
+                            <div class="field field-sm">
                                 <label>更新人</label>
                                 <input type="text" value="{{ request.user.username }}" readonly>
                             </div>
@@ -1458,6 +1253,7 @@
                                     <option value="org_mode">项目组织模式</option>
                                     <option value="data_status">数据状态</option>
                                     <option value="is_execution_level">是否执行层</option>
+                                    <option value="status">状态</option>
                                     <option value="remark">备注</option>
                                 </select>
                             </div>
@@ -1511,6 +1307,12 @@
                                 <option value="true">是</option>
                                 <option value="false">否</option>
                             </select>
+                            <select data-field="status">
+                                <option value="">请选择状态</option>
+                                <option value="启用">启用</option>
+                                <option value="停用">停用</option>
+                                <option value="作废">作废</option>
+                            </select>
                         </div>
                         <textarea name="remark" placeholder="备注">{{ update_target.remark }}</textarea>
                         <input type="text" name="update_note" placeholder="修改说明（选填）">
@@ -1556,7 +1358,7 @@
                     </div>
                 </div>
 
-                <div class="data-table" id="dataTable">
+                <div class="data-table" {% if show_update_panel %}style="display: none;"{% endif %}>
                     <div class="table-meta">
                         <div>当前匹配：<span id="matchCount">0</span> 条</div>
                         <div>总记录：<span id="totalCount">{{ projects|length }}</span> 条</div>
@@ -1577,8 +1379,9 @@
                                     <th data-sort="9">项目年份</th>
                                     <th data-sort="10">创建人</th>
                                     <th data-sort="11">项目类型</th>
-                                    <th data-sort="12">创建时间</th>
-                                    <th data-sort="13">备注</th>
+                                    <th data-sort="12">状态</th>
+                                    <th data-sort="13">创建时间</th>
+                                    <th data-sort="14">备注</th>
                                     <th>操作</th>
                                 </tr>
                                 <tr class="filter-row">
@@ -1590,18 +1393,20 @@
                                     <th><input type="text" data-filter="5" placeholder="筛选"></th>
                                     <th><input type="text" data-filter="6" placeholder="筛选"></th>
                                     <th><input type="text" data-filter="7" placeholder="筛选"></th>
-                                    <th>
-                                        <select data-filter="8">
-                                            <option value="">全部</option>
-                                            <option value="是">是</option>
-                                            <option value="否">否</option>
-                                        </select>
-                                    </th>
+                                    <th><input type="text" data-filter="8" placeholder="筛选"></th>
                                     <th><input type="text" data-filter="9" placeholder="筛选"></th>
                                     <th><input type="text" data-filter="10" placeholder="筛选"></th>
                                     <th><input type="text" data-filter="11" placeholder="筛选"></th>
-                                    <th><input type="month" data-filter="12" placeholder="选择年月"></th>
+                                    <th>
+                                        <select data-filter="12">
+                                            <option value="">全部</option>
+                                            <option value="启用">启用</option>
+                                            <option value="停用">停用</option>
+                                            <option value="作废">作废</option>
+                                        </select>
+                                    </th>
                                     <th><input type="text" data-filter="13" placeholder="筛选"></th>
+                                    <th><input type="text" data-filter="14" placeholder="筛选"></th>
                                     <th>
                                         <button type="button" class="btn-reset-filter" id="resetTableFilter">清空</button>
                                     </th>
@@ -1622,6 +1427,7 @@
                                     <td>{{ project.project_year }}</td>
                                     <td>{{ project.created_by }}</td>
                                     <td>{{ project.project_type_name }}</td>
+                                    <td>{{ project.status }}</td>
                                     <td>{{ project.created_at }}</td>
                                     <td>{{ project.remark }}</td>
                                     <td>
@@ -1633,7 +1439,7 @@
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="14">暂无数据</td>
+                                    <td colspan="10">暂无数据</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -1645,58 +1451,13 @@
     </div>
 
     <script>
-        // 多选下拉框功能
-        function toggleMultiSelect(element) {
-            const multiSelect = element.parentElement;
-            multiSelect.classList.toggle('open');
-        }
-
-        // 点击外部关闭下拉框
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.multi-select')) {
-                document.querySelectorAll('.multi-select.open').forEach(function(el) {
-                    el.classList.remove('open');
-                });
-            }
-        });
-
-        // 更新多选显示文本
-        function updateMultiSelectDisplay(multiSelect) {
-            const checkboxes = multiSelect.querySelectorAll('input[type="checkbox"]:checked');
-            const display = multiSelect.querySelector('.multi-select-display');
-            const defaultText = display.getAttribute('data-default') || display.textContent;
-            
-            if (checkboxes.length === 0) {
-                display.textContent = defaultText;
-            } else {
-                const selectedTexts = Array.from(checkboxes).map(cb => {
-                    return cb.parentElement.querySelector('span').textContent;
-                });
-                display.textContent = selectedTexts.join('；');
-            }
-        }
-
-        // 为多选选项添加事件监听
-        document.addEventListener('change', function(e) {
-            if (e.target.closest('.multi-select-option')) {
-                const multiSelect = e.target.closest('.multi-select');
-                updateMultiSelectDisplay(multiSelect);
-            }
-        });
-
         // 全局函数定义，确保 onclick 可以调用
         function showAddForm() {
-            console.log('showAddForm called');
-            try {
-                document.getElementById('addForm').style.display = 'block';
-                document.getElementById('searchForm').style.display = 'none';
-                document.getElementById('updatePanel').style.display = 'none';
-                document.getElementById('approvalPanel').style.display = 'none';
-                document.querySelector('.data-table').style.display = 'none';
-                console.log('showAddForm completed successfully');
-            } catch (error) {
-                console.error('Error in showAddForm:', error);
-            }
+            document.getElementById('addForm').style.display = 'block';
+            document.getElementById('searchForm').style.display = 'none';
+            document.getElementById('updatePanel').style.display = 'none';
+            document.getElementById('approvalPanel').style.display = 'none';
+            document.querySelector('.data-table').style.display = 'none';
         }
 
         function hideAddForm() {
@@ -1704,7 +1465,6 @@
         }
 
         function showApprovalPanel() {
-            console.log('showApprovalPanel called');
             document.getElementById('approvalPanel').style.display = 'block';
             document.getElementById('addForm').style.display = 'none';
             document.getElementById('searchForm').style.display = 'none';
@@ -1748,46 +1508,28 @@
         }
 
         function showSearchForm() {
-            console.log('showSearchForm called');
-            console.log('searchForm element:', document.getElementById('searchForm'));
-            console.log('addForm element:', document.getElementById('addForm'));
-            console.log('updatePanel element:', document.getElementById('updatePanel'));
-            console.log('approvalPanel element:', document.getElementById('approvalPanel'));
-            console.log('data-table element:', document.querySelector('.data-table'));
-            
-            try {
-                document.getElementById('searchForm').style.display = 'block';
-                document.getElementById('addForm').style.display = 'none';
-                document.getElementById('updatePanel').style.display = 'none';
-                document.getElementById('approvalPanel').style.display = 'none';
-                document.querySelector('.data-table').style.display = 'block';
-                document.getElementById('searchForm').classList.remove('collapsed');
-                const toggleBtn = document.getElementById('toggleSearchFields');
-                if (toggleBtn) {
-                    toggleBtn.textContent = '收起';
-                }
-                console.log('showSearchForm completed successfully');
-            } catch (error) {
-                console.error('Error in showSearchForm:', error);
+            document.getElementById('searchForm').style.display = 'block';
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('updatePanel').style.display = 'none';
+            document.getElementById('approvalPanel').style.display = 'none';
+            document.querySelector('.data-table').style.display = 'block';
+            document.getElementById('searchForm').classList.remove('collapsed');
+            const toggleBtn = document.getElementById('toggleSearchFields');
+            if (toggleBtn) {
+                toggleBtn.textContent = '收起';
             }
         }
 
         function showUpdatePanel() {
-            console.log('showUpdatePanel called');
-            try {
-                document.getElementById('updatePanel').style.display = 'block';
-                document.getElementById('addForm').style.display = 'none';
-                document.getElementById('searchForm').style.display = 'none';
-                document.getElementById('approvalPanel').style.display = 'none';
-                document.querySelector('.data-table').style.display = 'none';
-                document.getElementById('updatePanel').classList.remove('collapsed');
-                const toggleBtn = document.getElementById('toggleUpdatePanel');
-                if (toggleBtn) {
-                    toggleBtn.textContent = '收起';
-                }
-                console.log('showUpdatePanel completed successfully');
-            } catch (error) {
-                console.error('Error in showUpdatePanel:', error);
+            document.getElementById('updatePanel').style.display = 'block';
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('searchForm').style.display = 'none';
+            document.getElementById('approvalPanel').style.display = 'none';
+            document.querySelector('.data-table').style.display = 'none';
+            document.getElementById('updatePanel').classList.remove('collapsed');
+            const toggleBtn = document.getElementById('toggleUpdatePanel');
+            if (toggleBtn) {
+                toggleBtn.textContent = '收起';
             }
         }
 
@@ -1810,61 +1552,42 @@
         }
 
         function refreshList() {
-            console.log('refreshList called');
-            try {
-                document.getElementById('addForm').style.display = 'none';
-                document.getElementById('searchForm').style.display = 'none';
-                document.getElementById('updatePanel').style.display = 'none';
-                document.getElementById('approvalPanel').style.display = 'none';
-                document.querySelector('.data-table').style.display = 'block';
-                console.log('refreshList completed successfully');
-            } catch (error) {
-                console.error('Error in refreshList:', error);
-            }
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('searchForm').style.display = 'none';
+            document.getElementById('updatePanel').style.display = 'none';
+            document.getElementById('approvalPanel').style.display = 'none';
+            document.querySelector('.data-table').style.display = 'block';
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            // 初始化面板显示状态
-            const updatePanel = document.getElementById('updatePanel');
-            const dataTable = document.getElementById('dataTable');
-            // 从HTML数据属性获取初始化状态
-            const showUpdatePanel = document.body.dataset.showUpdatePanel === 'true';
-            if (showUpdatePanel) {
-                if (updatePanel) updatePanel.style.display = 'block';
-                if (dataTable) dataTable.style.display = 'none';
-            } else {
-                if (updatePanel) updatePanel.style.display = 'none';
-                if (dataTable) dataTable.style.display = 'block';
-            }
-
-            // 更新系统时间
-            function updateSystemTime() {
-                const now = new Date();
-                const timeElement = document.getElementById('systemTime');
-                if (timeElement) {
-                    timeElement.textContent = now.toLocaleString('zh-CN', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        second: '2-digit'
-                    });
-                }
-            }
-            
-            // 初始更新
-            updateSystemTime();
-            // 每秒更新一次
-            setInterval(updateSystemTime, 1000);
-
-            // 信息更新页签逻辑
+            // 信息更新页签联动逻辑
             const updateCodeSelect = document.getElementById('updateCodeSelect');
+            const updateNameSelect = document.getElementById('updateNameSelect');
+            const updateTargetSelect = document.getElementById('updateTargetSelect');
             
-            if (updateCodeSelect) {
+            if (updateCodeSelect && updateTargetSelect) {
                 updateCodeSelect.addEventListener('change', function() {
-                    if (this.value) {
-                        this.form.submit();
+                    const selectedCode = this.value;
+                    if (selectedCode) {
+                        updateTargetSelect.value = selectedCode;
+                    } else {
+                        updateTargetSelect.value = '';
+                    }
+                });
+            }
+            
+            if (updateNameSelect && updateTargetSelect) {
+                updateNameSelect.addEventListener('change', function() {
+                    const selectedName = this.value;
+                    if (selectedName) {
+                        for (let option of updateTargetSelect.options) {
+                            if (option.text.includes(selectedName)) {
+                                updateTargetSelect.value = option.value;
+                                break;
+                            }
+                        }
+                    } else {
+                        updateTargetSelect.value = '';
                     }
                 });
             }
@@ -1893,17 +1616,11 @@
 
             const toggleSearchFields = document.getElementById('toggleSearchFields');
             if (toggleSearchFields) {
-                toggleSearchFields.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
+                toggleSearchFields.addEventListener('click', () => {
                     const form = document.getElementById('searchForm');
-                    console.log('Toggle clicked, form before:', form.classList.contains('collapsed'));
                     form.classList.toggle('collapsed');
-                    console.log('Toggle clicked, form after:', form.classList.contains('collapsed'));
                     toggleSearchFields.textContent = form.classList.contains('collapsed') ? '展开' : '收起';
                 });
-            } else {
-                console.log('toggleSearchFields not found');
             }
 
             const toggleUpdatePanel = document.getElementById('toggleUpdatePanel');
@@ -1912,6 +1629,15 @@
                     const panel = document.getElementById('updatePanel');
                     panel.classList.toggle('collapsed');
                     toggleUpdatePanel.textContent = panel.classList.contains('collapsed') ? '展开' : '收起';
+                });
+            }
+
+            // 使用之前声明的 updateTargetSelect 变量
+            if (updateTargetSelect) {
+                updateTargetSelect.addEventListener('change', () => {
+                    if (updateTargetSelect.value) {
+                        updateTargetSelect.form.submit();
+                    }
                 });
             }
 
@@ -1925,7 +1651,8 @@
                 'project_type',
                 'org_mode',
                 'data_status',
-                'is_execution_level'
+                'is_execution_level',
+                'status'
             ]);
 
             function applyUpdateFieldTemplate(row) {
@@ -1963,153 +1690,151 @@
                 });
             });
 
-            if (addUpdateRowBtn) {
-                addUpdateRowBtn.addEventListener('click', () => {
-                    const container = document.getElementById('updateRows');
-                    if (!container) return;
-                    const row = document.createElement('div');
-                    row.className = 'form-grid';
-                    row.innerHTML = `
-                        <div class="field field-sm">
-                            <label>字段</label>
-                            <select name="update_field_key" class="update-field-key">
-                                <option value="">请选择字段</option>
-                                <option value="project_name">项目名称</option>
-                                <option value="parent_pj_code">上级PJ编码</option>
-                                <option value="province_code">所在省</option>
-                                <option value="business_unit">业务板块</option>
-                                <option value="dept">承担部门</option>
-                                <option value="project_type">项目类型</option>
-                                <option value="org_mode">项目组织模式</option>
-                                <option value="data_status">数据状态</option>
-                                <option value="is_execution_level">是否执行层</option>
-                                <option value="remark">备注</option>
-                            </select>
-                        </div>
-                        <div class="field update-value-cell">
-                            <label>新值</label>
-                            <input type="text" name="update_field_value" placeholder="填写新值">
-                        </div>
-                        <div class="field field-sm" style="align-self:flex-end;">
-                            <button class="btn-cancel" type="button">删除</button>
-                        </div>
-                    `;
-                    const delBtn = row.querySelector('button');
-                    const newSelect = row.querySelector('.update-field-key');
-                    newSelect.addEventListener('change', () => applyUpdateFieldTemplate(row));
-                    delBtn.addEventListener('click', () => row.remove());
-                    container.appendChild(row);
-                });
-            }
+        if (addUpdateRowBtn) {
+            addUpdateRowBtn.addEventListener('click', () => {
+                const container = document.getElementById('updateRows');
+                if (!container) return;
+                const row = document.createElement('div');
+                row.className = 'form-grid';
+                row.innerHTML = `
+                    <div class="field field-sm">
+                        <label>字段</label>
+                        <select name="update_field_key" class="update-field-key">
+                            <option value="">请选择字段</option>
+                            <option value="project_name">项目名称</option>
+                            <option value="parent_pj_code">上级PJ编码</option>
+                            <option value="province_code">所在省</option>
+                            <option value="business_unit">业务板块</option>
+                            <option value="dept">承担部门</option>
+                            <option value="project_type">项目类型</option>
+                            <option value="org_mode">项目组织模式</option>
+                            <option value="data_status">数据状态</option>
+                            <option value="is_execution_level">是否执行层</option>
+                            <option value="status">状态</option>
+                            <option value="remark">备注</option>
+                        </select>
+                    </div>
+                    <div class="field update-value-cell">
+                        <label>新值</label>
+                        <input type="text" name="update_field_value" placeholder="填写新值">
+                    </div>
+                    <div class="field field-sm" style="align-self:flex-end;">
+                        <button class="btn-cancel" type="button">删除</button>
+                    </div>
+                `;
+                const delBtn = row.querySelector('button');
+                const newSelect = row.querySelector('.update-field-key');
+                newSelect.addEventListener('change', () => applyUpdateFieldTemplate(row));
+                delBtn.addEventListener('click', () => row.remove());
+                container.appendChild(row);
+            });
+        }
 
-            const updateCodeInput = document.querySelector('input[name="update_code"]');
-            const updateNameInput = document.querySelector('input[name="update_name"]');
-            if (updateCodeInput && updateNameInput) {
-                updateCodeInput.addEventListener('input', () => {
-                    if (updateCodeInput.value.trim()) {
-                        updateNameInput.value = '';
-                    }
-                });
-                updateNameInput.addEventListener('input', () => {
-                    if (updateNameInput.value.trim()) {
-                        updateCodeInput.value = '';
-                    }
-                });
-            }
-
-            const sidebar = document.getElementById('sidebar');
-            const handle = document.getElementById('resizeHandle');
-            let isResizing = false;
-
-            if (handle) {
-                handle.addEventListener('mousedown', (e) => {
-                    isResizing = true;
-                    document.body.style.cursor = 'col-resize';
-                    e.preventDefault();
-                });
-
-                document.addEventListener('mousemove', (e) => {
-                    if (!isResizing) return;
-                    const newWidth = Math.min(Math.max(e.clientX, 200), 360);
-                    sidebar.style.width = newWidth + 'px';
-                });
-
-                document.addEventListener('mouseup', () => {
-                    if (isResizing) {
-                        isResizing = false;
-                        document.body.style.cursor = 'default';
-                    }
-                });
-            }
-
-            const table = document.getElementById('projectTable');
-            if (table) {
-                const tbody = table.querySelector('tbody');
-                const headers = table.querySelectorAll('th[data-sort]');
-                const filterInputs = table.querySelectorAll('[data-filter]');
-                const resetBtn = document.getElementById('resetTableFilter');
-                let sortIndex = null;
-                let sortAsc = true;
-
-                const applyFilters = () => {
-                    const filters = Array.from(filterInputs).map((input) => input.value.trim().toLowerCase());
-                    let visibleCount = 0;
-                    Array.from(tbody.querySelectorAll('tr')).forEach((row) => {
-                        const cells = Array.from(row.children);
-                        const match = filters.every((value, idx) => {
-                            if (!value) return true;
-                            const cell = cells[idx];
-                            if (!cell) return true;
-                            return cell.textContent.toLowerCase().includes(value);
-                        });
-                        row.style.display = match ? '' : 'none';
-                        if (match) visibleCount += 1;
-                    });
-                    const matchCount = document.getElementById('matchCount');
-                    if (matchCount) {
-                        matchCount.textContent = String(visibleCount);
-                    }
-                };
-
-                filterInputs.forEach((input) => {
-                    input.addEventListener('input', applyFilters);
-                    input.addEventListener('change', applyFilters);
-                });
-
-                if (resetBtn) {
-                    resetBtn.addEventListener('click', () => {
-                        filterInputs.forEach((input) => {
-                            input.value = '';
-                        });
-                        applyFilters();
-                    });
+        const updateCodeInput = document.querySelector('input[name="update_code"]');
+        const updateNameInput = document.querySelector('input[name="update_name"]');
+        if (updateCodeInput && updateNameInput) {
+            updateCodeInput.addEventListener('input', () => {
+                if (updateCodeInput.value.trim()) {
+                    updateNameInput.value = '';
                 }
-
-                headers.forEach((th) => {
-                    th.style.cursor = 'pointer';
-                    th.addEventListener('click', () => {
-                        const index = Number(th.getAttribute('data-sort'));
-                        sortAsc = sortIndex === index ? !sortAsc : true;
-                        sortIndex = index;
-                        const rows = Array.from(tbody.querySelectorAll('tr'));
-                        rows.sort((a, b) => {
-                            const aText = a.children[index]?.textContent.trim() || '';
-                            const bText = b.children[index]?.textContent.trim() || '';
-                            if (!aText && !bText) return 0;
-                            if (!aText) return sortAsc ? 1 : -1;
-                            if (!bText) return sortAsc ? -1 : 1;
-                            if (aText === bText) return 0;
-                            return sortAsc ? aText.localeCompare(bText, 'zh-Hans-CN') : bText.localeCompare(aText, 'zh-Hans-CN');
-                        });
-                        rows.forEach((row) => tbody.appendChild(row));
-                    });
-                });
-
-                if (typeof applyFilters === 'function') {
-                    applyFilters();
+            });
+            updateNameInput.addEventListener('input', () => {
+                if (updateNameInput.value.trim()) {
+                    updateCodeInput.value = '';
                 }
+            });
+        }
+
+        const sidebar = document.getElementById('sidebar');
+        const handle = document.getElementById('resizeHandle');
+        let isResizing = false;
+
+        if (handle) {
+            handle.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                document.body.style.cursor = 'col-resize';
+                e.preventDefault();
+            });
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            const newWidth = Math.min(Math.max(e.clientX, 200), 360);
+            sidebar.style.width = newWidth + 'px';
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                document.body.style.cursor = 'default';
             }
         });
+
+        const table = document.getElementById('projectTable');
+        if (table) {
+            const tbody = table.querySelector('tbody');
+            const headers = table.querySelectorAll('th[data-sort]');
+            const filterInputs = table.querySelectorAll('[data-filter]');
+            const resetBtn = document.getElementById('resetTableFilter');
+            let sortIndex = null;
+            let sortAsc = true;
+
+            const applyFilters = () => {
+                const filters = Array.from(filterInputs).map((input) => input.value.trim().toLowerCase());
+                let visibleCount = 0;
+                Array.from(tbody.querySelectorAll('tr')).forEach((row) => {
+                    const cells = Array.from(row.children);
+                    const match = filters.every((value, idx) => {
+                        if (!value) return true;
+                        const cell = cells[idx];
+                        if (!cell) return true;
+                        return cell.textContent.toLowerCase().includes(value);
+                    });
+                    row.style.display = match ? '' : 'none';
+                    if (match) visibleCount += 1;
+                });
+                const matchCount = document.getElementById('matchCount');
+                if (matchCount) {
+                    matchCount.textContent = String(visibleCount);
+                }
+            };
+
+            filterInputs.forEach((input) => {
+                input.addEventListener('input', applyFilters);
+                input.addEventListener('change', applyFilters);
+            });
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                    filterInputs.forEach((input) => {
+                        input.value = '';
+                    });
+                    applyFilters();
+                });
+            }
+
+            headers.forEach((th) => {
+                th.style.cursor = 'pointer';
+                th.addEventListener('click', () => {
+                    const index = Number(th.getAttribute('data-sort'));
+                    sortAsc = sortIndex === index ? !sortAsc : true;
+                    sortIndex = index;
+                    const rows = Array.from(tbody.querySelectorAll('tr'));
+                    rows.sort((a, b) => {
+                        const aText = a.children[index]?.textContent.trim() || '';
+                        const bText = b.children[index]?.textContent.trim() || '';
+                        if (!aText && !bText) return 0;
+                        if (!aText) return sortAsc ? 1 : -1;
+                        if (!bText) return sortAsc ? -1 : 1;
+                        if (aText === bText) return 0;
+                        return sortAsc ? aText.localeCompare(bText, 'zh-Hans-CN') : bText.localeCompare(aText, 'zh-Hans-CN');
+                    });
+                    rows.forEach((row) => tbody.appendChild(row));
+                });
+            });
+
+            applyFilters();
+        }
     </script>
 </body>
 </html>

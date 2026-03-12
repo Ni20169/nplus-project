@@ -89,7 +89,6 @@ def project_master_list(request):
             "data_status": request.POST.get("data_status", "").strip(),
             "is_execution_level": request.POST.get("is_execution_level", "false")
             == "true",
-            "status": request.POST.get("status", "启用").strip(),
             "created_by": request.POST.get("created_by", "").strip()
             or request.user.username,
             "updated_by": request.user.username,
@@ -143,7 +142,6 @@ def project_master_list(request):
             "org_mode": project.org_mode,
             "data_status": project.data_status,
             "is_execution_level": project.is_execution_level,
-            "status": project.status,
             "remark": project.remark,
         }
 
@@ -159,7 +157,6 @@ def project_master_list(request):
         project.org_mode = request.POST.get("org_mode", project.org_mode).strip()
         project.data_status = request.POST.get("data_status", project.data_status).strip()
         project.is_execution_level = request.POST.get("is_execution_level", "false") == "true"
-        project.status = request.POST.get("status", project.status).strip()
         project.remark = request.POST.get("remark", "").strip()
         project.updated_by = request.user.username
         change_note = request.POST.get("update_note", "").strip()
@@ -204,7 +201,6 @@ def project_master_list(request):
                         "org_mode": project.org_mode,
                         "data_status": project.data_status,
                         "is_execution_level": project.is_execution_level,
-                        "status": project.status,
                         "remark": project.remark,
                     },
                     change_note=change_note,
@@ -231,7 +227,6 @@ def project_master_list(request):
         "org_mode": request.GET.get("org_mode", "").strip(),
         "data_status": request.GET.get("data_status", "").strip(),
         "is_execution_level": request.GET.get("is_execution_level", "").strip(),
-        "status": request.GET.get("status", "").strip(),
         "project_year": request.GET.get("project_year", "").strip(),
         "created_by": request.GET.get("created_by", "").strip(),
         "remark": request.GET.get("remark", "").strip(),
@@ -261,8 +256,6 @@ def project_master_list(request):
         qs = qs.filter(is_execution_level=True)
     if search["is_execution_level"] == "false":
         qs = qs.filter(is_execution_level=False)
-    if search["status"]:
-        qs = qs.filter(status=search["status"])
     if search["project_year"]:
         qs = qs.filter(project_year__icontains=search["project_year"])
     if search["created_by"]:
@@ -306,7 +299,6 @@ def project_master_list(request):
         "org_mode": "项目组织模式",
         "data_status": "主数据系统数据状态",
         "is_execution_level": "是否为执行层",
-        "status": "状态",
         "remark": "备注",
     }
     for log in recent_updates:
@@ -385,7 +377,6 @@ def export_project_template(request):
         "项目组织模式",
         "主数据系统数据状态",
         "是否为执行层",
-        "状态",
         "备注",
     ]
     ws.append(headers)
@@ -468,7 +459,6 @@ def import_project_master(request):
         "项目组织模式": "org_mode",
         "主数据系统数据状态": "data_status",
         "是否为执行层": "is_execution_level",
-        "状态": "status",
         "备注": "remark",
     }
 
@@ -489,7 +479,6 @@ def import_project_master(request):
         "org_mode",
         "data_status",
         "is_execution_level",
-        "status",
     ]
 
     success = 0
@@ -583,7 +572,6 @@ def project_master_edit(request, project_code):
             "org_mode": project.org_mode,
             "data_status": project.data_status,
             "is_execution_level": project.is_execution_level,
-            "status": project.status,
             "remark": project.remark,
         }
 
@@ -598,7 +586,6 @@ def project_master_edit(request, project_code):
         project.org_mode = request.POST.get("org_mode", "").strip()
         project.data_status = request.POST.get("data_status", "").strip()
         project.is_execution_level = request.POST.get("is_execution_level", "false") == "true"
-        project.status = request.POST.get("status", "").strip()
         project.remark = request.POST.get("remark", "").strip()
         project.updated_by = request.user.username
 
@@ -622,7 +609,6 @@ def project_master_edit(request, project_code):
                         "org_mode": project.org_mode,
                         "data_status": project.data_status,
                         "is_execution_level": project.is_execution_level,
-                        "status": project.status,
                         "remark": project.remark,
                     },
                     operator=request.user.username,
@@ -680,7 +666,7 @@ def submit_delete_approval(request):
         "project_code": project.project_code,
         "project_name": project.project_name,
         "org_name": project.org_name,
-        "status": project.status,
+        "data_status": project.data_status,
     }
 
     approval = ProjectApproval.objects.create(

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>完整页签切换测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .action-buttons {
+            margin-bottom: 20px;
+        }
+        .action-buttons button {
+            margin-right: 10px;
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+        .sidebar {
+            width: 200px;
+            float: left;
+            margin-right: 20px;
+        }
+        .sidebar ul {
+            list-style: none;
+        }
+        .sidebar a {
+            display: block;
+            padding: 10px;
+            text-decoration: none;
+            color: #333;
+            border: 1px solid #ddd;
+            margin-bottom: 5px;
+        }
+        .sidebar a:hover {
+            background: #f0f0f0;
+        }
+        .main-content {
+            margin-left: 220px;
+        }
+        .panel {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+            background: #f9f9f9;
+        }
+        .data-table {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ddd;
+            background: #f0f0f0;
+        }
+        .active {
+            display: block !important;
+        }
+    </style>
+</head>
+<body>
+    <h1>完整页签切换测试</h1>
+    
+    <div class="sidebar">
+        <h3>左侧菜单</h3>
+        <ul>
+            <li><a href="#" onclick="showAddForm(); return false;">新增项目</a></li>
+            <li><a href="#" onclick="showSearchForm(); return false;">查询项目</a></li>
+            <li><a href="#" onclick="showUpdatePanel(); return false;">信息更新</a></li>
+            <li><a href="#" onclick="refreshList(); return false;">项目列表</a></li>
+            <li><a href="#" onclick="showApprovalPanel(); return false;">审批管理</a></li>
+        </ul>
+    </div>
+    
+    <div class="main-content">
+        <div class="action-buttons">
+            <h3>顶部按钮</h3>
+            <button onclick="showAddForm()">新增项目</button>
+            <button onclick="showSearchForm()">查询项目</button>
+            <button onclick="showUpdatePanel()">信息更新</button>
+            <button onclick="refreshList()">项目列表</button>
+            <button onclick="showApprovalPanel()">审批管理</button>
+        </div>
+        
+        <div id="addForm" class="panel active">
+            <h2>新增项目</h2>
+            <p>新增项目表单内容</p>
+        </div>
+        
+        <div id="searchForm" class="panel">
+            <h2>查询项目</h2>
+            <p>查询项目表单内容</p>
+        </div>
+        
+        <div id="updatePanel" class="panel">
+            <h2>信息更新</h2>
+            <p>信息更新表单内容</p>
+        </div>
+        
+        <div id="approvalPanel" class="panel">
+            <h2>审批管理</h2>
+            <p>审批管理表单内容</p>
+        </div>
+        
+        <div class="data-table" id="dataTable">
+            <h2>项目列表</h2>
+            <p>项目数据表格</p>
+        </div>
+    </div>
+    
+    <script>
+        console.log('JavaScript loaded');
+        
+        // 全局函数定义
+        function showAddForm() {
+            console.log('showAddForm called');
+            document.getElementById('addForm').style.display = 'block';
+            document.getElementById('searchForm').style.display = 'none';
+            document.getElementById('updatePanel').style.display = 'none';
+            document.getElementById('approvalPanel').style.display = 'none';
+            document.getElementById('dataTable').style.display = 'none';
+        }
+        
+        function showSearchForm() {
+            console.log('showSearchForm called');
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('searchForm').style.display = 'block';
+            document.getElementById('updatePanel').style.display = 'none';
+            document.getElementById('approvalPanel').style.display = 'none';
+            document.getElementById('dataTable').style.display = 'block';
+        }
+        
+        function showUpdatePanel() {
+            console.log('showUpdatePanel called');
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('searchForm').style.display = 'none';
+            document.getElementById('updatePanel').style.display = 'block';
+            document.getElementById('approvalPanel').style.display = 'none';
+            document.getElementById('dataTable').style.display = 'none';
+        }
+        
+        function refreshList() {
+            console.log('refreshList called');
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('searchForm').style.display = 'none';
+            document.getElementById('updatePanel').style.display = 'none';
+            document.getElementById('approvalPanel').style.display = 'none';
+            document.getElementById('dataTable').style.display = 'block';
+        }
+        
+        function showApprovalPanel() {
+            console.log('showApprovalPanel called');
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('searchForm').style.display = 'none';
+            document.getElementById('updatePanel').style.display = 'none';
+            document.getElementById('approvalPanel').style.display = 'block';
+            document.getElementById('dataTable').style.display = 'block';
+        }
+        
+        console.log('All functions defined');
+    </script>
+</body>
+</html>

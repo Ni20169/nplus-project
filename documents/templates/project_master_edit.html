@@ -156,12 +156,6 @@
                     <option value="false" {% if not project.is_execution_level %}selected{% endif %}>否</option>
                     <option value="true" {% if project.is_execution_level %}selected{% endif %}>是</option>
                 </select>
-
-                <select name="status" required>
-                    <option value="启用" {% if project.status == "启用" %}selected{% endif %}>启用</option>
-                    <option value="停用" {% if project.status == "停用" %}selected{% endif %}>停用</option>
-                    <option value="作废" {% if project.status == "作废" %}selected{% endif %}>作废</option>
-                </select>
             </div>
 
             <textarea name="remark" placeholder="备注">{{ project.remark }}</textarea>

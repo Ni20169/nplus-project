@@ -121,7 +121,6 @@ class ProjectMaster(models.Model):
     data_status = models.CharField("主数据系统数据状态", max_length=50)
     is_execution_level = models.BooleanField("是否为执行层", default=False)
     project_year = models.CharField("项目年份", max_length=4)
-    status = models.CharField("状态", max_length=10, default="启用")
     created_at = models.DateTimeField("创建时间", auto_now_add=True)
     created_by = models.CharField("创建人", max_length=50)
     updated_at = models.DateTimeField("更新时间", auto_now=True)

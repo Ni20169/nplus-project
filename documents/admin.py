@@ -18,9 +18,9 @@ class DictItemAdmin(admin.ModelAdmin):
 
 @admin.register(ProjectMaster)
 class ProjectMasterAdmin(admin.ModelAdmin):
-    list_display = ("project_code", "project_name", "org_name", "project_year", "status")
+    list_display = ("project_code", "project_name", "org_name", "project_year", "data_status")
     search_fields = ("project_code", "project_name", "org_name")
-    list_filter = ("status", "project_year")
+    list_filter = ("data_status", "project_year")
 
 
 @admin.register(ImportBatch)
