@@ -31,6 +31,7 @@
             background-color: #2f3542;
             color: white;
             padding: 16px 16px 20px 20px;
+            position: relative;
         }
 
         .menu-section {
@@ -74,6 +75,28 @@
 
         .menu-list li a:hover {
             background-color: #57606f;
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 12px;
+            left: 20px;
+            right: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 13px;
+            color: #dfe4ea;
+        }
+
+        .logout-btn {
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.16);
+            color: #fff;
+            text-decoration: none;
+            font-size: 12px;
         }
 
         .main-content {
@@ -187,6 +210,10 @@
                 <ul class="menu-list show" id="menu-projects">
                     <li><a href="{% url 'project_master_list' %}">项目主数据</a></li>
                 </ul>
+            </div>
+            <div class="sidebar-footer">
+                <span>当前用户：{{ request.user.username }}</span>
+                <a class="logout-btn" href="{% url 'logout' %}">登出</a>
             </div>
         </div>
 
