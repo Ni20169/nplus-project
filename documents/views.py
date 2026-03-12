@@ -639,9 +639,9 @@ def import_project_master(request):
         approval = ProjectApproval.objects.create(
             project_code=f"IMPORT_{uuid.uuid4().hex[:8].upper()}",
             project_name=f"批量导入 {total_rows} 条项目数据",
-            action_type="import",
-            submit_by=request.user.username,
-            note=f"导入文件: {file.name}, 预计导入 {total_rows} 条数据",
+            approval_type="import",
+            submitter=request.user.username,
+            change_note=f"导入文件: {file.name}, 预计导入 {total_rows} 条数据",
             import_file_path=tmp_file_path,
         )
         
