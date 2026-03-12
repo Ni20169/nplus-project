@@ -14,8 +14,9 @@ class Migration(migrations.Migration):
             name="ProjectApproval",
             fields=[
                 ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
-                ("project_code", models.CharField(max_length=12, verbose_name="项目编码")),
-                ("approval_type", models.CharField(choices=[("update", "修改"), ("delete", "删除")], max_length=10, verbose_name="审批类型")),
+                ("project_code", models.CharField(max_length=50, verbose_name="项目编码")),
+                ("project_name", models.CharField(blank=True, max_length=200, verbose_name="项目名称")),
+                ("approval_type", models.CharField(choices=[("update", "修改"), ("delete", "删除"), ("import", "导入")], max_length=10, verbose_name="审批类型")),
                 ("before_data", models.JSONField(blank=True, null=True, verbose_name="修改前数据")),
                 ("after_data", models.JSONField(blank=True, null=True, verbose_name="修改后数据")),
                 ("change_note", models.CharField(blank=True, max_length=200, verbose_name="修改说明")),
@@ -25,6 +26,7 @@ class Migration(migrations.Migration):
                 ("submit_time", models.DateTimeField(auto_now_add=True, verbose_name="提交时间")),
                 ("approve_time", models.DateTimeField(blank=True, null=True, verbose_name="审批时间")),
                 ("approve_note", models.CharField(blank=True, max_length=200, verbose_name="审批意见")),
+                ("import_file_path", models.CharField(blank=True, max_length=500, verbose_name="导入文件路径")),
             ],
             options={
                 "verbose_name": "项目审批",
