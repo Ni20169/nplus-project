@@ -731,20 +731,50 @@
                         <div class="form-grid">
                             <div class="field">
                                 <label>项目主数据编码</label>
-                                <input type="text" name="project_code" value="{{ search.project_code|default:'' }}" placeholder="例如：PJ0000000001">
+                                <select name="project_code">
+                                    <option value="">请选择项目编码</option>
+                                    {% for project in all_projects %}
+                                        <option value="{{ project.project_code }}" {% if search.project_code == project.project_code %}selected{% endif %}>
+                                            {{ project.project_code }} - {{ project.project_name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
                             </div>
                             <div class="field">
                                 <label>项目名称</label>
-                                <input type="text" name="project_name" value="{{ search.project_name|default:'' }}" placeholder="请输入项目名称">
+                                <select name="project_name">
+                                    <option value="">请选择项目名称</option>
+                                    {% for project in all_projects %}
+                                        <option value="{{ project.project_name }}" {% if search.project_name == project.project_name %}selected{% endif %}>
+                                            {{ project.project_name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
                             </div>
                             <div class="field">
                                 <label>项目机构名称</label>
-                                <input type="text" name="org_name" value="{{ search.org_name|default:'' }}" placeholder="请输入项目机构名称">
+                                <select name="org_name">
+                                    <option value="">请选择项目机构</option>
+                                    {% for project in all_projects %}
+                                        <option value="{{ project.org_name }}" {% if search.org_name == project.org_name %}selected{% endif %}>
+                                            {{ project.org_name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
                             </div>
 
                             <div class="field">
-                                <label>上级PJ编码</label>
-                                <input type="text" name="parent_pj_code" value="{{ search.parent_pj_code|default:'' }}" placeholder="请输入上级PJ编码">
+                                <label>上级 PJ 编码</label>
+                                <select name="parent_pj_code">
+                                    <option value="">请选择上级 PJ 编码</option>
+                                    {% for project in all_projects %}
+                                        {% if project.parent_pj_code %}
+                                            <option value="{{ project.parent_pj_code }}" {% if search.parent_pj_code == project.parent_pj_code %}selected{% endif %}>
+                                                {{ project.parent_pj_code }}
+                                            </option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
                             </div>
                             <div class="field">
                                 <label>所在省</label>
@@ -823,7 +853,14 @@
                             </div>
                             <div class="field">
                                 <label>创建人</label>
-                                <input type="text" name="created_by" value="{{ search.created_by|default:'' }}" placeholder="请输入创建人">
+                                <select name="created_by">
+                                    <option value="">请选择创建人</option>
+                                    {% for project in all_projects %}
+                                        <option value="{{ project.created_by }}" {% if search.created_by == project.created_by %}selected{% endif %}>
+                                            {{ project.created_by }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
                             </div>
                             <div class="field">
                                 <label>备注</label>
@@ -949,17 +986,31 @@
                         信息更新
                         <span class="collapse-btn" id="toggleUpdatePanel">收起</span>
                     </h3>
+                    <div class="hint" style="margin-bottom: 12px; padding: 8px 12px; background: #e3f2fd; border-left: 3px solid #2196f3; border-radius: 4px;">
+                        选择要变更的项目信息，请选择项目编码或是项目名称
+                    </div>
                     <form method="get" class="form-grid update-filter">
                         <div class="field field-md">
                             <label>项目编码</label>
-                            <input type="text" name="update_code" list="updateCodeList" value="{{ update_code|default:'' }}" placeholder="请输入项目编码">
+                            <select name="update_code" id="updateCodeSelect">
+                                <option value="">请选择项目编码</option>
+                                {% for project in all_projects %}
+                                    <option value="{{ project.project_code }}" {% if update_code == project.project_code %}selected{% endif %}>
+                                        {{ project.project_code }} - {{ project.project_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
                         </div>
                         <div class="field field-md">
                             <label>项目名称</label>
-                            <input type="text" name="update_name" list="updateNameList" value="{{ update_name|default:'' }}" placeholder="请输入项目名称">
-                        </div>
-                        <div class="field field-sm" style="align-self:flex-end;">
-                            <button class="btn-search" type="submit">查询</button>
+                            <select name="update_name" id="updateNameSelect">
+                                <option value="">请选择项目名称</option>
+                                {% for project in all_projects %}
+                                    <option value="{{ project.project_name }}" {% if update_name == project.project_name %}selected{% endif %}>
+                                        {{ project.project_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
                         </div>
                         <div class="field field-wide">
                             <label>选择更新项目</label>
@@ -972,16 +1023,6 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <datalist id="updateCodeList">
-                            {% for item in update_candidates %}
-                                <option value="{{ item.project_code }}">{{ item.project_name }}</option>
-                            {% endfor %}
-                        </datalist>
-                        <datalist id="updateNameList">
-                            {% for item in update_candidates %}
-                                <option value="{{ item.project_name }}">{{ item.project_code }}</option>
-                            {% endfor %}
-                        </datalist>
                     </form>
                     {% if update_code or update_name %}
                         {% if not update_candidates %}
@@ -1112,7 +1153,7 @@
                                 <input type="text" name="update_field_value" placeholder="填写新值">
                             </div>
                             <div class="field field-sm" style="align-self:flex-end;">
-                                <button class="btn-search" type="button" id="addUpdateRow">+ 新增行</button>
+                                <button class="btn-search" type="button" id="addUpdateRow" style="padding: 8px 14px; font-size: 14px; min-width: 96px;">+ 新增行</button>
                             </div>
                         </div>
                         <div id="updateFieldTemplates" style="display:none;">
@@ -1301,6 +1342,39 @@
     </div>
 
     <script>
+        // 信息更新页签联动逻辑
+        const updateCodeSelect = document.getElementById('updateCodeSelect');
+        const updateNameSelect = document.getElementById('updateNameSelect');
+        const updateTargetSelect = document.getElementById('updateTargetSelect');
+        
+        if (updateCodeSelect && updateTargetSelect) {
+            updateCodeSelect.addEventListener('change', function() {
+                const selectedCode = this.value;
+                if (selectedCode) {
+                    updateTargetSelect.value = selectedCode;
+                } else {
+                    updateTargetSelect.value = '';
+                }
+            });
+        }
+        
+        if (updateNameSelect && updateTargetSelect) {
+            updateNameSelect.addEventListener('change', function() {
+                const selectedName = this.value;
+                if (selectedName) {
+                    // 根据项目名称找到对应的项目编码
+                    for (let option of updateTargetSelect.options) {
+                        if (option.text.includes(selectedName)) {
+                            updateTargetSelect.value = option.value;
+                            break;
+                        }
+                    }
+                } else {
+                    updateTargetSelect.value = '';
+                }
+            });
+        }
+
         function showAddForm() {
             document.getElementById('addForm').style.display = 'block';
             document.getElementById('searchForm').style.display = 'none';

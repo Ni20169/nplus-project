@@ -331,6 +331,10 @@ def project_master_list(request):
 
     update_code = request.GET.get("update_code", "").strip()
     update_name = request.GET.get("update_name", "").strip()
+    
+    # 获取所有项目用于下拉选择
+    all_projects = list(ProjectMaster.objects.filter(is_deleted=False).order_by("-created_at")[:500])
+    
     update_candidates = ProjectMaster.objects.filter(is_deleted=False)
     if update_code:
         update_candidates = update_candidates.filter(project_code__icontains=update_code)
@@ -363,6 +367,7 @@ def project_master_list(request):
             "update_name": update_name,
             "show_update_panel": show_update_panel,
             "update_now": timezone.localtime().strftime("%Y-%m-%d %H:%M"),
+            "all_projects": all_projects,
         },
     )
 
