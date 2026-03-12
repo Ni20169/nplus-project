@@ -330,18 +330,10 @@ def project_master_list(request):
         log.after_summary = "\n".join(after_lines) if after_lines else "无"
 
     update_code = request.GET.get("update_code", "").strip()
-    update_name = request.GET.get("update_name", "").strip()
     
     # 获取所有项目用于下拉选择
     all_projects = list(ProjectMaster.objects.filter(is_deleted=False).order_by("-created_at")[:500])
     
-    update_candidates = ProjectMaster.objects.filter(is_deleted=False)
-    if update_code:
-        update_candidates = update_candidates.filter(project_code__icontains=update_code)
-    if update_name:
-        update_candidates = update_candidates.filter(project_name__icontains=update_name)
-    update_candidates = list(update_candidates.order_by("-created_at")[:20])
-
     # 获取审批数据
     from .models import ProjectApproval
     pending_approvals = ProjectApproval.objects.filter(status="pending").order_by("-submit_time")
@@ -349,14 +341,11 @@ def project_master_list(request):
         status__in=["approved", "rejected"]
     ).order_by("-approve_time")[:50]
 
-    update_target_code = request.GET.get("update_target", "").strip()
     update_target = None
-    if update_target_code:
+    if update_code:
         update_target = ProjectMaster.objects.filter(
-            project_code=update_target_code, is_deleted=False
+            project_code=update_code, is_deleted=False
         ).first()
-        show_update_panel = True
-    if update_code or update_name:
         show_update_panel = True
 
     return render(
@@ -368,10 +357,8 @@ def project_master_list(request):
             "latest_errors": latest_errors,
             "search": search,
             "recent_updates": recent_updates,
-            "update_candidates": update_candidates,
             "update_target": update_target,
             "update_code": update_code,
-            "update_name": update_name,
             "show_update_panel": show_update_panel,
             "update_now": timezone.localtime().strftime("%Y-%m-%d %H:%M"),
             "all_projects": all_projects,

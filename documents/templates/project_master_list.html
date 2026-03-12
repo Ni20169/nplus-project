@@ -1113,48 +1113,23 @@
                         <span class="collapse-btn" id="toggleUpdatePanel">收起</span>
                     </h3>
                     <div class="hint" style="margin-bottom: 12px; padding: 8px 12px; background: #e3f2fd; border-left: 3px solid #2196f3; border-radius: 4px;">
-                        选择要变更的项目信息，请选择项目编码或是项目名称
+                        请在下方选择要变更的项目
                     </div>
-                    <form method="get" class="form-grid update-filter">
-                        <div class="field field-md">
-                            <label>项目编码</label>
-                            <select name="update_code" id="updateCodeSelect">
-                                <option value="">请选择项目编码</option>
-                                {% for project in all_projects %}
-                                    <option value="{{ project.project_code }}" {% if update_code == project.project_code %}selected{% endif %}>
-                                        {{ project.project_code }} - {{ project.project_name }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="field field-md">
-                            <label>项目名称</label>
-                            <select name="update_name" id="updateNameSelect">
-                                <option value="">请选择项目名称</option>
-                                {% for project in all_projects %}
-                                    <option value="{{ project.project_name }}" {% if update_name == project.project_name %}selected{% endif %}>
-                                        {{ project.project_name }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="field field-wide">
-                            <label>选择更新项目</label>
-                            <select name="update_target" id="updateTargetSelect">
-                                <option value="">请选择项目</option>
-                                {% for item in update_candidates %}
-                                    <option value="{{ item.project_code }}" {% if update_target and update_target.project_code == item.project_code %}selected{% endif %}>
-                                        {{ item.project_code }} - {{ item.project_name }}
-                                    </option>
-                                {% endfor %}
-                            </select>
+                    <form method="get">
+                        <div class="form-grid-row">
+                            <div class="field">
+                                <label><span class="required-star">*</span>项目编码-名称</label>
+                                <select name="update_code" id="updateCodeSelect" required>
+                                    <option value="">请选择项目编码-名称</option>
+                                    {% for project in all_projects %}
+                                        <option value="{{ project.project_code }}" {% if update_code == project.project_code %}selected{% endif %}>
+                                            {{ project.project_code }} - {{ project.project_name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
                         </div>
                     </form>
-                    {% if update_code or update_name %}
-                        {% if not update_candidates %}
-                            <div class="hint">暂无匹配项目</div>
-                        {% endif %}
-                    {% endif %}
 
                     {% if update_target %}
                     <form method="post" class="search-form update-form" style="margin-top: 12px;">
@@ -1621,34 +1596,13 @@
                 if (dataTable) dataTable.style.display = 'block';
             }
 
-            // 信息更新页签联动逻辑
+            // 信息更新页签逻辑
             const updateCodeSelect = document.getElementById('updateCodeSelect');
-            const updateNameSelect = document.getElementById('updateNameSelect');
-            const updateTargetSelect = document.getElementById('updateTargetSelect');
             
-            if (updateCodeSelect && updateTargetSelect) {
+            if (updateCodeSelect) {
                 updateCodeSelect.addEventListener('change', function() {
-                    const selectedCode = this.value;
-                    if (selectedCode) {
-                        updateTargetSelect.value = selectedCode;
-                    } else {
-                        updateTargetSelect.value = '';
-                    }
-                });
-            }
-            
-            if (updateNameSelect && updateTargetSelect) {
-                updateNameSelect.addEventListener('change', function() {
-                    const selectedName = this.value;
-                    if (selectedName) {
-                        for (let option of updateTargetSelect.options) {
-                            if (option.text.includes(selectedName)) {
-                                updateTargetSelect.value = option.value;
-                                break;
-                            }
-                        }
-                    } else {
-                        updateTargetSelect.value = '';
+                    if (this.value) {
+                        this.form.submit();
                     }
                 });
             }
@@ -1690,15 +1644,6 @@
                     const panel = document.getElementById('updatePanel');
                     panel.classList.toggle('collapsed');
                     toggleUpdatePanel.textContent = panel.classList.contains('collapsed') ? '展开' : '收起';
-                });
-            }
-
-            // 使用之前声明的 updateTargetSelect 变量
-            if (updateTargetSelect) {
-                updateTargetSelect.addEventListener('change', () => {
-                    if (updateTargetSelect.value) {
-                        updateTargetSelect.form.submit();
-                    }
                 });
             }
 
