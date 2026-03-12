@@ -1107,7 +1107,7 @@
                     </form>
                 </div>
 
-                <div class="update-panel" id="updatePanel" style="display: {% if show_update_panel %}block{% else %}none{% endif %};">
+                <div class="update-panel" id="updatePanel">
                     <h3>
                         信息更新
                         <span class="collapse-btn" id="toggleUpdatePanel">收起</span>
@@ -1375,7 +1375,7 @@
                     </div>
                 </div>
 
-                <div class="data-table" {% if show_update_panel %}style="display: none;"{% endif %}>
+                <div class="data-table" id="dataTable">
                     <div class="table-meta">
                         <div>当前匹配：<span id="matchCount">0</span> 条</div>
                         <div>总记录：<span id="totalCount">{{ projects|length }}</span> 条</div>
@@ -1608,6 +1608,17 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            // 初始化面板显示状态
+            const updatePanel = document.getElementById('updatePanel');
+            const dataTable = document.getElementById('dataTable');
+            {% if show_update_panel %}
+                if (updatePanel) updatePanel.style.display = 'block';
+                if (dataTable) dataTable.style.display = 'none';
+            {% else %}
+                if (updatePanel) updatePanel.style.display = 'none';
+                if (dataTable) dataTable.style.display = 'block';
+            {% endif %}
+
             // 信息更新页签联动逻辑
             const updateCodeSelect = document.getElementById('updateCodeSelect');
             const updateNameSelect = document.getElementById('updateNameSelect');
