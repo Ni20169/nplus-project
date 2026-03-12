@@ -459,12 +459,19 @@ def project_master_edit(request, project_code):
         except Exception as exc:
             messages.error(request, f"保存失败：{exc}")
 
+    latest_update = (
+        ProjectMasterLog.objects.filter(project_code=project.project_code, action="update")
+        .order_by("-created_at")
+        .first()
+    )
+
     return render(
         request,
         "project_master_edit.html",
         {
             "project": project,
             "dicts": dicts,
+            "latest_update": latest_update,
         },
     )
 

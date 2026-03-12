@@ -57,6 +57,39 @@
         }
         .btn-save { background-color: #7fe6a8; color: #111; }
         .btn-cancel { background-color: #95a5a6; color: #fff; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+
+        .update-panel {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 6px;
+            background: #f7f9fc;
+            border: 1px solid #e4e8f0;
+            font-size: 12px;
+        }
+
+        .update-panel h3 {
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .update-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .update-item {
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            padding: 8px;
+            word-break: break-all;
+        }
+
+        .update-meta {
+            margin-top: 8px;
+            color: #666;
+        }
         @media (max-width: 1000px) {
             .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
@@ -151,6 +184,25 @@
                 <a class="btn btn-cancel" href="{% url 'project_master_list' %}">取消</a>
             </div>
         </form>
+
+        {% if latest_update %}
+        <div class="update-panel">
+            <h3>最近一次更新记录</h3>
+            <div class="update-grid">
+                <div class="update-item">
+                    <strong>修改前字段</strong>
+                    <pre>{{ latest_update.before_data|default:"无" }}</pre>
+                </div>
+                <div class="update-item">
+                    <strong>修改后字段</strong>
+                    <pre>{{ latest_update.after_data|default:"无" }}</pre>
+                </div>
+            </div>
+            <div class="update-meta">
+                更新人：{{ latest_update.operator }} | 更新日期：{{ latest_update.created_at }}
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     <script>
