@@ -1611,13 +1611,14 @@
             // 初始化面板显示状态
             const updatePanel = document.getElementById('updatePanel');
             const dataTable = document.getElementById('dataTable');
-            {% if show_update_panel %}
+            const showUpdatePanel = {% if show_update_panel %}true{% else %}false{% endif %};
+            if (showUpdatePanel) {
                 if (updatePanel) updatePanel.style.display = 'block';
                 if (dataTable) dataTable.style.display = 'none';
-            {% else %}
+            } else {
                 if (updatePanel) updatePanel.style.display = 'none';
                 if (dataTable) dataTable.style.display = 'block';
-            {% endif %}
+            }
 
             // 信息更新页签联动逻辑
             const updateCodeSelect = document.getElementById('updateCodeSelect');
