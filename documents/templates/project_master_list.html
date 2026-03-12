@@ -339,6 +339,15 @@
             display: none;
         }
 
+        .update-filter .field {
+            flex: 1 1 260px;
+        }
+
+        .update-filter .field-wide {
+            flex: 1 1 100%;
+            min-width: 260px;
+        }
+
         .update-table pre {
             margin: 0;
             white-space: pre-wrap;
@@ -806,7 +815,10 @@
                             <label>项目名称</label>
                             <input type="text" name="update_name" value="{{ update_name|default:'' }}" placeholder="请输入项目名称">
                         </div>
-                        <div class="field field-md">
+                        <div class="field field-sm" style="align-self:flex-end;">
+                            <button class="btn-search" type="submit">查询</button>
+                        </div>
+                        <div class="field field-wide">
                             <label>选择更新项目</label>
                             <select name="update_target" id="updateTargetSelect">
                                 <option value="">请选择项目</option>
@@ -816,9 +828,6 @@
                                     </option>
                                 {% endfor %}
                             </select>
-                        </div>
-                        <div class="field field-sm" style="align-self:flex-end;">
-                            <button class="btn-search" type="submit">查询</button>
                         </div>
                     </form>
                     {% if update_code or update_name %}
@@ -1287,6 +1296,21 @@
             updateTargetSelect.addEventListener('change', () => {
                 if (updateTargetSelect.value) {
                     updateTargetSelect.form.submit();
+                }
+            });
+        }
+
+        const updateCodeInput = document.querySelector('input[name="update_code"]');
+        const updateNameInput = document.querySelector('input[name="update_name"]');
+        if (updateCodeInput && updateNameInput) {
+            updateCodeInput.addEventListener('input', () => {
+                if (updateCodeInput.value.trim()) {
+                    updateNameInput.value = '';
+                }
+            });
+            updateNameInput.addEventListener('input', () => {
+                if (updateNameInput.value.trim()) {
+                    updateCodeInput.value = '';
                 }
             });
         }
