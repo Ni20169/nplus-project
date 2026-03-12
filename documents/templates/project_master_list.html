@@ -1310,8 +1310,8 @@
                             <div class="field field-flex">
                                 <label><span class="required-star">*</span>是否为执行层</label>
                                 <select name="is_execution_level" required>
+                                    <option value="true" selected>是</option>
                                     <option value="false">否</option>
-                                    <option value="true">是</option>
                                 </select>
                             </div>
                             <div class="field field-flex">
@@ -1437,7 +1437,7 @@
                             </div>
                             <div class="field field-sm">
                                 <label>更新人</label>
-                                <input type="text" value="{{ request.user.username }}" readonly>
+                                <input type="text" value="{{ request.user.username }}" readonly style="background-color: #f5f5f5; cursor: not-allowed;">
                             </div>
                             <div class="field field-sm">
                                 <label>更新日期</label>
