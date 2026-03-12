@@ -536,9 +536,75 @@
             color: #b5b5b5;
         }
 
-        .search-form select[multiple] {
-            height: auto;
-            min-height: 80px;
+        /* 多选下拉框样式 */
+        .multi-select {
+            position: relative;
+            width: 100%;
+        }
+
+        .multi-select-display {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 13px;
+            min-height: 32px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .multi-select-display:after {
+            content: '▼';
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 10px;
+            color: #666;
+        }
+
+        .multi-select.open .multi-select-display:after {
+            content: '▲';
+        }
+
+        .multi-select-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .multi-select.open .multi-select-dropdown {
+            display: block;
+        }
+
+        .multi-select-option {
+            display: flex;
+            align-items: center;
+            padding: 6px 8px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .multi-select-option:hover {
+            background: #f0f0f0;
+        }
+
+        .multi-select-option input[type="checkbox"] {
+            margin-right: 6px;
+            width: auto;
         }
 
         .form-grid {
@@ -1065,12 +1131,17 @@
                             </div>
                             <div class="field">
                                 <label>业务板块</label>
-                                <select name="business_unit" multiple size="3">
-                                    <option value="">请选择业务板块</option>
-                                    {% for item in dicts.BUSINESS_UNIT %}
-                                        <option value="{{ item.code }}" {% if search.business_unit == item.code %}selected{% endif %}>{{ item.name }}</option>
-                                    {% endfor %}
-                                </select>
+                                <div class="multi-select" data-name="business_unit">
+                                    <div class="multi-select-display" onclick="toggleMultiSelect(this)" data-default="请选择业务板块">请选择业务板块</div>
+                                    <div class="multi-select-dropdown">
+                                        {% for item in dicts.BUSINESS_UNIT %}
+                                            <label class="multi-select-option">
+                                                <input type="checkbox" value="{{ item.code }}" {% if search.business_unit == item.code %}checked{% endif %}>
+                                                <span>{{ item.name }}</span>
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                </div>
                             </div>
                             <div class="field">
                                 <label>项目承担部门</label>
@@ -1078,47 +1149,81 @@
                             </div>
                             <div class="field">
                                 <label>项目类型</label>
-                                <select name="project_type" multiple size="3">
-                                    <option value="">请选择项目类型</option>
-                                    {% for item in dicts.PROJECT_TYPE %}
-                                        <option value="{{ item.code }}" {% if search.project_type == item.code %}selected{% endif %}>{{ item.name }}</option>
-                                    {% endfor %}
-                                </select>
+                                <div class="multi-select" data-name="project_type">
+                                    <div class="multi-select-display" onclick="toggleMultiSelect(this)" data-default="请选择项目类型">请选择项目类型</div>
+                                    <div class="multi-select-dropdown">
+                                        {% for item in dicts.PROJECT_TYPE %}
+                                            <label class="multi-select-option">
+                                                <input type="checkbox" value="{{ item.code }}" {% if search.project_type == item.code %}checked{% endif %}>
+                                                <span>{{ item.name }}</span>
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                </div>
                             </div>
                             <div class="field">
                                 <label>项目组织模式</label>
-                                <select name="org_mode" multiple size="3">
-                                    <option value="">请选择项目组织模式</option>
-                                    {% for item in dicts.ORG_MODE %}
-                                        <option value="{{ item.code }}" {% if search.org_mode == item.code %}selected{% endif %}>{{ item.name }}</option>
-                                    {% endfor %}
-                                </select>
+                                <div class="multi-select" data-name="org_mode">
+                                    <div class="multi-select-display" onclick="toggleMultiSelect(this)" data-default="请选择项目组织模式">请选择项目组织模式</div>
+                                    <div class="multi-select-dropdown">
+                                        {% for item in dicts.ORG_MODE %}
+                                            <label class="multi-select-option">
+                                                <input type="checkbox" value="{{ item.code }}" {% if search.org_mode == item.code %}checked{% endif %}>
+                                                <span>{{ item.name }}</span>
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                </div>
                             </div>
                             <div class="field">
                                 <label>主数据系统数据状态</label>
-                                <select name="data_status" multiple size="3">
-                                    <option value="">请选择数据状态</option>
-                                    {% for item in dicts.DATA_STATUS %}
-                                        <option value="{{ item.code }}" {% if search.data_status == item.code %}selected{% endif %}>{{ item.name }}</option>
-                                    {% endfor %}
-                                </select>
+                                <div class="multi-select" data-name="data_status">
+                                    <div class="multi-select-display" onclick="toggleMultiSelect(this)" data-default="请选择数据状态">请选择数据状态</div>
+                                    <div class="multi-select-dropdown">
+                                        {% for item in dicts.DATA_STATUS %}
+                                            <label class="multi-select-option">
+                                                <input type="checkbox" value="{{ item.code }}" {% if search.data_status == item.code %}checked{% endif %}>
+                                                <span>{{ item.name }}</span>
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                </div>
                             </div>
                             <div class="field">
                                 <label>是否为执行层</label>
-                                <select name="is_execution_level" multiple size="3">
-                                    <option value="">全部</option>
-                                    <option value="true">是</option>
-                                    <option value="false">否</option>
-                                </select>
+                                <div class="multi-select" data-name="is_execution_level">
+                                    <div class="multi-select-display" onclick="toggleMultiSelect(this)" data-default="全部">全部</div>
+                                    <div class="multi-select-dropdown">
+                                        <label class="multi-select-option">
+                                            <input type="checkbox" value="true">
+                                            <span>是</span>
+                                        </label>
+                                        <label class="multi-select-option">
+                                            <input type="checkbox" value="false">
+                                            <span>否</span>
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
                             <div class="field">
                                 <label>状态</label>
-                                <select name="status" multiple size="3">
-                                    <option value="">全部</option>
-                                    <option value="启用">启用</option>
-                                    <option value="停用">停用</option>
-                                    <option value="作废">作废</option>
-                                </select>
+                                <div class="multi-select" data-name="status">
+                                    <div class="multi-select-display" onclick="toggleMultiSelect(this)" data-default="全部">全部</div>
+                                    <div class="multi-select-dropdown">
+                                        <label class="multi-select-option">
+                                            <input type="checkbox" value="启用">
+                                            <span>启用</span>
+                                        </label>
+                                        <label class="multi-select-option">
+                                            <input type="checkbox" value="停用">
+                                            <span>停用</span>
+                                        </label>
+                                        <label class="multi-select-option">
+                                            <input type="checkbox" value="作废">
+                                            <span>作废</span>
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
                             <div class="field">
                                 <label>项目年份</label>
@@ -1589,6 +1694,45 @@
     </div>
 
     <script>
+        // 多选下拉框功能
+        function toggleMultiSelect(element) {
+            const multiSelect = element.parentElement;
+            multiSelect.classList.toggle('open');
+        }
+
+        // 点击外部关闭下拉框
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.multi-select')) {
+                document.querySelectorAll('.multi-select.open').forEach(function(el) {
+                    el.classList.remove('open');
+                });
+            }
+        });
+
+        // 更新多选显示文本
+        function updateMultiSelectDisplay(multiSelect) {
+            const checkboxes = multiSelect.querySelectorAll('input[type="checkbox"]:checked');
+            const display = multiSelect.querySelector('.multi-select-display');
+            const defaultText = display.getAttribute('data-default') || display.textContent;
+            
+            if (checkboxes.length === 0) {
+                display.textContent = defaultText;
+            } else {
+                const selectedTexts = Array.from(checkboxes).map(cb => {
+                    return cb.parentElement.querySelector('span').textContent;
+                });
+                display.textContent = selectedTexts.join('；');
+            }
+        }
+
+        // 为多选选项添加事件监听
+        document.addEventListener('change', function(e) {
+            if (e.target.closest('.multi-select-option')) {
+                const multiSelect = e.target.closest('.multi-select');
+                updateMultiSelectDisplay(multiSelect);
+            }
+        });
+
         // 全局函数定义，确保 onclick 可以调用
         function showAddForm() {
             console.log('showAddForm called');
