@@ -343,7 +343,11 @@ def project_master_list(request):
     unique_project_years = list(ProjectMaster.objects.filter(is_deleted=False).values_list('project_year', flat=True).distinct())
     unique_created_bys = list(ProjectMaster.objects.filter(is_deleted=False).values_list('created_by', flat=True).distinct())
     unique_project_types = list(ProjectMaster.objects.filter(is_deleted=False).values_list('project_type_name', flat=True).distinct())
-    unique_created_dates = list(ProjectMaster.objects.filter(is_deleted=False).extra(select={'date': 'DATE(created_at)'}).values_list('date', flat=True).distinct())
+    # 获取创建日期（去重）
+    from django.db.models import Func, F
+    unique_created_dates = list(ProjectMaster.objects.filter(is_deleted=False).annotate(
+        created_date=Func(F('created_at'), function='DATE')
+    ).values_list('created_date', flat=True).distinct())
     
     # 获取审批数据
     from .models import ProjectApproval
