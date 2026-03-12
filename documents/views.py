@@ -342,6 +342,13 @@ def project_master_list(request):
         update_candidates = update_candidates.filter(project_name__icontains=update_name)
     update_candidates = list(update_candidates.order_by("-created_at")[:20])
 
+    # 获取审批数据
+    from .models import ProjectApproval
+    pending_approvals = ProjectApproval.objects.filter(status="pending").order_by("-submit_time")
+    processed_approvals = ProjectApproval.objects.filter(
+        status__in=["approved", "rejected"]
+    ).order_by("-approve_time")[:50]
+
     update_target_code = request.GET.get("update_target", "").strip()
     update_target = None
     if update_target_code:
@@ -368,6 +375,8 @@ def project_master_list(request):
             "show_update_panel": show_update_panel,
             "update_now": timezone.localtime().strftime("%Y-%m-%d %H:%M"),
             "all_projects": all_projects,
+            "pending_approvals": pending_approvals,
+            "processed_approvals": processed_approvals,
         },
     )
 

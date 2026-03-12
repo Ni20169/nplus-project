@@ -255,6 +255,12 @@
             color: #fff;
             font-weight: 600;
         }
+        .btn-approval {
+            background-color: #8e44ad;
+            border-color: #8e44ad;
+            color: #fff;
+            font-weight: 600;
+        }
         .btn-refresh { background-color: #f39c12; }
         .btn-export { background-color: #1abc9c; }
         .btn-import { background-color: #9b59b6; }
@@ -645,7 +651,6 @@
                             <li><a href="#" onclick="refreshList()">项目列表</a></li>
                         </ul>
                     </li>
-                    <li><a href="{% url 'approval_list' %}">审批管理</a></li>
                 </ul>
             </div>
             <div class="menu-section">
@@ -680,7 +685,8 @@
                     <button class="btn-search" onclick="showSearchForm()">查询项目</button>
                     <button class="btn-update" onclick="showUpdatePanel()">信息更新</button>
                     <button class="btn-refresh" onclick="refreshList()">项目列表</button>
-                    <a class="btn-export" href="{% url 'export_project_template' %}">导出Excel模板</a>
+                    <button class="btn-approval" onclick="showApprovalPanel()">审批管理</button>
+                    <a class="btn-export" href="{% url 'export_project_template' %}">导出 Excel 模板</a>
                     <form method="post" action="{% url 'import_project_master' %}" enctype="multipart/form-data" class="import-group">
                         {% csrf_token %}
                         <button class="btn-import" type="submit">批量导入</button>
@@ -694,7 +700,110 @@
                         <div class="message {{ message.tags }}">{{ message }}</div>
                     {% endfor %}
                 </div>
-                {% endif %}
+                {% endif %}</div>
+
+                <!-- 审批管理面板 -->
+                <div class="search-form" id="approvalPanel" style="display: none;">
+                    <h3>
+                        审批管理
+                        <span class="collapse-btn" onclick="hideApprovalPanel()">收起</span>
+                    </h3>
+                    
+                    <div style="margin-top: 16px;">
+                        <h4 style="margin-bottom: 12px; color: #2c3e50;">待审批申请</h4>
+                        {% if pending_approvals %}
+                        <div class="table-wrapper" style="max-height: 400px;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>审批单号</th>
+                                        <th>项目编码</th>
+                                        <th>项目名称</th>
+                                        <th>审批类型</th>
+                                        <th>提交人</th>
+                                        <th>提交时间</th>
+                                        <th>修改说明</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for approval in pending_approvals %}
+                                    <tr>
+                                        <td>{{ approval.id }}</td>
+                                        <td>{{ approval.project_code }}</td>
+                                        <td>{{ approval.before_data.project_name|default:"-" }}</td>
+                                        <td>{{ approval.get_approval_type_display }}</td>
+                                        <td>{{ approval.submitter }}</td>
+                                        <td>{{ approval.submit_time|date:"Y-m-d H:i" }}</td>
+                                        <td>{{ approval.change_note|default:"-" }}</td>
+                                        <td>
+                                            {% if request.user.username == approval.approver %}
+                                            <form method="post" action="{% url 'approve_action' approval.id %}" style="display: flex; gap: 8px;">
+                                                {% csrf_token %}
+                                                <input type="text" name="approve_note" placeholder="审批意见" style="padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; width: 120px;">
+                                                <button type="submit" name="action" value="approve" class="btn-approve" style="padding: 4px 12px; border: none; border-radius: 4px; background: #27ae60; color: white; cursor: pointer; font-size: 12px;">批准</button>
+                                                <button type="submit" name="action" value="reject" class="btn-reject" style="padding: 4px 12px; border: none; border-radius: 4px; background: #e74c3c; color: white; cursor: pointer; font-size: 12px;">拒绝</button>
+                                            </form>
+                                            {% else %}
+                                            <span style="color: #7f8c8d; font-size: 12px;">等待 {{ approval.approver }} 审批</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div style="padding: 20px; text-align: center; color: #7f8c8d; background: #f9f9f9; border-radius: 6px;">
+                            暂无待审批的申请
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <h4 style="margin-bottom: 12px; color: #2c3e50;">已处理申请（最近 50 条）</h4>
+                        {% if processed_approvals %}
+                        <div class="table-wrapper" style="max-height: 400px;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>审批单号</th>
+                                        <th>项目编码</th>
+                                        <th>审批类型</th>
+                                        <th>提交人</th>
+                                        <th>审批结果</th>
+                                        <th>审批人</th>
+                                        <th>审批时间</th>
+                                        <th>审批意见</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for approval in processed_approvals %}
+                                    <tr>
+                                        <td>{{ approval.id }}</td>
+                                        <td>{{ approval.project_code }}</td>
+                                        <td>{{ approval.get_approval_type_display }}</td>
+                                        <td>{{ approval.submitter }}</td>
+                                        <td>
+                                            <span style="padding: 2px 8px; border-radius: 10px; font-size: 11px; background: {% if approval.status == 'approved' %}#d4edda{% else %}#f8d7da{% endif %}; color: {% if approval.status == 'approved' %}#155724{% else %}#721c24{% endif %};">
+                                                {{ approval.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ approval.approver }}</td>
+                                        <td>{{ approval.approve_time|date:"Y-m-d H:i" }}</td>
+                                        <td>{{ approval.approve_note|default:"-" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div style="padding: 20px; text-align: center; color: #7f8c8d; background: #f9f9f9; border-radius: 6px;">
+                            暂无已处理的申请
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
 
                 {% if latest_errors %}
                 <div class="error-panel">
@@ -1384,6 +1493,18 @@
 
         function hideAddForm() {
             document.getElementById('addForm').style.display = 'none';
+        }
+
+        function showApprovalPanel() {
+            document.getElementById('approvalPanel').style.display = 'block';
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('searchForm').style.display = 'none';
+            document.getElementById('updatePanel').style.display = 'none';
+            document.querySelector('.data-table').style.display = 'block';
+        }
+
+        function hideApprovalPanel() {
+            document.getElementById('approvalPanel').style.display = 'none';
         }
 
         function submitDeleteApproval(projectCode, projectName) {
