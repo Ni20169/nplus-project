@@ -22,6 +22,9 @@
         .container {
             display: flex;
             min-height: 100vh;
+            width: 1600px;
+            max-width: 100%;
+            margin: 0 auto;
         }
 
         .container.sidebar-hidden .sidebar {
@@ -190,6 +193,36 @@
         .content-wrap {
             position: relative;
             z-index: 3;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .action-buttons {
+            flex-shrink: 0;
+        }
+
+        .search-form,
+        .data-table {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .table-wrapper {
+            flex: 1;
+            overflow: auto;
+            scrollbar-gutter: stable both-edges;
+        }
+
+        table thead {
+            position: sticky;
+            top: 0;
+            background: #fff;
+            z-index: 10;
+            box-shadow: 0 2px 2px rgba(0,0,0,0.1);
         }
 
         .page-header {
@@ -198,6 +231,7 @@
             align-items: flex-start;
             gap: 12px;
             margin-bottom: 8px;
+            flex-shrink: 0;
         }
 
         .header-left {
