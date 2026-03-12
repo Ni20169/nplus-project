@@ -1566,6 +1566,10 @@
             document.getElementById('searchForm').style.display = 'none';
         }
 
+        function hideUpdatePanel() {
+            document.getElementById('updatePanel').style.display = 'none';
+        }
+
         function toggleSubMenu(id, triggerEl) {
             const target = document.getElementById(id);
             if (target) {
@@ -1825,36 +1829,6 @@
             });
 
             applyFilters();
-        }
-        function showAddForm() {
-            document.getElementById('addForm').style.display = 'block';
-            document.getElementById('searchForm').style.display = 'none';
-            document.getElementById('updatePanel').style.display = 'none';
-            document.querySelector('.data-table').style.display = 'block';
-        }
-
-        function showSearchForm() {
-            document.getElementById('searchForm').style.display = 'block';
-            document.getElementById('addForm').style.display = 'none';
-            document.getElementById('updatePanel').style.display = 'none';
-            document.querySelector('.data-table').style.display = 'block';
-            document.getElementById('searchForm').classList.remove('collapsed');
-            const toggleBtn = document.getElementById('toggleSearchFields');
-            if (toggleBtn) {
-                toggleBtn.textContent = '收起';
-            }
-        }
-
-        function showUpdatePanel() {
-            document.getElementById('updatePanel').style.display = 'block';
-            document.getElementById('addForm').style.display = 'none';
-            document.getElementById('searchForm').style.display = 'none';
-            document.querySelector('.data-table').style.display = 'none';
-            document.getElementById('updatePanel').classList.remove('collapsed');
-            const toggleBtn = document.getElementById('toggleUpdatePanel');
-            if (toggleBtn) {
-                toggleBtn.textContent = '收起';
-            }
         }
     </script>
 </body>
