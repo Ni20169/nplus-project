@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("documents", "0004_remove_projectmaster_org_code"),
+        ("documents", "0001_initial"),
     ]
 
     operations = [
