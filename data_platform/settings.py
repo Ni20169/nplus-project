@@ -84,9 +84,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'project_db',             # 云端数据库名
-        'USER': 'project_user',           # 云端数据库用�?
-        'PASSWORD': '@@@nmz1995',  # 云端数据库密�?
-        'HOST': '127.0.0.1',           # 云服务器公网 IP
+        'USER': 'project_user',           # 云端数据库用名
+        'PASSWORD': '@@@nmz###',  # 云端数据库密码
+        'HOST': '39.106.48.25',           # 云服务器公网 IP
         'PORT': '5432',                    # PostgreSQL 默认端口
     }
 }
@@ -128,7 +128,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [BASE_DIR / 'documents' / 'static']
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # Security (production defaults)
