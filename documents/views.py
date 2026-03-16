@@ -330,7 +330,7 @@ def project_master_list(request):
             "created_by": "",
         }
 
-    projects = list(qs.order_by("-created_at"))
+    projects = list(qs.order_by("-project_code"))
     name_map = _dict_name_map(dicts)
     for project in projects:
         project.province_name = name_map.get("PROVINCE", {}).get(
@@ -391,7 +391,7 @@ def project_master_list(request):
     update_code = request.GET.get("update_code", "").strip()
     
     # 获取所有项目用于下拉选择
-    all_projects = list(ProjectMaster.objects.filter(is_deleted=False).order_by("-created_at")[:500])
+    all_projects = list(ProjectMaster.objects.filter(is_deleted=False).order_by("-project_code")[:500])
     
     # 获取审批数据
     from .models import ProjectApproval
