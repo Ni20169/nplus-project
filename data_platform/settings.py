@@ -85,7 +85,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'project_db',             # 云端数据库名
         'USER': 'project_user',           # 云端数据库用名
-        'PASSWORD': '@@@nmz###',  # 云端数据库密码
+        'PASSWORD': '@@@nmz###',          # 云端数据库密码
         'HOST': '39.106.48.25',           # 云服务器公网 IP
         'PORT': '5432',                    # PostgreSQL 默认端口
     }
