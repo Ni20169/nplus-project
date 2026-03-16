@@ -1109,20 +1109,15 @@
                             </div>
                             <div class="field">
                                 <label>项目机构名称</label>
-                                <div class="multi-select-dropdown" id="orgNameDropdown">
-                                    <div class="multi-select-trigger" onclick="toggleMultiSelect('orgNameDropdown')">
-                                        <span class="placeholder">{% if search.org_name %}{{ search.org_name }}{% else %}选择项目机构{% endif %}</span>
-                                        <span class="caret">▼</span>
-                                    </div>
-                                    <div class="multi-select-panel">
-                                        <div class="multi-select-options">
-                                            {% for item in dicts.ORG %}
+                                <div class="multi-select" data-name="org_name">
+                                    <div class="multi-select-display" onclick="toggleMultiSelect(this)" data-default="请选择项目机构">请选择项目机构</div>
+                                    <div class="multi-select-dropdown">
+                                        {% for item in dicts.ORG %}
                                             <label class="multi-select-option">
-                                                <input type="checkbox" name="org_name" value="{{ item.name }}" {% if search.org_name == item.name %}checked{% endif %}>
+                                                <input type="checkbox" value="{{ item.code }}" {% if search.org_name == item.code %}checked{% endif %}>
                                                 <span>{{ item.name }}</span>
                                             </label>
-                                            {% endfor %}
-                                        </div>
+                                        {% endfor %}
                                     </div>
                                 </div>
                             </div>
@@ -1142,7 +1137,17 @@
                             </div>
                             <div class="field">
                                 <label>所在省</label>
-                                <input type="text" name="province_code" placeholder="输入省份关键词搜索">
+                                <div class="multi-select" data-name="province_code">
+                                    <div class="multi-select-display" onclick="toggleMultiSelect(this)" data-default="请选择所在省">请选择所在省</div>
+                                    <div class="multi-select-dropdown">
+                                        {% for item in dicts.PROVINCE %}
+                                            <label class="multi-select-option">
+                                                <input type="checkbox" value="{{ item.code }}" {% if search.province_code == item.code %}checked{% endif %}>
+                                                <span>{{ item.name }}</span>
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                </div>
                             </div>
                             <div class="field">
                                 <label>业务板块</label>
