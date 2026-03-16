@@ -1399,9 +1399,9 @@
                     </div>
                     <form method="get">
                         <div class="form-grid-row">
-                            <div class="field">
-                                <label><span class="required-star">*</span>项目编码-名称</label>
-                                <select name="update_code" id="updateCodeSelect" required>
+                            <div class="field field-wide">
+                                <label style="font-size: 14px;"><span class="required-star">*</span>项目编码-名称</label>
+                                <select name="update_code" id="updateCodeSelect" required style="padding: 6px 8px; font-size: 14px; min-height: 36px;">
                                     <option value="">请选择项目编码-名称</option>
                                     {% for project in all_projects %}
                                         <option value="{{ project.project_code }}" {% if update_code == project.project_code %}selected{% endif %}>
