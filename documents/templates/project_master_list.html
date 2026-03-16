@@ -684,6 +684,41 @@
             min-width: 96px;
         }
 
+        .inline-actions {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+        .inline-actions .btn-search,
+        .inline-actions .btn-cancel {
+            padding: 8px 14px;
+            font-size: 13px;
+            border-radius: 4px;
+            min-width: 96px;
+            height: 40px;
+        }
+
+        .field-with-buttons .all-in-one-row {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+        .field-with-buttons .all-in-one-row input[type="text"] {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .field-with-buttons .inline-label {
+            display: flex;
+            align-items: flex-end;
+            padding-bottom: 8px;
+            font-size: 12px;
+            color: #666;
+            white-space: nowrap;
+        }
+
         .btn-cancel {
             background-color: #95a5a6;
             color: white;
@@ -1239,18 +1274,18 @@
                                 <label>项目年份</label>
                                 <input type="text" name="project_year" placeholder="输入年份关键词搜索">
                             </div>
-                            <div class="field">
+                            <div class="field field-with-buttons">
                                 <label>创建人</label>
-                                <input type="text" name="created_by" placeholder="输入创建人关键词搜索">
+                                <div class="all-in-one-row">
+                                    <input type="text" name="created_by" placeholder="输入创建人关键词搜索">
+                                    <label class="inline-label">备注</label>
+                                    <input type="text" name="remark" value="{{ search.remark|default:'' }}" placeholder="请输入备注关键词">
+                                    <div class="inline-actions">
+                                        <button class="btn-search" type="submit">查询</button>
+                                        <a class="btn-cancel" href="{% url 'project_master_list' %}">取消</a>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="field">
-                                <label>备注</label>
-                                <input type="text" name="remark" value="{{ search.remark|default:'' }}" placeholder="请输入备注关键词">
-                            </div>
-                        </div>
-                        <div class="form-actions">
-                            <button class="btn-search" type="submit">查询</button>
-                            <a class="btn-cancel" href="{% url 'project_master_list' %}">取消</a>
                         </div>
                     </form>
                 </div>
