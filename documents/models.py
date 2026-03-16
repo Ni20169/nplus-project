@@ -112,7 +112,7 @@ class ProjectMaster(models.Model):
     project_name = models.CharField("项目名称", max_length=100, unique=True)
     org_name = models.CharField("项目机构名称", max_length=50)
     parent_pj_code = models.CharField("上级PJ编码", max_length=12, blank=True, null=True)
-    province_code = models.CharField("所在省", max_length=20)
+    province_code = models.CharField("所在省", max_length=6)
     city_code = models.CharField("所在市", max_length=6)
     business_unit = models.CharField("业务板块", max_length=50)
     dept = models.CharField("项目承担部门", max_length=50)
