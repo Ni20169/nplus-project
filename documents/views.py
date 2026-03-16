@@ -1055,6 +1055,14 @@ def user_list(request):
                     messages.success(request, f"用户 {target.username} 的密码已重置")
             else:
                 messages.error(request, "请输入新密码")
+        elif action == "update_department":
+            user_id = request.POST.get("user_id")
+            department = request.POST.get("department", "").strip()
+            target = get_object_or_404(User, id=user_id)
+            profile, _ = UserProfile.objects.get_or_create(user=target)
+            profile.department = department
+            profile.save(update_fields=["department"])
+            messages.success(request, f"用户 {target.username} 的部门已更新")
         return redirect("user_list")
 
     return render(request, "user_list.html", {"users": users})

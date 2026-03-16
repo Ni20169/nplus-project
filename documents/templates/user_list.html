@@ -266,7 +266,19 @@
                             {% for user in users %}
                             <tr>
                                 <td>{{ user.username }}</td>
-                                <td>{{ user.profile.department|default:"" }}</td>
+                                <td>
+                                    {% if request.user.is_staff %}
+                                    <form method="post" style="display:inline;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="update_department">
+                                        <input type="hidden" name="user_id" value="{{ user.id }}">
+                                        <input type="text" name="department" value="{{ user.profile.department|default:'' }}" placeholder="部门" style="width:150px;">
+                                        <button class="btn btn-reset" type="submit" style="padding:4px 8px;min-width:auto;">保存</button>
+                                    </form>
+                                    {% else %}
+                                    {{ user.profile.department|default:"" }}
+                                    {% endif %}
+                                </td>
                                 <td>{{ user.is_active|yesno:"是,否" }}</td>
                                 <td>{{ user.is_staff|yesno:"是,否" }}</td>
                                 <td>{{ user.last_login }}</td>
@@ -285,8 +297,8 @@
                                         {% csrf_token %}
                                         <input type="hidden" name="action" value="reset">
                                         <input type="hidden" name="user_id" value="{{ user.id }}">
-                                        <input type="text" name="new_password" placeholder="8位以上，含大小写+数字" style="width:180px;" title="密码要求：至少8位，包含大写字母、小写字母和数字">
-                                        <button class="btn btn-reset" type="submit">重置密码</button>
+                                        <input type="text" name="new_password" placeholder="新密码" style="width:120px;">
+                                        <button class="btn btn-reset" type="submit">重置</button>
                                     </form>
                                 </td>
                                 {% endif %}
