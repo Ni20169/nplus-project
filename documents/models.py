@@ -112,7 +112,7 @@ class ProjectMaster(models.Model):
     project_name = models.CharField("项目名称", max_length=100, unique=True)
     org_name = models.CharField("项目机构名称", max_length=50)
     parent_pj_code = models.CharField("上级PJ编码", max_length=12, blank=True, null=True)
-    province_code = models.CharField("所在省", max_length=6)
+    province_code = models.CharField("所在省", max_length=20)
     city_code = models.CharField("所在市", max_length=6)
     business_unit = models.CharField("业务板块", max_length=50)
     dept = models.CharField("项目承担部门", max_length=50)
@@ -121,6 +121,7 @@ class ProjectMaster(models.Model):
     data_status = models.CharField("主数据系统数据状态", max_length=50)
     is_execution_level = models.BooleanField("是否为执行层", default=False)
     project_year = models.CharField("项目年份", max_length=4)
+    status = models.CharField("状态", max_length=10, default="启用")
     created_at = models.DateTimeField("创建时间", auto_now_add=True)
     created_by = models.CharField("创建人", max_length=50)
     updated_at = models.DateTimeField("更新时间", auto_now=True)
@@ -191,11 +192,10 @@ def ensure_user_profile(sender, instance, created, **kwargs):
 
 
 class ProjectApproval(models.Model):
-    """项目修改/删除/导入审批表"""
+    """项目修改/删除审批表"""
     APPROVAL_TYPE_CHOICES = (
         ("update", "修改"),
         ("delete", "删除"),
-        ("import", "导入"),
     )
     STATUS_CHOICES = (
         ("pending", "待审批"),
@@ -203,8 +203,7 @@ class ProjectApproval(models.Model):
         ("rejected", "已拒绝"),
     )
 
-    project_code = models.CharField("项目编码", max_length=50)
-    project_name = models.CharField("项目名称", max_length=200, blank=True)
+    project_code = models.CharField("项目编码", max_length=12)
     approval_type = models.CharField("审批类型", max_length=10, choices=APPROVAL_TYPE_CHOICES)
     before_data = models.JSONField("修改前数据", null=True, blank=True)
     after_data = models.JSONField("修改后数据", null=True, blank=True)
@@ -215,7 +214,6 @@ class ProjectApproval(models.Model):
     submit_time = models.DateTimeField("提交时间", auto_now_add=True)
     approve_time = models.DateTimeField("审批时间", null=True, blank=True)
     approve_note = models.CharField("审批意见", max_length=200, blank=True)
-    import_file_path = models.CharField("导入文件路径", max_length=500, blank=True)
 
     class Meta:
         verbose_name = "项目审批"
