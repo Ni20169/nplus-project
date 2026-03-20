@@ -196,6 +196,7 @@ class ProjectApproval(models.Model):
     APPROVAL_TYPE_CHOICES = (
         ("update", "修改"),
         ("delete", "删除"),
+        ("import", "导入"),
     )
     STATUS_CHOICES = (
         ("pending", "待审批"),
@@ -204,6 +205,7 @@ class ProjectApproval(models.Model):
     )
 
     project_code = models.CharField("项目编码", max_length=12)
+    project_name = models.CharField("项目名称", max_length=200, blank=True)
     approval_type = models.CharField("审批类型", max_length=10, choices=APPROVAL_TYPE_CHOICES)
     before_data = models.JSONField("修改前数据", null=True, blank=True)
     after_data = models.JSONField("修改后数据", null=True, blank=True)
@@ -214,6 +216,7 @@ class ProjectApproval(models.Model):
     submit_time = models.DateTimeField("提交时间", auto_now_add=True)
     approve_time = models.DateTimeField("审批时间", null=True, blank=True)
     approve_note = models.CharField("审批意见", max_length=200, blank=True)
+    import_file_path = models.CharField("导入文件路径", max_length=500, blank=True)
 
     class Meta:
         verbose_name = "项目审批"
