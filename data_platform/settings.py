@@ -163,6 +163,9 @@ CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.getenv('DJANGO_CSRF_TRUSTED_ORIGIN
 LOGIN_REDIRECT_URL = '/documents/'        # 对应 ProjectMaster 列表�?
 LOGOUT_REDIRECT_URL = '/'                 # 退出登录回首页
 
+# Keep legacy integer primary keys to match existing migrations/schema.
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
 # Deployment static files override
 
 # Logging configuration for production debugging
