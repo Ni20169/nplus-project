@@ -171,17 +171,12 @@
 
         .watermark {
             position: fixed;
-            top: -12vh;
-            left: -12vw;
-            width: 124vw;
-            height: 124vh;
+            inset: 0;
             pointer-events: none;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            grid-auto-rows: 90px;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            grid-auto-rows: 120px;
             align-content: start;
-            transform: rotate(-18deg);
-            transform-origin: center;
             z-index: 4;
             overflow: hidden;
         }
@@ -190,12 +185,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            color: rgba(0, 0, 0, 0.16);
+            color: rgba(0, 0, 0, 0.13);
             font-size: 15px;
             font-weight: 600;
             letter-spacing: 1px;
             white-space: nowrap;
             text-transform: uppercase;
+            transform: rotate(-18deg);
         }
 
         .content-wrap {
@@ -919,7 +915,7 @@
 </head>
 <body data-show-update-panel="{% if show_update_panel %}true{% else %}false{% endif %}">
     <div class="watermark">
-        {% for _ in "12345678901234567890123456789012345678901234567890" %}
+        {% for _ in "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890" %}
             <span>{{ request.user.username }}</span>
         {% endfor %}
     </div>
