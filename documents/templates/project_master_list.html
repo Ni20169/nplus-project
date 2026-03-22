@@ -917,7 +917,7 @@
         }
     </style>
 </head>
-<body data-show-update-panel="{% if show_update_panel %}true{% else %}false{% endif %}">
+<body data-show-update-panel="{% if show_update_panel %}true{% else %}false{% endif %}" data-show-search-form="{% if show_search_form %}true{% else %}false{% endif %}" data-is-query-result="{% if is_query_result %}true{% else %}false{% endif %}">
     <div class="watermark">
         {% for _ in "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890" %}
             <span>{{ request.user.username }}</span>
@@ -1864,7 +1864,8 @@
                 document.getElementById('updatePanel').style.display = 'none';
                 document.getElementById('approvalPanel').style.display = 'none';
                 document.getElementById('listFilterPanel').style.display = 'none';
-                document.querySelector('.data-table').style.display = 'block';
+                // 查询页签默认只展示查询条件，不展示项目列表
+                document.querySelector('.data-table').style.display = 'none';
                 document.getElementById('searchForm').classList.remove('collapsed');
                 const toggleBtn = document.getElementById('toggleSearchFields');
                 if (toggleBtn) {
@@ -1935,8 +1936,14 @@
             const dataTable = document.getElementById('dataTable');
             // 从HTML数据属性获取初始化状态
             const showUpdatePanel = document.body.dataset.showUpdatePanel === 'true';
+            const showSearchFormMode = document.body.dataset.showSearchForm === 'true';
+            const isQueryResult = document.body.dataset.isQueryResult === 'true';
             if (showUpdatePanel) {
                 if (updatePanel) updatePanel.style.display = 'block';
+                if (dataTable) dataTable.style.display = 'none';
+            } else if (showSearchFormMode && !isQueryResult) {
+                // 查询页签（未提交查询）只显示查询条件，不显示列表
+                if (updatePanel) updatePanel.style.display = 'none';
                 if (dataTable) dataTable.style.display = 'none';
             } else {
                 if (updatePanel) updatePanel.style.display = 'none';
