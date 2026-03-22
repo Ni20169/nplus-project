@@ -198,10 +198,11 @@
             <div class="menu-section">
                 <div class="menu-toggle" data-target="menu-system">系统管理<span>▸</span></div>
                 <ul class="menu-list show" id="menu-system">
+                    {% if permissions.can_user_manage %}
                     <li><a href="{% url 'user_list' %}">用户管理</a></li>
                     {% if request.user.is_staff %}
-                        <li><a href="#">权限管理</a></li>
-                        <li><a href="#">系统设置</a></li>
+                        <li><a href="{% url 'permission_manage' %}">权限管理</a></li>
+                    {% endif %}
                     {% endif %}
                 </ul>
             </div>

@@ -12,6 +12,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from openpyxl import Workbook, load_workbook
 
@@ -31,6 +32,32 @@ DICT_CODES = [
 
 PJ_CODE_PATTERN = re.compile(r"^PJ\d{10}$")
 logger = logging.getLogger(__name__)
+
+PERMISSION_FIELDS = [
+    ("can_user_manage", "用户管理"),
+    ("can_create_project", "新增项目"),
+    ("can_query_project", "查询项目"),
+    ("can_update_project", "信息更新"),
+    ("can_view_project_list", "项目列表"),
+    ("can_approval_manage", "审批管理"),
+]
+
+
+def _get_user_permissions(user):
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    permissions = {
+        key: bool(getattr(profile, key, False))
+        for key, _ in PERMISSION_FIELDS
+    }
+    if user.is_superuser:
+        for key, _ in PERMISSION_FIELDS:
+            permissions[key] = True
+    return permissions
+
+
+def _redirect_no_permission(request):
+    messages.error(request, "无权限")
+    return redirect(f"{reverse('project_master_list')}?show_add=1")
 
 
 def _normalize_project_code(value):
@@ -81,10 +108,45 @@ def logout_view(request):
 
 @login_required
 def project_master_list(request):
+    permissions = _get_user_permissions(request.user)
     dicts = _load_dicts()
     dict_map = _dict_name_map(dicts)
+    is_list_filter = request.GET.get("list_filter") == "1"
+    force_add_form = request.GET.get("show_add") == "1"
+    query_keys = [
+        "project_code",
+        "project_name",
+        "org_name",
+        "parent_pj_code",
+        "province_code",
+        "business_unit",
+        "dept",
+        "project_type",
+        "org_mode",
+        "data_status",
+        "is_execution_level",
+        "project_year",
+        "created_by",
+        "remark",
+    ]
+    has_query_request = any(request.GET.get(key, "").strip() for key in query_keys)
+
+    if request.method == "GET":
+        if is_list_filter and not permissions["can_view_project_list"]:
+            return _redirect_no_permission(request)
+        if has_query_request and not permissions["can_query_project"]:
+            return _redirect_no_permission(request)
+        if (
+            not is_list_filter
+            and not has_query_request
+            and not force_add_form
+            and not permissions["can_view_project_list"]
+        ):
+            return _redirect_no_permission(request)
 
     if request.method == "POST" and request.POST.get("form_type") == "create":
+        if not permissions["can_create_project"]:
+            return _redirect_no_permission(request)
         project_data = {
             "project_code": request.POST.get("project_code", "").strip(),
             "project_name": request.POST.get("project_name", "").strip(),
@@ -135,6 +197,8 @@ def project_master_list(request):
     show_update_panel = False
 
     if request.method == "POST" and request.POST.get("form_type") == "update":
+        if not permissions["can_update_project"]:
+            return _redirect_no_permission(request)
         target_code = request.POST.get("update_project_code", "").strip()
         project = ProjectMaster.objects.filter(project_code=target_code, is_deleted=False).first()
         if not project:
@@ -225,9 +289,8 @@ def project_master_list(request):
         show_update_panel = True
 
     qs = ProjectMaster.objects.filter(is_deleted=False)
-    
-    # 检查是否是项目列表筛选模式
-    is_list_filter = request.GET.get("list_filter") == "1"
+    if not permissions["can_view_project_list"] and not (has_query_request and permissions["can_query_project"]):
+        qs = ProjectMaster.objects.none()
     
     if is_list_filter:
         # 项目列表独立筛选
@@ -365,6 +428,8 @@ def project_master_list(request):
     recent_updates = list(
         ProjectMasterLog.objects.filter(action="update").order_by("-created_at")[:10]
     )
+    if not permissions["can_update_project"]:
+        recent_updates = []
     project_name_map = dict(
         ProjectMaster.objects.filter(is_deleted=False).values_list("project_code", "project_name")
     )
@@ -432,17 +497,22 @@ def project_master_list(request):
     update_code = request.GET.get("update_code", "").strip()
     
     # 获取所有项目用于下拉选择
-    all_projects = list(ProjectMaster.objects.filter(is_deleted=False).order_by("-project_code")[:500])
+    all_projects = []
+    if permissions["can_update_project"]:
+        all_projects = list(ProjectMaster.objects.filter(is_deleted=False).order_by("-project_code")[:500])
     
     # 获取审批数据
     from .models import ProjectApproval
-    pending_approvals = ProjectApproval.objects.filter(status="pending").order_by("-submit_time")
-    processed_approvals = ProjectApproval.objects.filter(
-        status__in=["approved", "rejected"]
-    ).order_by("-approve_time")[:50]
+    pending_approvals = []
+    processed_approvals = []
+    if permissions["can_approval_manage"]:
+        pending_approvals = ProjectApproval.objects.filter(status="pending").order_by("-submit_time")
+        processed_approvals = ProjectApproval.objects.filter(
+            status__in=["approved", "rejected"]
+        ).order_by("-approve_time")[:50]
 
     update_target = None
-    if update_code:
+    if update_code and permissions["can_update_project"]:
         update_target = ProjectMaster.objects.filter(
             project_code=update_code, is_deleted=False
         ).first()
@@ -466,9 +536,14 @@ def project_master_list(request):
         search["remark"],
     ])
     is_query_result = (not is_list_filter) and has_search_params
+    show_action_column = (not is_query_result) and (
+        permissions["can_update_project"] or permissions["can_approval_manage"]
+    )
 
     # 检查是否是新增项目表单提交后的显示
-    show_add_form = request.method == "POST" and request.POST.get("form_type") == "create"
+    show_add_form = (request.method == "POST" and request.POST.get("form_type") == "create") or force_add_form
+    if not permissions["can_create_project"]:
+        show_add_form = False
     
     # 构建项目列表导出参数
     list_export_params = "&".join([f"{k}={v}" for k, v in list_filter.items() if v])
@@ -503,13 +578,15 @@ def project_master_list(request):
             "update_target": update_target,
             "update_code": update_code,
             "show_update_panel": show_update_panel,
-            "show_search_form": has_search_params,
+            "show_search_form": has_search_params and permissions["can_query_project"],
             "is_query_result": is_query_result,
+            "show_action_column": show_action_column,
             "show_add_form": show_add_form,
             "update_now": timezone.localtime().strftime("%Y-%m-%d %H:%M"),
             "all_projects": all_projects,
             "pending_approvals": pending_approvals,
             "processed_approvals": processed_approvals,
+            "permissions": permissions,
         },
     )
 
@@ -582,6 +659,10 @@ def export_project_template(request):
 @login_required
 def export_project_list(request):
     """导出项目列表（支持筛选条件）"""
+    permissions = _get_user_permissions(request.user)
+    if not permissions["can_view_project_list"]:
+        return _redirect_no_permission(request)
+
     qs = ProjectMaster.objects.filter(is_deleted=False)
     
     # 应用筛选条件
@@ -667,6 +748,10 @@ def export_project_list(request):
 
 @login_required
 def import_project_master(request):
+    permissions = _get_user_permissions(request.user)
+    if not permissions["can_approval_manage"]:
+        return _redirect_no_permission(request)
+
     if request.method != "POST":
         return redirect("project_master_list")
 
@@ -745,6 +830,10 @@ def import_project_master(request):
 
 @login_required
 def project_master_edit(request, project_code):
+    permissions = _get_user_permissions(request.user)
+    if not permissions["can_update_project"]:
+        return _redirect_no_permission(request)
+
     dicts = _load_dicts()
     project = get_object_or_404(ProjectMaster, project_code=project_code, is_deleted=False)
 
@@ -861,6 +950,10 @@ def project_master_edit(request, project_code):
 @login_required
 def submit_delete_approval(request):
     """提交删除审批申请"""
+    permissions = _get_user_permissions(request.user)
+    if not permissions["can_approval_manage"]:
+        return _redirect_no_permission(request)
+
     if request.method != "POST":
         return redirect("project_master_list")
 
@@ -912,6 +1005,10 @@ def approval_list(request):
 @login_required
 def approve_action(request, approval_id):
     """处理审批"""
+    permissions = _get_user_permissions(request.user)
+    if not permissions["can_approval_manage"]:
+        return _redirect_no_permission(request)
+
     if request.method != "POST":
         return redirect("project_master_list")
 
@@ -1150,6 +1247,10 @@ def _process_import_file(file_path, submitter):
 
 @login_required
 def user_list(request):
+    permissions = _get_user_permissions(request.user)
+    if not permissions["can_user_manage"]:
+        return _redirect_no_permission(request)
+
     if request.user.is_staff:
         users = User.objects.all().order_by("-date_joined")
     else:
@@ -1216,4 +1317,41 @@ def user_list(request):
             messages.success(request, f"用户 {target.username} 的部门已更新")
         return redirect("user_list")
 
-    return render(request, "user_list.html", {"users": users})
+    return render(request, "user_list.html", {"users": users, "permissions": permissions})
+
+
+@login_required
+def permission_manage(request):
+    permissions = _get_user_permissions(request.user)
+    if not request.user.is_staff or not permissions["can_user_manage"]:
+        return _redirect_no_permission(request)
+
+    if request.method == "POST":
+        user_id = request.POST.get("user_id")
+        target = get_object_or_404(User, id=user_id)
+        profile, _ = UserProfile.objects.get_or_create(user=target)
+        for key, _ in PERMISSION_FIELDS:
+            setattr(profile, key, request.POST.get(key) == "on")
+        profile.save(update_fields=[key for key, _ in PERMISSION_FIELDS])
+        messages.success(request, f"用户 {target.username} 的权限已更新")
+        return redirect("permission_manage")
+
+    users = list(User.objects.all().order_by("-date_joined"))
+    user_permission_rows = []
+    for user in users:
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        user_permission_rows.append(
+            {
+                "user": user,
+                "profile": profile,
+            }
+        )
+
+    return render(
+        request,
+        "permission_manage.html",
+        {
+            "user_permission_rows": user_permission_rows,
+            "permissions": permissions,
+        },
+    )

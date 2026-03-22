@@ -923,7 +923,7 @@
         }
     </style>
 </head>
-<body data-show-update-panel="{% if show_update_panel %}true{% else %}false{% endif %}" data-show-search-form="{% if show_search_form %}true{% else %}false{% endif %}" data-is-query-result="{% if is_query_result %}true{% else %}false{% endif %}">
+<body data-show-update-panel="{% if show_update_panel %}true{% else %}false{% endif %}" data-show-search-form="{% if show_search_form %}true{% else %}false{% endif %}" data-is-query-result="{% if is_query_result %}true{% else %}false{% endif %}" data-can-create-project="{% if permissions.can_create_project %}true{% else %}false{% endif %}" data-can-query-project="{% if permissions.can_query_project %}true{% else %}false{% endif %}" data-can-update-project="{% if permissions.can_update_project %}true{% else %}false{% endif %}" data-can-view-project-list="{% if permissions.can_view_project_list %}true{% else %}false{% endif %}" data-can-approval-manage="{% if permissions.can_approval_manage %}true{% else %}false{% endif %}">
     <div class="watermark">
         {% for _ in "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890" %}
             <span>{{ request.user.username }}</span>
@@ -935,10 +935,11 @@
             <div class="menu-section">
                 <div class="menu-toggle level-1 open" data-target="menu-system">系统管理<span class="caret">▼</span></div>
                 <ul class="menu-list show" id="menu-system">
+                    {% if permissions.can_user_manage %}
                     <li><a href="{% url 'user_list' %}">用户管理</a></li>
                     {% if request.user.is_staff %}
-                        <li><a href="#">权限管理</a></li>
-                        <li><a href="#">系统设置</a></li>
+                        <li><a href="{% url 'permission_manage' %}">权限管理</a></li>
+                    {% endif %}
                     {% endif %}
                 </ul>
             </div>
@@ -948,11 +949,21 @@
                     <li>
                         <a class="menu-level-2 open" href="#" onclick="toggleSubMenu('menu-project-master', this); return false;">项目主数据管理<span class="caret">▼</span></a>
                         <ul class="menu-list show menu-level-3" id="menu-project-master">
+                            {% if permissions.can_create_project %}
                             <li><a href="#" onclick="showAddForm()">新增项目</a></li>
+                            {% endif %}
+                            {% if permissions.can_query_project %}
                             <li><a href="#" onclick="showSearchForm()">查询项目</a></li>
+                            {% endif %}
+                            {% if permissions.can_update_project %}
                             <li><a href="#" onclick="showUpdatePanel()">信息更新</a></li>
+                            {% endif %}
+                            {% if permissions.can_view_project_list %}
                             <li><a href="#" onclick="refreshList()">项目列表</a></li>
+                            {% endif %}
+                            {% if permissions.can_approval_manage %}
                             <li><a href="#" onclick="showApprovalPanel()">审批管理</a></li>
+                            {% endif %}
                         </ul>
                     </li>
                 </ul>
@@ -977,17 +988,31 @@
                 </div>
 
                 <div class="action-buttons">
+                    {% if permissions.can_create_project %}
                     <button class="btn-add" onclick="showAddForm()">新增项目</button>
+                    {% endif %}
+                    {% if permissions.can_query_project %}
                     <button class="btn-search" onclick="showSearchForm()">查询项目</button>
+                    {% endif %}
+                    {% if permissions.can_update_project %}
                     <button class="btn-update" onclick="showUpdatePanel()">信息更新</button>
+                    {% endif %}
+                    {% if permissions.can_view_project_list %}
                     <button class="btn-refresh" onclick="refreshList()">项目列表</button>
+                    {% endif %}
+                    {% if permissions.can_approval_manage %}
                     <button class="btn-approval" onclick="showApprovalPanel()">审批管理</button>
+                    {% endif %}
+                    {% if permissions.can_create_project %}
                     <a class="btn-export" href="{% url 'export_project_template' %}">导出 Excel 模板</a>
+                    {% endif %}
+                    {% if permissions.can_approval_manage %}
                     <form method="post" action="{% url 'import_project_master' %}" enctype="multipart/form-data" class="import-group">
                         {% csrf_token %}
                         <button class="btn-import" type="submit">批量导入</button>
                         <input type="file" name="import_file" accept=".xlsx" required>
                     </form>
+                    {% endif %}
                 </div>
 
                 {% if messages %}
@@ -999,6 +1024,7 @@
                 {% endif %}
 
                 <!-- 审批管理面板 -->
+                {% if permissions.can_approval_manage %}
                 <div class="search-form" id="approvalPanel" style="display: none;">
                     <h3>
                         审批管理
@@ -1122,6 +1148,7 @@
                         {% endif %}
                     </div>
                 </div>
+                {% endif %}
 
                 {% if latest_errors %}
                 <div class="error-panel">
@@ -1319,6 +1346,7 @@
                     </form>
                 </div>
 
+                {% if permissions.can_create_project %}
                 <div class="search-form add-form{% if not show_add_form %} hidden{% endif %}" id="addForm">
                     <h3>新增项目</h3>
                     <form method="post">
@@ -1417,7 +1445,9 @@
                         <div class="hint">项目年份将从项目主数据编码第3-6位自动生成。</div>
                     </form>
                 </div>
+                {% endif %}
 
+                {% if permissions.can_update_project %}
                 <div class="update-panel" id="updatePanel">
                     <h3>
                         信息更新
@@ -1652,6 +1682,7 @@
                         </div>
                     </div>
                 </div>
+                {% endif %}
 
                 <!-- 项目列表筛选面板（已隐藏） -->
                 <div class="search-form" id="listFilterPanel" style="display: none !important;">
@@ -1680,7 +1711,7 @@
                                     <th data-sort="11">项目类型</th>
                                     <th data-sort="12">创建时间</th>
                                     <th data-sort="13">备注</th>
-                                        {% if not is_query_result %}
+                                        {% if show_action_column %}
                                     <th>操作</th>
                                         {% endif %}
                                 </tr>
@@ -1705,7 +1736,7 @@
                                     <th><input type="text" data-filter="11" placeholder="筛选"></th>
                                     <th><input type="month" data-filter="12" placeholder="选择年月"></th>
                                     <th><input type="text" data-filter="13" placeholder="筛选"></th>
-                                    {% if not is_query_result %}
+                                    {% if show_action_column %}
                                     <th>
                                         <button type="button" class="btn-reset-filter" id="resetTableFilter">清空</button>
                                     </th>
@@ -1729,18 +1760,22 @@
                                     <td>{{ project.project_type_name }}</td>
                                     <td>{{ project.created_at }}</td>
                                     <td>{{ project.remark }}</td>
-                                    {% if not is_query_result %}
+                                    {% if show_action_column %}
                                     <td>
                                         <div style="display: flex; gap: 16px; justify-content: center;">
+                                            {% if permissions.can_update_project %}
                                             <a class="btn-edit" href="{% url 'project_master_edit' project.project_code %}">修改</a>
+                                            {% endif %}
+                                            {% if permissions.can_approval_manage %}
                                             <button class="btn-delete" type="button" onclick="submitDeleteApproval('{{ project.project_code }}', '{{ project.project_name }}')">删除</button>
+                                            {% endif %}
                                         </div>
                                     </td>
                                     {% endif %}
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="{% if not is_query_result %}15{% else %}14{% endif %}">暂无数据</td>
+                                    <td colspan="{% if show_action_column %}15{% else %}14{% endif %}">暂无数据</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -1792,15 +1827,39 @@
         });
 
         // 全局函数定义，确保 onclick 可以调用
+        const canCreateProject = document.body.dataset.canCreateProject === 'true';
+        const canQueryProject = document.body.dataset.canQueryProject === 'true';
+        const canUpdateProject = document.body.dataset.canUpdateProject === 'true';
+        const canViewProjectList = document.body.dataset.canViewProjectList === 'true';
+        const canApprovalManage = document.body.dataset.canApprovalManage === 'true';
+
+        function setDisplay(id, value) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.style.display = value;
+            }
+        }
+
+        function setTableDisplay(value) {
+            const table = document.querySelector('.data-table');
+            if (table) {
+                table.style.display = value;
+            }
+        }
+
         function showAddForm() {
+            if (!canCreateProject) {
+                alert('无权限');
+                return;
+            }
             console.log('showAddForm called');
             try {
-                document.getElementById('addForm').style.display = 'block';
-                document.getElementById('searchForm').style.display = 'none';
-                document.getElementById('updatePanel').style.display = 'none';
-                document.getElementById('approvalPanel').style.display = 'none';
-                document.getElementById('listFilterPanel').style.display = 'none';
-                document.querySelector('.data-table').style.display = 'none';
+                setDisplay('addForm', 'block');
+                setDisplay('searchForm', 'none');
+                setDisplay('updatePanel', 'none');
+                setDisplay('approvalPanel', 'none');
+                setDisplay('listFilterPanel', 'none');
+                setTableDisplay('none');
                 console.log('showAddForm completed successfully');
             } catch (error) {
                 console.error('Error in showAddForm:', error);
@@ -1808,21 +1867,25 @@
         }
 
         function hideAddForm() {
-            document.getElementById('addForm').style.display = 'none';
+            setDisplay('addForm', 'none');
         }
 
         function showApprovalPanel() {
+            if (!canApprovalManage) {
+                alert('无权限');
+                return;
+            }
             console.log('showApprovalPanel called');
-            document.getElementById('approvalPanel').style.display = 'block';
-            document.getElementById('addForm').style.display = 'none';
-            document.getElementById('searchForm').style.display = 'none';
-            document.getElementById('updatePanel').style.display = 'none';
-            document.getElementById('listFilterPanel').style.display = 'none';
-            document.querySelector('.data-table').style.display = 'block';
+            setDisplay('approvalPanel', 'block');
+            setDisplay('addForm', 'none');
+            setDisplay('searchForm', 'none');
+            setDisplay('updatePanel', 'none');
+            setDisplay('listFilterPanel', 'none');
+            setTableDisplay('block');
         }
 
         function hideApprovalPanel() {
-            document.getElementById('approvalPanel').style.display = 'none';
+            setDisplay('approvalPanel', 'none');
         }
 
         function submitDeleteApproval(projectCode, projectName) {
@@ -1857,6 +1920,10 @@
         }
 
         function showSearchForm() {
+            if (!canQueryProject) {
+                alert('无权限');
+                return;
+            }
             console.log('showSearchForm called');
             console.log('searchForm element:', document.getElementById('searchForm'));
             console.log('addForm element:', document.getElementById('addForm'));
@@ -1865,14 +1932,17 @@
             console.log('data-table element:', document.querySelector('.data-table'));
             
             try {
-                document.getElementById('searchForm').style.display = 'block';
-                document.getElementById('addForm').style.display = 'none';
-                document.getElementById('updatePanel').style.display = 'none';
-                document.getElementById('approvalPanel').style.display = 'none';
-                document.getElementById('listFilterPanel').style.display = 'none';
+                setDisplay('searchForm', 'block');
+                setDisplay('addForm', 'none');
+                setDisplay('updatePanel', 'none');
+                setDisplay('approvalPanel', 'none');
+                setDisplay('listFilterPanel', 'none');
                 // 查询页签默认只展示查询条件，不展示项目列表
-                document.querySelector('.data-table').style.display = 'none';
-                document.getElementById('searchForm').classList.remove('collapsed');
+                setTableDisplay('none');
+                const searchForm = document.getElementById('searchForm');
+                if (searchForm) {
+                    searchForm.classList.remove('collapsed');
+                }
                 const toggleBtn = document.getElementById('toggleSearchFields');
                 if (toggleBtn) {
                     toggleBtn.textContent = '收起';
@@ -1884,15 +1954,22 @@
         }
 
         function showUpdatePanel() {
+            if (!canUpdateProject) {
+                alert('无权限');
+                return;
+            }
             console.log('showUpdatePanel called');
             try {
-                document.getElementById('updatePanel').style.display = 'block';
-                document.getElementById('addForm').style.display = 'none';
-                document.getElementById('searchForm').style.display = 'none';
-                document.getElementById('approvalPanel').style.display = 'none';
-                document.getElementById('listFilterPanel').style.display = 'none';
-                document.querySelector('.data-table').style.display = 'none';
-                document.getElementById('updatePanel').classList.remove('collapsed');
+                setDisplay('updatePanel', 'block');
+                setDisplay('addForm', 'none');
+                setDisplay('searchForm', 'none');
+                setDisplay('approvalPanel', 'none');
+                setDisplay('listFilterPanel', 'none');
+                setTableDisplay('none');
+                const updatePanel = document.getElementById('updatePanel');
+                if (updatePanel) {
+                    updatePanel.classList.remove('collapsed');
+                }
                 const toggleBtn = document.getElementById('toggleUpdatePanel');
                 if (toggleBtn) {
                     toggleBtn.textContent = '收起';
@@ -1904,11 +1981,11 @@
         }
 
         function hideSearchForm() {
-            document.getElementById('searchForm').style.display = 'none';
+            setDisplay('searchForm', 'none');
         }
 
         function hideUpdatePanel() {
-            document.getElementById('updatePanel').style.display = 'none';
+            setDisplay('updatePanel', 'none');
         }
 
         function toggleSubMenu(id, triggerEl) {
@@ -1922,14 +1999,18 @@
         }
 
         function refreshList() {
+            if (!canViewProjectList) {
+                alert('无权限');
+                return;
+            }
             console.log('refreshList called');
             try {
-                document.getElementById('addForm').style.display = 'none';
-                document.getElementById('searchForm').style.display = 'none';
-                document.getElementById('updatePanel').style.display = 'none';
-                document.getElementById('approvalPanel').style.display = 'none';
-                document.getElementById('listFilterPanel').style.display = 'none';
-                document.querySelector('.data-table').style.display = 'block';
+                setDisplay('addForm', 'none');
+                setDisplay('searchForm', 'none');
+                setDisplay('updatePanel', 'none');
+                setDisplay('approvalPanel', 'none');
+                setDisplay('listFilterPanel', 'none');
+                setTableDisplay('block');
                 console.log('refreshList completed successfully');
             } catch (error) {
                 console.error('Error in refreshList:', error);
@@ -1953,7 +2034,9 @@
                 if (dataTable) dataTable.style.display = 'none';
             } else {
                 if (updatePanel) updatePanel.style.display = 'none';
-                if (dataTable) dataTable.style.display = 'block';
+                if (dataTable) {
+                    dataTable.style.display = (!canViewProjectList && !isQueryResult) ? 'none' : 'block';
+                }
             }
 
             // 更新系统时间

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>权限管理</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "PingFang SC","Microsoft YaHei","Noto Sans SC","Source Han Sans SC",sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            font-size: 14px;
+        }
+        .container { display: flex; min-height: 100vh; }
+        .sidebar {
+            width: 240px;
+            background-color: #2f3542;
+            color: #fff;
+            padding: 16px;
+            position: relative;
+        }
+        .menu-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.06);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .menu-list { list-style: none; padding-left: 8px; }
+        .menu-list li { margin-bottom: 10px; }
+        .menu-list a {
+            color: #fff;
+            text-decoration: none;
+            display: block;
+            padding: 6px 8px;
+            border-radius: 4px;
+        }
+        .menu-list a:hover { background: #57606f; }
+        .sidebar-footer {
+            position: absolute;
+            bottom: 12px;
+            left: 16px;
+            right: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #dfe4ea;
+        }
+        .logout-btn {
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.16);
+            color: #fff;
+            text-decoration: none;
+        }
+        .main-content { flex: 1; padding: 16px 24px 24px; }
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            padding: 16px;
+            overflow-x: auto;
+        }
+        h1 { font-size: 20px; margin-bottom: 12px; }
+        .hint {
+            margin-bottom: 12px;
+            padding: 10px 12px;
+            background: #eef6ff;
+            border-left: 4px solid #3182ce;
+            border-radius: 4px;
+        }
+        .msg p { margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; min-width: 980px; }
+        th, td {
+            border-bottom: 1px solid #eee;
+            padding: 8px 10px;
+            text-align: left;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        th { background: #f3f6f9; font-weight: 600; }
+        .perm-cell { text-align: center; }
+        .btn-save {
+            border: none;
+            background: #2b8a3e;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="menu-toggle">系统管理<span>▾</span></div>
+            <ul class="menu-list">
+                <li><a href="{% url 'user_list' %}">用户管理</a></li>
+                <li><a href="{% url 'permission_manage' %}">权限管理</a></li>
+            </ul>
+            <div class="menu-toggle" style="margin-top: 12px;">项目管理<span>▾</span></div>
+            <ul class="menu-list">
+                <li><a href="{% url 'project_master_list' %}">项目主数据</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <span>{{ request.user.username }}</span>
+                <a class="logout-btn" href="{% url 'logout' %}">登出</a>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <h1>权限管理</h1>
+            <div class="card">
+                <div class="hint">默认策略：普通用户默认仅勾选“查询项目”和“项目列表”，其余功能需授权。</div>
+                {% if messages %}
+                <div class="msg">
+                    {% for message in messages %}
+                    <p>{{ message }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>用户名</th>
+                            <th>部门</th>
+                            <th class="perm-cell">用户管理</th>
+                            <th class="perm-cell">新增项目</th>
+                            <th class="perm-cell">查询项目</th>
+                            <th class="perm-cell">信息更新</th>
+                            <th class="perm-cell">项目列表</th>
+                            <th class="perm-cell">审批管理</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in user_permission_rows %}
+                        <tr>
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="user_id" value="{{ row.user.id }}">
+                                <td>{{ row.user.username }}</td>
+                                <td>{{ row.profile.department|default:"" }}</td>
+                                <td class="perm-cell"><input type="checkbox" name="can_user_manage" {% if row.profile.can_user_manage %}checked{% endif %}></td>
+                                <td class="perm-cell"><input type="checkbox" name="can_create_project" {% if row.profile.can_create_project %}checked{% endif %}></td>
+                                <td class="perm-cell"><input type="checkbox" name="can_query_project" {% if row.profile.can_query_project %}checked{% endif %}></td>
+                                <td class="perm-cell"><input type="checkbox" name="can_update_project" {% if row.profile.can_update_project %}checked{% endif %}></td>
+                                <td class="perm-cell"><input type="checkbox" name="can_view_project_list" {% if row.profile.can_view_project_list %}checked{% endif %}></td>
+                                <td class="perm-cell"><input type="checkbox" name="can_approval_manage" {% if row.profile.can_approval_manage %}checked{% endif %}></td>
+                                <td><button type="submit" class="btn-save">保存</button></td>
+                            </form>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="9">暂无用户</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

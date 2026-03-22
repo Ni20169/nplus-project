@@ -12,5 +12,6 @@ urlpatterns = [
     path("documents/approvals/", views.approval_list, name="approval_list"),
     path("documents/approvals/<int:approval_id>/action/", views.approve_action, name="approve_action"),
     path("documents/users/", views.user_list, name="user_list"),
+    path("documents/permissions/", views.permission_manage, name="permission_manage"),
     path("logout/", views.logout_view, name="logout"),
 ]
