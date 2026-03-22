@@ -1172,7 +1172,7 @@
                                     <div class="multi-select-dropdown">
                                         {% for item in dicts.ORG %}
                                             <label class="multi-select-option">
-                                                <input type="checkbox" value="{{ item.code }}" {% if search.org_name == item.code %}checked{% endif %}>
+                                                <input type="checkbox" name="org_name" value="{{ item.code }}" {% if search.org_name == item.code %}checked{% endif %}>
                                                 <span>{{ item.name }}</span>
                                             </label>
                                         {% endfor %}
@@ -1200,7 +1200,7 @@
                                     <div class="multi-select-dropdown">
                                         {% for item in dicts.PROVINCE %}
                                             <label class="multi-select-option">
-                                                <input type="checkbox" value="{{ item.code }}" {% if search.province_code == item.code %}checked{% endif %}>
+                                                <input type="checkbox" name="province_code" value="{{ item.code }}" {% if search.province_code == item.code %}checked{% endif %}>
                                                 <span>{{ item.name }}</span>
                                             </label>
                                         {% endfor %}
@@ -1214,7 +1214,7 @@
                                     <div class="multi-select-dropdown">
                                         {% for item in dicts.BUSINESS_UNIT %}
                                             <label class="multi-select-option">
-                                                <input type="checkbox" value="{{ item.code }}" {% if search.business_unit == item.code %}checked{% endif %}>
+                                                <input type="checkbox" name="business_unit" value="{{ item.code }}" {% if search.business_unit == item.code %}checked{% endif %}>
                                                 <span>{{ item.name }}</span>
                                             </label>
                                         {% endfor %}
@@ -1228,7 +1228,7 @@
                                     <div class="multi-select-dropdown">
                                         {% for item in dicts.DEPT %}
                                             <label class="multi-select-option">
-                                                <input type="checkbox" value="{{ item.code }}" {% if search.dept == item.code %}checked{% endif %}>
+                                                <input type="checkbox" name="dept" value="{{ item.code }}" {% if search.dept == item.code %}checked{% endif %}>
                                                 <span>{{ item.name }}</span>
                                             </label>
                                         {% endfor %}
@@ -1242,7 +1242,7 @@
                                     <div class="multi-select-dropdown">
                                         {% for item in dicts.PROJECT_TYPE %}
                                             <label class="multi-select-option">
-                                                <input type="checkbox" value="{{ item.code }}" {% if search.project_type == item.code %}checked{% endif %}>
+                                                <input type="checkbox" name="project_type" value="{{ item.code }}" {% if search.project_type == item.code %}checked{% endif %}>
                                                 <span>{{ item.name }}</span>
                                             </label>
                                         {% endfor %}
@@ -1256,7 +1256,7 @@
                                     <div class="multi-select-dropdown">
                                         {% for item in dicts.ORG_MODE %}
                                             <label class="multi-select-option">
-                                                <input type="checkbox" value="{{ item.code }}" {% if search.org_mode == item.code %}checked{% endif %}>
+                                                <input type="checkbox" name="org_mode" value="{{ item.code }}" {% if search.org_mode == item.code %}checked{% endif %}>
                                                 <span>{{ item.name }}</span>
                                             </label>
                                         {% endfor %}
@@ -1270,7 +1270,7 @@
                                     <div class="multi-select-dropdown">
                                         {% for item in dicts.DATA_STATUS %}
                                             <label class="multi-select-option">
-                                                <input type="checkbox" value="{{ item.code }}" {% if search.data_status == item.code %}checked{% endif %}>
+                                                <input type="checkbox" name="data_status" value="{{ item.code }}" {% if search.data_status == item.code %}checked{% endif %}>
                                                 <span>{{ item.name }}</span>
                                             </label>
                                         {% endfor %}
@@ -1283,11 +1283,11 @@
                                     <div class="multi-select-display" onclick="toggleMultiSelect(this)" data-default="全部">全部</div>
                                     <div class="multi-select-dropdown">
                                         <label class="multi-select-option">
-                                            <input type="checkbox" value="true">
+                                            <input type="checkbox" name="is_execution_level" value="true" {% if search.is_execution_level == 'true' %}checked{% endif %}>
                                             <span>是</span>
                                         </label>
                                         <label class="multi-select-option">
-                                            <input type="checkbox" value="false">
+                                            <input type="checkbox" name="is_execution_level" value="false" {% if search.is_execution_level == 'false' %}checked{% endif %}>
                                             <span>否</span>
                                         </label>
                                     </div>
