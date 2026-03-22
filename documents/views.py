@@ -444,7 +444,14 @@ def project_master_list(request):
         list_export_params = "list_filter=1"
     
     # 获取项目年份列表
-    project_years = sorted(set([p.project_year for p in ProjectMaster.objects.filter(is_deleted=False).exclude(project_year="").values_list("project_year", flat=True)]), reverse=True)
+    project_years = sorted(
+        set(
+            ProjectMaster.objects.filter(is_deleted=False)
+            .exclude(project_year="")
+            .values_list("project_year", flat=True)
+        ),
+        reverse=True,
+    )
 
     return render(
         request,
