@@ -203,6 +203,7 @@ class ProjectApproval(models.Model):
         ("update", "修改"),
         ("delete", "删除"),
         ("import", "导入"),
+        ("export", "导出"),
     )
     STATUS_CHOICES = (
         ("pending", "待审批"),

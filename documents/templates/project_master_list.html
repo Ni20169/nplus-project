@@ -1056,7 +1056,7 @@
                                         <td>{{ approval.id }}</td>
                                         <td>{{ approval.project_code }}</td>
                                         <td>
-                                            {% if approval.approval_type == 'import' %}
+                                            {% if approval.approval_type == 'import' or approval.approval_type == 'export' %}
                                                 {{ approval.project_name }}
                                             {% else %}
                                                 {{ approval.before_data.project_name|default:"-" }}

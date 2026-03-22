@@ -2,6 +2,8 @@ import uuid
 import re
 import os
 import logging
+import json
+import hashlib
 from datetime import datetime
 
 from django.contrib import messages
@@ -58,6 +60,76 @@ def _get_user_permissions(user):
 def _redirect_no_permission(request):
     messages.error(request, "无权限")
     return redirect(f"{reverse('project_master_list')}?show_add=1")
+
+
+def _build_export_signature(export_type, params):
+    raw = json.dumps(
+        {"export_type": export_type, "params": params},
+        ensure_ascii=False,
+        sort_keys=True,
+    )
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def _ensure_export_approved(request, export_type, export_label):
+    """Ensure export is approved by 倪明珠. If not approved, create/request approval and return None."""
+    if export_type == "project_template":
+        params = {}
+    elif export_type == "project_list":
+        params = {
+            "list_filter": request.GET.get("list_filter", ""),
+            "list_project_code": request.GET.get("list_project_code", "").strip(),
+            "list_project_name": request.GET.get("list_project_name", "").strip(),
+            "list_org_name": request.GET.get("list_org_name", "").strip(),
+            "list_province_code": request.GET.get("list_province_code", "").strip(),
+            "list_business_unit": request.GET.get("list_business_unit", "").strip(),
+            "list_dept": request.GET.get("list_dept", "").strip(),
+            "list_data_status": request.GET.get("list_data_status", "").strip(),
+            "list_project_year": request.GET.get("list_project_year", "").strip(),
+            "list_created_by": request.GET.get("list_created_by", "").strip(),
+        }
+    else:
+        params = {}
+
+    signature = _build_export_signature(export_type, params)
+
+    approved = ProjectApproval.objects.filter(
+        approval_type="export",
+        submitter=request.user.username,
+        status="approved",
+    ).order_by("-approve_time")
+    for item in approved:
+        after = item.after_data or {}
+        if after.get("export_type") == export_type and after.get("signature") == signature:
+            return item
+
+    existing_pending = ProjectApproval.objects.filter(
+        approval_type="export",
+        submitter=request.user.username,
+        status="pending",
+    ).order_by("-submit_time")
+    for item in existing_pending:
+        after = item.after_data or {}
+        if after.get("export_type") == export_type and after.get("signature") == signature:
+            messages.warning(request, f"{export_label}申请已提交，等待倪明珠审批。审批单号：{item.id}")
+            return None
+
+    approval = ProjectApproval.objects.create(
+        project_code=f"EX{uuid.uuid4().hex[:10].upper()}",
+        project_name=export_label,
+        approval_type="export",
+        change_note=f"导出申请：{export_label}",
+        after_data={
+            "export_type": export_type,
+            "signature": signature,
+            "params": params,
+        },
+        submitter=request.user.username,
+        approver="倪明珠",
+        status="pending",
+    )
+    messages.success(request, f"{export_label}申请已提交，等待倪明珠审批。审批单号：{approval.id}")
+    return None
 
 
 def _normalize_project_code(value):
@@ -593,6 +665,13 @@ def project_master_list(request):
 
 @login_required
 def export_project_template(request):
+    permissions = _get_user_permissions(request.user)
+    if not permissions["can_create_project"]:
+        return _redirect_no_permission(request)
+
+    if _ensure_export_approved(request, "project_template", "Excel模板导出") is None:
+        return redirect("project_master_list")
+
     wb = Workbook()
     ws = wb.active
     ws.title = "项目主数据模板"
@@ -662,6 +741,9 @@ def export_project_list(request):
     permissions = _get_user_permissions(request.user)
     if not permissions["can_view_project_list"]:
         return _redirect_no_permission(request)
+
+    if _ensure_export_approved(request, "project_list", "项目列表导出") is None:
+        return redirect("project_master_list")
 
     qs = ProjectMaster.objects.filter(is_deleted=False)
     
@@ -1101,6 +1183,10 @@ def approve_action(request, approval_id):
                     else:
                         messages.error(request, "导入文件不存在或已过期")
                         return redirect("project_master_list")
+
+                elif approval.approval_type == "export":
+                    # 导出审批通过后，由申请人再次点击导出触发实际下载。
+                    pass
 
                 approval.status = "approved"
                 approval.approve_time = timezone.now()
