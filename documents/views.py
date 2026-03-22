@@ -698,7 +698,6 @@ def export_project_list(request):
         "项目机构名称",
         "上级PJ编码",
         "所在省",
-        "所在市",
         "业务板块",
         "承担部门",
         "项目类型",
@@ -719,7 +718,6 @@ def export_project_list(request):
             project.org_name,
             project.parent_pj_code or "",
             name_map.get("PROVINCE", {}).get(project.province_code, project.province_code),
-            name_map.get("CITY", {}).get(project.city_code, project.city_code or ""),
             name_map.get("BUSINESS_UNIT", {}).get(project.business_unit, project.business_unit or ""),
             name_map.get("DEPT", {}).get(project.dept, project.dept or ""),
             name_map.get("PROJECT_TYPE", {}).get(project.project_type, project.project_type or ""),
@@ -733,7 +731,7 @@ def export_project_list(request):
         ])
     
     # 设置列宽
-    for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P']:
+    for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O']:
         ws.column_dimensions[col].width = 20
     ws.column_dimensions['B'].width = 30
     ws.column_dimensions['C'].width = 30
