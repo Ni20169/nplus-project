@@ -14,7 +14,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from openpyxl import Workbook, load_workbook
 
-from .models import DictType, ImportBatch, ImportError, ProjectMaster, ProjectMasterLog, UserProfile
+from .models import DictType, ImportBatch, ImportError, ProjectApproval, ProjectMaster, ProjectMasterLog, UserProfile
 
 
 DICT_CODES = [
