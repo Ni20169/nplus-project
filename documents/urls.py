@@ -5,6 +5,7 @@ urlpatterns = [
     path("", views.home, name="home"),
     path("documents/", views.project_master_list, name="project_master_list"),
     path("documents/export-template/", views.export_project_template, name="export_project_template"),
+    path("documents/export-list/", views.export_project_list, name="export_project_list"),
     path("documents/import/", views.import_project_master, name="import_project_master"),
     path("documents/<str:project_code>/edit/", views.project_master_edit, name="project_master_edit"),
     # path("documents/<str:project_code>/delete/", views.project_master_delete, name="project_master_delete"),  # 已改为审批流程

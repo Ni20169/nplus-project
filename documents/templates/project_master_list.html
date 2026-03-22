@@ -1692,6 +1692,11 @@
                     <div class="table-meta">
                         <div>当前匹配：<span id="matchCount">0</span> 条</div>
                         <div>总记录：<span id="totalCount">{{ projects|length }}</span> 条</div>
+                        {% if permissions.can_view_project_list %}
+                        <div>
+                            <a class="btn-export" href="{% url 'export_project_list' %}?{{ list_export_params }}">导出项目列表（Excel）</a>
+                        </div>
+                        {% endif %}
                     </div>
                     <div class="table-wrapper">
                         <table id="projectTable">
