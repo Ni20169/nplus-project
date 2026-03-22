@@ -1433,59 +1433,66 @@
                             </div>
                             <div class="field field-sm">
                                 <label>上级PJ编码</label>
-                                <input type="text" name="parent_pj_code" value="{{ update_target.parent_pj_code }}">
+                                <select name="parent_pj_code">
+                                    <option value="">可为空</option>
+                                    {% for project in all_projects %}
+                                        <option value="{{ project.project_code }}" {% if update_target.parent_pj_code == project.project_code %}selected{% endif %}>
+                                            {{ project.project_code }} - {{ project.project_name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
                             </div>
                             <div class="field">
                                 <label>所在省</label>
                                 <select name="province_code" required>
-                                    <option value="{{ update_target.province_code }}">{{ update_target.province_code }}</option>
+                                    <option value="">选择所在省</option>
                                     {% for item in dicts.PROVINCE %}
-                                        <option value="{{ item.code }}">{{ item.name }}</option>
+                                        <option value="{{ item.code }}" {% if update_target.province_code == item.code %}selected{% endif %}>{{ item.code }} - {{ item.name }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
                             <div class="field">
                                 <label>业务板块</label>
                                 <select name="business_unit" required>
-                                    <option value="{{ update_target.business_unit }}">{{ update_target.business_unit }}</option>
+                                    <option value="">选择业务板块</option>
                                     {% for item in dicts.BUSINESS_UNIT %}
-                                        <option value="{{ item.code }}">{{ item.name }}</option>
+                                        <option value="{{ item.code }}" {% if update_target.business_unit == item.code %}selected{% endif %}>{{ item.code }} - {{ item.name }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
                             <div class="field">
                                 <label>承担部门</label>
                                 <select name="dept" required>
-                                    <option value="{{ update_target.dept }}">{{ update_target.dept }}</option>
+                                    <option value="">选择承担部门</option>
                                     {% for item in dicts.DEPT %}
-                                        <option value="{{ item.code }}">{{ item.name }}</option>
+                                        <option value="{{ item.code }}" {% if update_target.dept == item.code %}selected{% endif %}>{{ item.code }} - {{ item.name }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
                             <div class="field">
                                 <label>项目类型</label>
                                 <select name="project_type" required>
-                                    <option value="{{ update_target.project_type }}">{{ update_target.project_type }}</option>
+                                    <option value="">选择项目类型</option>
                                     {% for item in dicts.PROJECT_TYPE %}
-                                        <option value="{{ item.code }}">{{ item.name }}</option>
+                                        <option value="{{ item.code }}" {% if update_target.project_type == item.code %}selected{% endif %}>{{ item.code }} - {{ item.name }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
                             <div class="field">
                                 <label>项目组织模式</label>
                                 <select name="org_mode" required>
-                                    <option value="{{ update_target.org_mode }}">{{ update_target.org_mode }}</option>
+                                    <option value="">选择项目组织模式</option>
                                     {% for item in dicts.ORG_MODE %}
-                                        <option value="{{ item.code }}">{{ item.name }}</option>
+                                        <option value="{{ item.code }}" {% if update_target.org_mode == item.code %}selected{% endif %}>{{ item.code }} - {{ item.name }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
                             <div class="field">
                                 <label>数据状态</label>
                                 <select name="data_status" required>
-                                    <option value="{{ update_target.data_status }}">{{ update_target.data_status }}</option>
+                                    <option value="">选择数据状态</option>
                                     {% for item in dicts.DATA_STATUS %}
-                                        <option value="{{ item.code }}">{{ item.name }}</option>
+                                        <option value="{{ item.code }}" {% if update_target.data_status == item.code %}selected{% endif %}>{{ item.code }} - {{ item.name }}</option>
                                     {% endfor %}
                                 </select>
                             </div>

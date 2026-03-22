@@ -363,6 +363,40 @@ def project_master_list(request):
     recent_updates = list(
         ProjectMasterLog.objects.filter(action="update").order_by("-created_at")[:10]
     )
+    project_name_map = dict(
+        ProjectMaster.objects.filter(is_deleted=False).values_list("project_code", "project_name")
+    )
+    update_dict_key_map = {
+        "province_code": "PROVINCE",
+        "business_unit": "BUSINESS_UNIT",
+        "dept": "DEPT",
+        "project_type": "PROJECT_TYPE",
+        "org_mode": "ORG_MODE",
+        "data_status": "DATA_STATUS",
+    }
+
+    def _display_update_value(field_key, raw_value):
+        if raw_value in (None, ""):
+            return "-"
+
+        if field_key == "is_execution_level":
+            if isinstance(raw_value, bool):
+                return "是" if raw_value else "否"
+            return "是" if str(raw_value).strip().lower() in {"true", "1", "是"} else "否"
+
+        if field_key == "parent_pj_code":
+            code = str(raw_value)
+            name = project_name_map.get(code)
+            return f"{code} - {name}" if name else code
+
+        dict_code = update_dict_key_map.get(field_key)
+        if dict_code:
+            code = str(raw_value)
+            name = name_map.get(dict_code, {}).get(code)
+            return f"{code} - {name}" if name else code
+
+        return str(raw_value)
+
     field_labels = {
         "project_name": "项目名称",
         "org_name": "项目机构",
@@ -387,11 +421,8 @@ def project_master_list(request):
             after_val = after.get(key)
             if before_val != after_val:
                 changed.append(label)
-                if key == "is_execution_level":
-                    before_val = "是" if before_val else "否"
-                    after_val = "是" if after_val else "否"
-                before_lines.append(f"{label}：{before_val}")
-                after_lines.append(f"{label}：{after_val}")
+                before_lines.append(f"{label}：{_display_update_value(key, before_val)}")
+                after_lines.append(f"{label}：{_display_update_value(key, after_val)}")
         log.changed_fields = "、".join(changed) if changed else "无"
         log.before_summary = "\n".join(before_lines) if before_lines else "无"
         log.after_summary = "\n".join(after_lines) if after_lines else "无"
