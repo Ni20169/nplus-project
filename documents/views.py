@@ -415,18 +415,27 @@ def project_master_list(request):
         }
     else:
         # 查询项目筛选
+        org_name_values = [v.strip() for v in request.GET.getlist("org_name") if v.strip()]
+        province_code_values = [v.strip() for v in request.GET.getlist("province_code") if v.strip()]
+        business_unit_values = [v.strip() for v in request.GET.getlist("business_unit") if v.strip()]
+        dept_values = [v.strip() for v in request.GET.getlist("dept") if v.strip()]
+        project_type_values = [v.strip() for v in request.GET.getlist("project_type") if v.strip()]
+        org_mode_values = [v.strip() for v in request.GET.getlist("org_mode") if v.strip()]
+        data_status_values = [v.strip() for v in request.GET.getlist("data_status") if v.strip()]
+        execution_level_values = [v.strip() for v in request.GET.getlist("is_execution_level") if v.strip()]
+
         search = {
             "project_code": request.GET.get("project_code", "").strip(),
             "project_name": request.GET.get("project_name", "").strip(),
-            "org_name": request.GET.get("org_name", "").strip(),
+            "org_name": org_name_values,
             "parent_pj_code": request.GET.get("parent_pj_code", "").strip(),
-            "province_code": request.GET.get("province_code", "").strip(),
-            "business_unit": request.GET.get("business_unit", "").strip(),
-            "dept": request.GET.get("dept", "").strip(),
-            "project_type": request.GET.get("project_type", "").strip(),
-            "org_mode": request.GET.get("org_mode", "").strip(),
-            "data_status": request.GET.get("data_status", "").strip(),
-            "is_execution_level": request.GET.get("is_execution_level", "").strip(),
+            "province_code": province_code_values,
+            "business_unit": business_unit_values,
+            "dept": dept_values,
+            "project_type": project_type_values,
+            "org_mode": org_mode_values,
+            "data_status": data_status_values,
+            "is_execution_level": execution_level_values,
             "project_year": request.GET.get("project_year", "").strip(),
             "created_by": request.GET.get("created_by", "").strip(),
             "remark": request.GET.get("remark", "").strip(),
@@ -437,24 +446,25 @@ def project_master_list(request):
         if search["project_name"]:
             qs = qs.filter(project_name__icontains=search["project_name"])
         if search["org_name"]:
-            qs = qs.filter(org_name__icontains=search["org_name"])
+            qs = qs.filter(org_name__in=search["org_name"])
         if search["parent_pj_code"]:
             qs = qs.filter(parent_pj_code__icontains=search["parent_pj_code"])
         if search["province_code"]:
-            qs = qs.filter(province_code=search["province_code"])
+            qs = qs.filter(province_code__in=search["province_code"])
         if search["business_unit"]:
-            qs = qs.filter(business_unit=search["business_unit"])
+            qs = qs.filter(business_unit__in=search["business_unit"])
         if search["dept"]:
-            qs = qs.filter(dept=search["dept"])
+            qs = qs.filter(dept__in=search["dept"])
         if search["project_type"]:
-            qs = qs.filter(project_type=search["project_type"])
+            qs = qs.filter(project_type__in=search["project_type"])
         if search["org_mode"]:
-            qs = qs.filter(org_mode=search["org_mode"])
+            qs = qs.filter(org_mode__in=search["org_mode"])
         if search["data_status"]:
-            qs = qs.filter(data_status=search["data_status"])
-        if search["is_execution_level"] == "true":
+            qs = qs.filter(data_status__in=search["data_status"])
+        selected_execution_levels = set(search["is_execution_level"])
+        if selected_execution_levels == {"true"}:
             qs = qs.filter(is_execution_level=True)
-        if search["is_execution_level"] == "false":
+        if selected_execution_levels == {"false"}:
             qs = qs.filter(is_execution_level=False)
         if search["project_year"]:
             qs = qs.filter(project_year__icontains=search["project_year"])
