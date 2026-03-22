@@ -903,40 +903,29 @@ def submit_delete_approval(request):
 @login_required
 def approval_list(request):
     """审批列表页面"""
-    # 获取待审批的记录
-    pending_approvals = ProjectApproval.objects.filter(status="pending").order_by("-submit_time")
-
-    # 获取已审批的记录
-    processed_approvals = ProjectApproval.objects.filter(
-        status__in=["approved", "rejected"]
-    ).order_by("-approve_time")[:50]
-
-    context = {
-        "pending_approvals": pending_approvals,
-        "processed_approvals": processed_approvals,
-    }
-    return render(request, "approval_list.html", context)
+    # 审批管理已集成在项目列表页，避免缺失模板导致500
+    return redirect("project_master_list")
 
 
 @login_required
 def approve_action(request, approval_id):
     """处理审批"""
     if request.method != "POST":
-        return redirect("approval_list")
+        return redirect("project_master_list")
 
     approval = get_object_or_404(ProjectApproval, id=approval_id, status="pending")
 
     # 检查当前用户是否为审批人
     if request.user.username != approval.approver:
         messages.error(request, "您没有权限审批此申请")
-        return redirect("approval_list")
+        return redirect("project_master_list")
 
     action = request.POST.get("action")
     approve_note = request.POST.get("approve_note", "").strip()
 
     if action not in {"approve", "reject"}:
         messages.error(request, "无效的审批动作")
-        return redirect("approval_list")
+        return redirect("project_master_list")
 
     try:
         with transaction.atomic():
@@ -950,7 +939,7 @@ def approve_action(request, approval_id):
 
                     if not project:
                         messages.error(request, "目标项目不存在或已删除，无法审批通过")
-                        return redirect("approval_list")
+                        return redirect("project_master_list")
 
                     after_data = approval.after_data or {}
                     editable_fields = [
@@ -1014,7 +1003,7 @@ def approve_action(request, approval_id):
                         messages.success(request, "导入文件已处理完成")
                     else:
                         messages.error(request, "导入文件不存在或已过期")
-                        return redirect("approval_list")
+                        return redirect("project_master_list")
 
                 approval.status = "approved"
                 approval.approve_time = timezone.now()
@@ -1041,9 +1030,9 @@ def approve_action(request, approval_id):
     except Exception as exc:
         logger.exception("审批处理失败 approval_id=%s action=%s", approval_id, action)
         messages.error(request, f"审批处理失败: {exc}")
-        return redirect("approval_list")
+        return redirect("project_master_list")
 
-    return redirect("approval_list")
+    return redirect("project_master_list")
 
 
 def _process_import_file(file_path, submitter):
