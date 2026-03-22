@@ -1295,12 +1295,12 @@
                             </div>
                             <div class="field">
                                 <label>项目年份</label>
-                                <input type="text" name="project_year" placeholder="输入年份关键词搜索">
+                                <input type="text" name="project_year" value="{{ search.project_year|default:'' }}" placeholder="输入年份关键词搜索">
                             </div>
                             <div class="field field-with-buttons">
                                 <label>创建人</label>
                                 <div class="all-in-one-row">
-                                    <input type="text" name="created_by" placeholder="输入创建人关键词搜索">
+                                    <input type="text" name="created_by" value="{{ search.created_by|default:'' }}" placeholder="输入创建人关键词搜索">
                                     <label class="inline-label">备注</label>
                                     <input type="text" name="remark" value="{{ search.remark|default:'' }}" placeholder="请输入备注关键词">
                                     <div class="inline-actions">
@@ -1659,7 +1659,7 @@
                     <div class="table-wrapper">
                         <table id="projectTable">
                             <thead>
-                                <tr>
+                                    <tr>
                                     <th class="sticky-col col-1" data-sort="0">项目编码</th>
                                     <th class="sticky-col col-2" data-sort="1">项目名称</th>
                                     <th class="sticky-col col-3" data-sort="2">机构名称</th>
@@ -1674,7 +1674,9 @@
                                     <th data-sort="11">项目类型</th>
                                     <th data-sort="12">创建时间</th>
                                     <th data-sort="13">备注</th>
+                                        {% if not is_query_result %}
                                     <th>操作</th>
+                                        {% endif %}
                                 </tr>
                                 <tr class="filter-row">
                                     <th class="sticky-col col-1"><input type="text" data-filter="0" placeholder="筛选"></th>
@@ -1697,9 +1699,11 @@
                                     <th><input type="text" data-filter="11" placeholder="筛选"></th>
                                     <th><input type="month" data-filter="12" placeholder="选择年月"></th>
                                     <th><input type="text" data-filter="13" placeholder="筛选"></th>
+                                    {% if not is_query_result %}
                                     <th>
                                         <button type="button" class="btn-reset-filter" id="resetTableFilter">清空</button>
                                     </th>
+                                    {% endif %}
                                 </tr>
                             </thead>
                             <tbody>
@@ -1719,16 +1723,18 @@
                                     <td>{{ project.project_type_name }}</td>
                                     <td>{{ project.created_at }}</td>
                                     <td>{{ project.remark }}</td>
+                                    {% if not is_query_result %}
                                     <td>
                                         <div style="display: flex; gap: 16px; justify-content: center;">
                                             <a class="btn-edit" href="{% url 'project_master_edit' project.project_code %}">修改</a>
                                             <button class="btn-delete" type="button" onclick="submitDeleteApproval('{{ project.project_code }}', '{{ project.project_name }}')">删除</button>
                                         </div>
                                     </td>
+                                    {% endif %}
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="14">暂无数据</td>
+                                    <td colspan="{% if not is_query_result %}15{% else %}14{% endif %}">暂无数据</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -2207,6 +2213,30 @@
 
                 if (typeof applyFilters === 'function') {
                     applyFilters();
+                }
+
+                // 查询表单：把多选控件勾选值回显到显示文本，并在提交时写入隐藏字段
+                const queryForm = document.querySelector('#searchForm form');
+                document.querySelectorAll('#searchForm .multi-select').forEach((multiSelect) => {
+                    updateMultiSelectDisplay(multiSelect);
+                });
+
+                if (queryForm) {
+                    queryForm.addEventListener('submit', () => {
+                        queryForm.querySelectorAll('input[type="hidden"][data-generated="multiselect"]').forEach((el) => el.remove());
+                        queryForm.querySelectorAll('.multi-select').forEach((multiSelect) => {
+                            const fieldName = multiSelect.getAttribute('data-name');
+                            if (!fieldName) return;
+                            const checked = multiSelect.querySelectorAll('input[type="checkbox"]:checked');
+                            if (checked.length === 0) return;
+                            const hidden = document.createElement('input');
+                            hidden.type = 'hidden';
+                            hidden.name = fieldName;
+                            hidden.value = checked[0].value;
+                            hidden.setAttribute('data-generated', 'multiselect');
+                            queryForm.appendChild(hidden);
+                        });
+                    });
                 }
             }
         });

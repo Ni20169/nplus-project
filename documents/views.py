@@ -465,6 +465,7 @@ def project_master_list(request):
         search["created_by"],
         search["remark"],
     ])
+    is_query_result = (not is_list_filter) and has_search_params
 
     # 检查是否是新增项目表单提交后的显示
     show_add_form = request.method == "POST" and request.POST.get("form_type") == "create"
@@ -503,6 +504,7 @@ def project_master_list(request):
             "update_code": update_code,
             "show_update_panel": show_update_panel,
             "show_search_form": has_search_params,
+            "is_query_result": is_query_result,
             "show_add_form": show_add_form,
             "update_now": timezone.localtime().strftime("%Y-%m-%d %H:%M"),
             "all_projects": all_projects,
