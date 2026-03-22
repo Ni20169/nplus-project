@@ -1,6 +1,7 @@
 import uuid
 import re
 import os
+import logging
 from datetime import datetime
 
 from django.contrib import messages
@@ -29,6 +30,7 @@ DICT_CODES = [
 ]
 
 PJ_CODE_PATTERN = re.compile(r"^PJ\d{10}$")
+logger = logging.getLogger(__name__)
 
 
 def _normalize_project_code(value):
@@ -902,59 +904,68 @@ def approve_action(request, approval_id):
     action = request.POST.get("action")
     approve_note = request.POST.get("approve_note", "").strip()
 
-    if action == "approve":
-        # 执行实际的删除操作
-        if approval.approval_type == "delete":
-            project = ProjectMaster.objects.filter(
-                project_code=approval.project_code,
-                is_deleted=False
-            ).first()
+    if action not in {"approve", "reject"}:
+        messages.error(request, "无效的审批动作")
+        return redirect("approval_list")
 
-            if project:
-                project.is_deleted = True
-                project.updated_by = approval.submitter
-                project.save(update_fields=["is_deleted", "updated_by"])
+    try:
+        with transaction.atomic():
+            if action == "approve":
+                # 执行实际的删除操作
+                if approval.approval_type == "delete":
+                    project = ProjectMaster.objects.filter(
+                        project_code=approval.project_code,
+                        is_deleted=False
+                    ).first()
 
-                ProjectMasterLog.objects.create(
-                    project_code=project.project_code,
-                    action="delete",
-                    before_data=approval.before_data,
-                    operator=approval.submitter,
-                    source="approval",
-                )
-        
-        # 执行导入操作
-        elif approval.approval_type == "import":
-            if approval.import_file_path and os.path.exists(approval.import_file_path):
-                try:
-                    _process_import_file(approval.import_file_path, approval.submitter)
-                    messages.success(request, f"导入文件已处理完成")
-                except Exception as exc:
-                    messages.error(request, f"导入处理失败: {str(exc)}")
-                    return redirect("approval_list")
-            else:
-                messages.error(request, "导入文件不存在或已过期")
-                return redirect("approval_list")
+                    if project:
+                        project.is_deleted = True
+                        project.updated_by = approval.submitter
+                        project.save(update_fields=["is_deleted", "updated_by"])
 
-        approval.status = "approved"
-        approval.approve_time = timezone.now()
-        approval.approve_note = approve_note
-        approval.save()
+                        ProjectMasterLog.objects.create(
+                            project_code=project.project_code,
+                            action="delete",
+                            before_data=approval.before_data,
+                            operator=approval.submitter,
+                            source="approval",
+                        )
+                
+                # 执行导入操作
+                elif approval.approval_type == "import":
+                    if approval.import_file_path and os.path.exists(approval.import_file_path):
+                        _process_import_file(approval.import_file_path, approval.submitter)
+                        messages.success(request, "导入文件已处理完成")
+                    else:
+                        messages.error(request, "导入文件不存在或已过期")
+                        return redirect("approval_list")
 
-        messages.success(request, f"已批准 {approval.submitter} 的{approval.get_approval_type_display()}申请")
+                approval.status = "approved"
+                approval.approve_time = timezone.now()
+                approval.approve_note = approve_note
+                approval.save(update_fields=["status", "approve_time", "approve_note"])
 
-    elif action == "reject":
-        # 如果拒绝导入申请，删除临时文件
-        if approval.approval_type == "import" and approval.import_file_path:
-            if os.path.exists(approval.import_file_path):
-                os.unlink(approval.import_file_path)
-        
-        approval.status = "rejected"
-        approval.approve_time = timezone.now()
-        approval.approve_note = approve_note
-        approval.save()
+                messages.success(request, f"已批准 {approval.submitter} 的{approval.get_approval_type_display()}申请")
 
-        messages.success(request, f"已拒绝 {approval.submitter} 的{approval.get_approval_type_display()}申请")
+            elif action == "reject":
+                # 如果拒绝导入申请，删除临时文件
+                if approval.approval_type == "import" and approval.import_file_path:
+                    if os.path.exists(approval.import_file_path):
+                        try:
+                            os.unlink(approval.import_file_path)
+                        except OSError:
+                            logger.warning("删除导入临时文件失败: %s", approval.import_file_path, exc_info=True)
+                
+                approval.status = "rejected"
+                approval.approve_time = timezone.now()
+                approval.approve_note = approve_note
+                approval.save(update_fields=["status", "approve_time", "approve_note"])
+
+                messages.success(request, f"已拒绝 {approval.submitter} 的{approval.get_approval_type_display()}申请")
+    except Exception as exc:
+        logger.exception("审批处理失败 approval_id=%s action=%s", approval_id, action)
+        messages.error(request, f"审批处理失败: {exc}")
+        return redirect("approval_list")
 
     return redirect("approval_list")
 
