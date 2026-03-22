@@ -430,6 +430,12 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.06);
         }
 
+        /* 查询页签专用：避免flex拉伸造成上下大空白，保持中等间距 */
+        #searchForm {
+            flex: 0 0 auto;
+            margin-bottom: 10px;
+        }
+
         .search-form.hidden {
             display: none;
         }
