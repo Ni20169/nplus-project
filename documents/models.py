@@ -177,7 +177,7 @@ class UserProfile(models.Model):
     can_create_project = models.BooleanField("可用-新增项目", default=False)
     can_query_project = models.BooleanField("可用-查询项目", default=True)
     can_update_project = models.BooleanField("可用-信息更新", default=False)
-    can_view_project_list = models.BooleanField("可用-项目列表", default=True)
+    can_view_project_list = models.BooleanField("可用-项目列表", default=False)
     can_approval_manage = models.BooleanField("可用-审批管理", default=False)
 
     class Meta:
