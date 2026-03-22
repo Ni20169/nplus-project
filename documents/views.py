@@ -747,6 +747,15 @@ def project_master_edit(request, project_code):
     project = get_object_or_404(ProjectMaster, project_code=project_code, is_deleted=False)
 
     if request.method == "POST":
+        existing = ProjectApproval.objects.filter(
+            project_code=project_code,
+            approval_type="update",
+            status="pending",
+        ).first()
+        if existing:
+            messages.warning(request, "该项目已有待审批的修改申请，请勿重复提交")
+            return redirect("project_master_list")
+
         before = {
             "project_name": project.project_name,
             "org_name": project.org_name,
@@ -759,54 +768,75 @@ def project_master_edit(request, project_code):
             "org_mode": project.org_mode,
             "data_status": project.data_status,
             "is_execution_level": project.is_execution_level,
+            "status": project.status,
             "remark": project.remark,
         }
 
-        project.project_name = request.POST.get("project_name", "").strip()
-        project.org_name = request.POST.get("org_name", "").strip()
-        project.parent_pj_code = request.POST.get("parent_pj_code", "").strip() or None
-        project.province_code = request.POST.get("province_code", "").strip()
-        project.city_code = request.POST.get("city_code", "").strip() or project.province_code
-        project.business_unit = request.POST.get("business_unit", "").strip()
-        project.dept = request.POST.get("dept", "").strip()
-        project.project_type = request.POST.get("project_type", "").strip()
-        project.org_mode = request.POST.get("org_mode", "").strip()
-        project.data_status = request.POST.get("data_status", "").strip()
-        project.is_execution_level = request.POST.get("is_execution_level", "false") == "true"
-        project.remark = request.POST.get("remark", "").strip()
-        project.updated_by = request.user.username
+        after_data = {
+            "project_name": request.POST.get("project_name", "").strip(),
+            "org_name": request.POST.get("org_name", "").strip(),
+            "parent_pj_code": request.POST.get("parent_pj_code", "").strip() or None,
+            "province_code": request.POST.get("province_code", "").strip(),
+            "city_code": request.POST.get("city_code", "").strip() or request.POST.get("province_code", "").strip(),
+            "business_unit": request.POST.get("business_unit", "").strip(),
+            "dept": request.POST.get("dept", "").strip(),
+            "project_type": request.POST.get("project_type", "").strip(),
+            "org_mode": request.POST.get("org_mode", "").strip(),
+            "data_status": request.POST.get("data_status", "").strip(),
+            "is_execution_level": request.POST.get("is_execution_level", "false") == "true",
+            "status": request.POST.get("status", "").strip() or project.status,
+            "remark": request.POST.get("remark", "").strip(),
+        }
+
+        field_labels = {
+            "project_name": "项目名称",
+            "org_name": "项目机构",
+            "parent_pj_code": "上级PJ编码",
+            "province_code": "所在省",
+            "city_code": "所在市",
+            "business_unit": "业务板块",
+            "dept": "项目承担部门",
+            "project_type": "项目类型",
+            "org_mode": "项目组织模式",
+            "data_status": "主数据系统数据状态",
+            "is_execution_level": "是否为执行层",
+            "status": "状态",
+            "remark": "备注",
+        }
+
+        changed_fields = [
+            field_labels[key]
+            for key in after_data.keys()
+            if before.get(key) != after_data.get(key)
+        ]
+
+        if not changed_fields:
+            messages.info(request, "未检测到字段变化，无需提交审批")
+            return redirect("project_master_list")
 
         try:
-            with transaction.atomic():
-                project.full_clean()
-                project.save()
-                ProjectMasterLog.objects.create(
-                    project_code=project.project_code,
-                    action="update",
-                    before_data=before,
-                    after_data={
-                        "project_name": project.project_name,
-                        "org_name": project.org_name,
-                        "parent_pj_code": project.parent_pj_code,
-                        "province_code": project.province_code,
-                        "city_code": project.city_code,
-                        "business_unit": project.business_unit,
-                        "dept": project.dept,
-                        "project_type": project.project_type,
-                        "org_mode": project.org_mode,
-                        "data_status": project.data_status,
-                        "is_execution_level": project.is_execution_level,
-                        "remark": project.remark,
-                    },
-                    operator=request.user.username,
-                    source="web",
-                )
-            messages.success(request, "项目已更新")
+            for key, value in after_data.items():
+                setattr(project, key, value)
+            project.updated_by = request.user.username
+            project.full_clean()
+
+            approval = ProjectApproval.objects.create(
+                project_code=project.project_code,
+                project_name=after_data.get("project_name") or project.project_name,
+                approval_type="update",
+                before_data=before,
+                after_data=after_data,
+                change_note="变更字段：" + "、".join(changed_fields),
+                submitter=request.user.username,
+                approver="倪明珠",
+                status="pending",
+            )
+            messages.success(request, f"修改申请已提交，等待倪明珠审批。审批单号：{approval.id}")
             return redirect("project_master_list")
         except ValidationError as exc:
-            messages.error(request, f"保存失败：{exc}")
+            messages.error(request, f"提交审批失败：{exc}")
         except Exception as exc:
-            messages.error(request, f"保存失败：{exc}")
+            messages.error(request, f"提交审批失败：{exc}")
 
     latest_update = (
         ProjectMasterLog.objects.filter(project_code=project.project_code, action="update")
@@ -911,8 +941,54 @@ def approve_action(request, approval_id):
     try:
         with transaction.atomic():
             if action == "approve":
+                # 执行修改审批
+                if approval.approval_type == "update":
+                    project = ProjectMaster.objects.filter(
+                        project_code=approval.project_code,
+                        is_deleted=False,
+                    ).first()
+
+                    if not project:
+                        messages.error(request, "目标项目不存在或已删除，无法审批通过")
+                        return redirect("approval_list")
+
+                    after_data = approval.after_data or {}
+                    editable_fields = [
+                        "project_name",
+                        "org_name",
+                        "parent_pj_code",
+                        "province_code",
+                        "city_code",
+                        "business_unit",
+                        "dept",
+                        "project_type",
+                        "org_mode",
+                        "data_status",
+                        "is_execution_level",
+                        "status",
+                        "remark",
+                    ]
+                    for key in editable_fields:
+                        if key in after_data:
+                            value = after_data[key]
+                            if key == "is_execution_level" and isinstance(value, str):
+                                value = value.strip().lower() in {"true", "1", "是"}
+                            setattr(project, key, value)
+                    project.updated_by = approval.submitter
+                    project.full_clean()
+                    project.save()
+
+                    ProjectMasterLog.objects.create(
+                        project_code=project.project_code,
+                        action="update",
+                        before_data=approval.before_data,
+                        after_data=approval.after_data,
+                        operator=approval.submitter,
+                        source="approval",
+                    )
+
                 # 执行实际的删除操作
-                if approval.approval_type == "delete":
+                elif approval.approval_type == "delete":
                     project = ProjectMaster.objects.filter(
                         project_code=approval.project_code,
                         is_deleted=False

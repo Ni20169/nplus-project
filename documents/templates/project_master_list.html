@@ -1013,6 +1013,8 @@
                                         <th>提交人</th>
                                         <th>提交时间</th>
                                         <th>修改说明</th>
+                                        <th>修改前</th>
+                                        <th>修改后</th>
                                         <th>操作</th>
                                     </tr>
                                 </thead>
@@ -1032,6 +1034,20 @@
                                         <td>{{ approval.submitter }}</td>
                                         <td>{{ approval.submit_time|date:"Y-m-d H:i" }}</td>
                                         <td>{{ approval.change_note|default:"-" }}</td>
+                                        <td>
+                                            {% if approval.approval_type == 'update' %}
+                                            <pre style="white-space: pre-wrap; font-size: 12px; margin: 0; min-width: 220px; max-height: 120px; overflow: auto;">{{ approval.before_data|default:"-" }}</pre>
+                                            {% else %}
+                                            -
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if approval.approval_type == 'update' %}
+                                            <pre style="white-space: pre-wrap; font-size: 12px; margin: 0; min-width: 220px; max-height: 120px; overflow: auto;">{{ approval.after_data|default:"-" }}</pre>
+                                            {% else %}
+                                            -
+                                            {% endif %}
+                                        </td>
                                         <td>
                                             {% if request.user.username == approval.approver %}
                                             <form method="post" action="{% url 'approve_action' approval.id %}" style="display: flex; gap: 8px;">
