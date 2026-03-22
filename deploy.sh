@@ -13,6 +13,7 @@ BRANCH="${DEPLOY_BRANCH:-master}"
 GUNICORN_SERVICE="${GUNICORN_SERVICE:-gunicorn}"
 NGINX_SERVICE="${NGINX_SERVICE:-nginx}"
 SOCKET_PATH="${SOCKET_PATH:-/run/nplus_project/nplus_project.sock}"
+SOCKET_WAIT_SECONDS="${SOCKET_WAIT_SECONDS:-20}"
 HEALTH_URL="${HEALTH_URL:-https://npbpm.cn/}"
 PYTHON_BIN="${PYTHON_BIN:-python}"
 
@@ -35,6 +36,22 @@ require_cmd() {
 require_cmd git
 require_cmd "$PYTHON_BIN"
 require_cmd systemctl
+
+wait_for_socket() {
+  local socket_path="$1"
+  local max_wait="$2"
+  local i
+  for ((i = 1; i <= max_wait; i++)); do
+    if [[ -S "$socket_path" ]]; then
+      return 0
+    fi
+    if ! sudo systemctl is-active --quiet "$GUNICORN_SERVICE"; then
+      break
+    fi
+    sleep 1
+  done
+  return 1
+}
 
 if [[ ! -f "$APP_DIR/manage.py" ]]; then
   echo "ERROR: manage.py not found in $APP_DIR" >&2
@@ -62,10 +79,18 @@ run sudo systemctl restart "$NGINX_SERVICE"
 run sudo systemctl status "$GUNICORN_SERVICE" --no-pager -l
 run sudo systemctl status "$NGINX_SERVICE" --no-pager -l
 
-if [[ -S "$SOCKET_PATH" ]]; then
+log "Waiting up to ${SOCKET_WAIT_SECONDS}s for socket: $SOCKET_PATH"
+if wait_for_socket "$SOCKET_PATH" "$SOCKET_WAIT_SECONDS"; then
   run ls -lah "$SOCKET_PATH"
 else
   echo "ERROR: socket not found: $SOCKET_PATH" >&2
+  log "Recent gunicorn logs"
+  sudo journalctl -u "$GUNICORN_SERVICE" -n 80 --no-pager -l || true
+  socket_dir="$(dirname "$SOCKET_PATH")"
+  if [[ -d "$socket_dir" ]]; then
+    log "Socket directory listing: $socket_dir"
+    ls -lah "$socket_dir" || true
+  fi
   exit 1
 fi
 
