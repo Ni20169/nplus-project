@@ -29,12 +29,26 @@
             grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 10px;
         }
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .field label {
+            font-size: 13px;
+            color: #444;
+            font-weight: 600;
+        }
         input, select, textarea {
             width: 100%;
             padding: 6px 8px;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 13px;
+        }
+        input[readonly] {
+            background: #f5f7fa;
+            color: #666;
         }
         textarea {
             margin-top: 10px;
@@ -104,64 +118,102 @@
         <form method="post">
             {% csrf_token %}
             <div class="form-grid">
-                <input type="text" name="project_name" value="{{ project.project_name }}" placeholder="项目名称" required>
+                <div class="field">
+                    <label>项目名称</label>
+                    <input type="text" name="project_name" value="{{ project.project_name }}" placeholder="项目名称" required>
+                </div>
 
-                <input type="text" name="org_name" value="{{ project.org_name }}" placeholder="项目机构名称" required>
+                <div class="field">
+                    <label>项目机构名称</label>
+                    <input type="text" name="org_name" value="{{ project.org_name }}" placeholder="项目机构名称" required>
+                </div>
 
-                <input type="text" name="parent_pj_code" value="{{ project.parent_pj_code }}" placeholder="上级PJ编码（可为空）">
+                <div class="field">
+                    <label>上级PJ编码</label>
+                    <input type="text" name="parent_pj_code" value="{{ project.parent_pj_code }}" placeholder="上级PJ编码（可为空）">
+                </div>
 
-                <select name="province_code" id="provinceSelect" required>
-                    <option value="{{ project.province_code }}">{{ project.province_code }}</option>
-                    {% for item in dicts.PROVINCE %}
-                        <option value="{{ item.code }}">{{ item.name }}</option>
-                    {% endfor %}
-                </select>
+                <div class="field">
+                    <label>所在省</label>
+                    <select name="province_code" id="provinceSelect" required>
+                        <option value="{{ project.province_code }}">{{ project.province_code }}</option>
+                        {% for item in dicts.PROVINCE %}
+                            <option value="{{ item.code }}">{{ item.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-                <select name="business_unit" required>
-                    <option value="{{ project.business_unit }}">{{ project.business_unit }}</option>
-                    {% for item in dicts.BUSINESS_UNIT %}
-                        <option value="{{ item.code }}">{{ item.name }}</option>
-                    {% endfor %}
-                </select>
+                <div class="field">
+                    <label>业务板块</label>
+                    <select name="business_unit" required>
+                        <option value="{{ project.business_unit }}">{{ project.business_unit }}</option>
+                        {% for item in dicts.BUSINESS_UNIT %}
+                            <option value="{{ item.code }}">{{ item.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-                <select name="dept" required>
-                    <option value="{{ project.dept }}">{{ project.dept }}</option>
-                    {% for item in dicts.DEPT %}
-                        <option value="{{ item.code }}">{{ item.name }}</option>
-                    {% endfor %}
-                </select>
+                <div class="field">
+                    <label>承担部门</label>
+                    <select name="dept" required>
+                        <option value="{{ project.dept }}">{{ project.dept }}</option>
+                        {% for item in dicts.DEPT %}
+                            <option value="{{ item.code }}">{{ item.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-                <select name="project_type" required>
-                    <option value="{{ project.project_type }}">{{ project.project_type }}</option>
-                    {% for item in dicts.PROJECT_TYPE %}
-                        <option value="{{ item.code }}">{{ item.name }}</option>
-                    {% endfor %}
-                </select>
+                <div class="field">
+                    <label>项目类型</label>
+                    <select name="project_type" required>
+                        <option value="{{ project.project_type }}">{{ project.project_type }}</option>
+                        {% for item in dicts.PROJECT_TYPE %}
+                            <option value="{{ item.code }}">{{ item.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-                <select name="org_mode" required>
-                    <option value="{{ project.org_mode }}">{{ project.org_mode }}</option>
-                    {% for item in dicts.ORG_MODE %}
-                        <option value="{{ item.code }}">{{ item.name }}</option>
-                    {% endfor %}
-                </select>
+                <div class="field">
+                    <label>项目组织模式</label>
+                    <select name="org_mode" required>
+                        <option value="{{ project.org_mode }}">{{ project.org_mode }}</option>
+                        {% for item in dicts.ORG_MODE %}
+                            <option value="{{ item.code }}">{{ item.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-                <select name="data_status" required>
-                    <option value="{{ project.data_status }}">{{ project.data_status }}</option>
-                    {% for item in dicts.DATA_STATUS %}
-                        <option value="{{ item.code }}">{{ item.name }}</option>
-                    {% endfor %}
-                </select>
+                <div class="field">
+                    <label>数据状态</label>
+                    <select name="data_status" required>
+                        <option value="{{ project.data_status }}">{{ project.data_status }}</option>
+                        {% for item in dicts.DATA_STATUS %}
+                            <option value="{{ item.code }}">{{ item.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-                <select name="is_execution_level" required>
-                    <option value="false" {% if not project.is_execution_level %}selected{% endif %}>否</option>
-                    <option value="true" {% if project.is_execution_level %}selected{% endif %}>是</option>
-                </select>
+                <div class="field">
+                    <label>是否执行层</label>
+                    <select name="is_execution_level" required>
+                        <option value="false" {% if not project.is_execution_level %}selected{% endif %}>否</option>
+                        <option value="true" {% if project.is_execution_level %}selected{% endif %}>是</option>
+                    </select>
+                </div>
 
-                <select name="status" required>
-                    <option value="启用" {% if project.status == "启用" %}selected{% endif %}>启用</option>
-                    <option value="停用" {% if project.status == "停用" %}selected{% endif %}>停用</option>
-                    <option value="作废" {% if project.status == "作废" %}selected{% endif %}>作废</option>
-                </select>
+                <div class="field">
+                    <label>状态</label>
+                    <select name="status" required>
+                        <option value="启用" {% if project.status == "启用" %}selected{% endif %}>启用</option>
+                        <option value="停用" {% if project.status == "停用" %}selected{% endif %}>停用</option>
+                        <option value="作废" {% if project.status == "作废" %}selected{% endif %}>作废</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>修改人</label>
+                    <input type="text" value="{{ request.user.username }}" readonly>
+                </div>
             </div>
 
             <textarea name="remark" placeholder="备注">{{ project.remark }}</textarea>
