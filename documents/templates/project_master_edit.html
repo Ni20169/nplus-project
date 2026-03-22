@@ -214,6 +214,11 @@
                     <label>修改人</label>
                     <input type="text" value="{{ request.user.username }}" readonly>
                 </div>
+
+                <div class="field">
+                    <label>修改时间</label>
+                    <input type="text" value="{% now 'Y-m-d H:i' %}" readonly>
+                </div>
             </div>
 
             <textarea name="remark" placeholder="备注">{{ project.remark }}</textarea>
