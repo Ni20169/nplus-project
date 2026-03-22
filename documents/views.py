@@ -1,4 +1,5 @@
 import uuid
+import re
 from datetime import datetime
 
 from django.contrib import messages
@@ -25,6 +26,12 @@ DICT_CODES = [
     "PROVINCE",
     "CITY",
 ]
+
+PJ_CODE_PATTERN = re.compile(r"^PJ\d{10}$")
+
+
+def _normalize_project_code(value):
+    return re.sub(r"\s+", "", str(value or "")).upper()
 
 
 def _load_dicts():
@@ -648,13 +655,34 @@ def import_project_master(request):
             messages.error(request, f"导入文件缺少必要的列: {', '.join(missing_columns)}")
             return redirect("project_master_list")
         
+        # 先校验项目编码格式，避免后续数据库长度/格式异常
+        code_idx = headers.index("项目主数据编码")
+        invalid_rows = []
+        for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+            raw_code = row[code_idx] if code_idx < len(row) else ""
+            code = _normalize_project_code(raw_code)
+            if not code:
+                continue
+            if not PJ_CODE_PATTERN.fullmatch(code):
+                invalid_rows.append(f"第{row_num}行:{code}")
+                if len(invalid_rows) >= 5:
+                    break
+
+        if invalid_rows:
+            os.unlink(tmp_file_path)
+            messages.error(
+                request,
+                "项目主数据编码格式错误，需为PJ开头+10位数字。" + "；".join(invalid_rows),
+            )
+            return redirect("project_master_list")
+
         # 统计导入数据条数
         total_rows = ws.max_row - 1  # 减去表头
         
         # 创建导入审批记录
         from .models import ProjectApproval
         approval = ProjectApproval.objects.create(
-            project_code=f"IMPORT_{uuid.uuid4().hex[:8].upper()}",
+            project_code=f"IM{uuid.uuid4().hex[:10].upper()}",
             project_name=f"批量导入 {total_rows} 条项目数据",
             approval_type="import",
             submitter=request.user.username,
@@ -945,8 +973,14 @@ def _process_import_file(file_path, submitter):
         for field, idx in field_idx.items():
             row_data[field] = (row[idx] if idx < len(row) else "") or ""
 
+        row_data["project_code"] = _normalize_project_code(row_data.get("project_code"))
+
         missing = [field for field in required_fields if not row_data.get(field)]
         if missing:
+            failure += 1
+            continue
+
+        if not PJ_CODE_PATTERN.fullmatch(row_data["project_code"]):
             failure += 1
             continue
 
