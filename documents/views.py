@@ -155,6 +155,10 @@ def _dict_name_map(dicts):
     return {code: {item.code: item.name for item in items} for code, items in dicts.items()}
 
 
+def _can_manage_articles(user):
+    return bool(user.is_authenticated and (user.is_superuser or user.is_staff))
+
+
 def public_home(request):
     recent_notes = Article.objects.filter(
         article_type="note", is_published=True
@@ -193,7 +197,7 @@ def logout_view(request):
 
 
 # -----------------------------------------------------------------------
-# 文章视图（公开可读，管理仅限 superuser）
+# 文章视图（公开可读，管理限 Django 管理员）
 # -----------------------------------------------------------------------
 
 def article_list(request):
@@ -234,13 +238,16 @@ def article_list(request):
 
 
 def article_detail(request, pk):
-    article = get_object_or_404(Article, pk=pk, is_published=True)
+    if _can_manage_articles(request.user):
+        article = get_object_or_404(Article, pk=pk)
+    else:
+        article = get_object_or_404(Article, pk=pk, is_published=True)
     return render(request, "article_detail.html", {"article": article})
 
 
 @login_required
 def article_create(request):
-    if not request.user.is_superuser:
+    if not _can_manage_articles(request.user):
         messages.error(request, "无权限")
         return redirect("public_home")
     if request.method == "POST":
@@ -268,13 +275,15 @@ def article_create(request):
                     tag_obj, _ = Tag.objects.get_or_create(name=t)
                     article.tags.add(tag_obj)
             messages.success(request, "文章创建成功")
-            return redirect("article_detail", pk=article.pk)
+            if article.is_published:
+                return redirect("article_detail", pk=article.pk)
+            return redirect("article_edit", pk=article.pk)
     return render(request, "article_form.html", {"form_title": "新建文章", "article": None})
 
 
 @login_required
 def article_edit(request, pk):
-    if not request.user.is_superuser:
+    if not _can_manage_articles(request.user):
         messages.error(request, "无权限")
         return redirect("public_home")
     article = get_object_or_404(Article, pk=pk)
@@ -303,7 +312,9 @@ def article_edit(request, pk):
                     tag_obj, _ = Tag.objects.get_or_create(name=t)
                     article.tags.add(tag_obj)
             messages.success(request, "文章更新成功")
-            return redirect("article_detail", pk=article.pk)
+            if article.is_published:
+                return redirect("article_detail", pk=article.pk)
+            return redirect("article_edit", pk=article.pk)
     existing_tags = ",".join(article.tags.values_list("name", flat=True))
     return render(request, "article_form.html", {
         "form_title": "编辑文章",
@@ -314,7 +325,7 @@ def article_edit(request, pk):
 
 @login_required
 def article_delete(request, pk):
-    if not request.user.is_superuser:
+    if not _can_manage_articles(request.user):
         messages.error(request, "无权限")
         return redirect("public_home")
     article = get_object_or_404(Article, pk=pk)

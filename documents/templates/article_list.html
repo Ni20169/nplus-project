@@ -288,7 +288,7 @@ body {
             <span class="article-count">共 {{ articles|length }} 篇</span>
         </div>
 
-        {% if user.is_superuser %}
+        {% if user.is_staff or user.is_superuser %}
         <div class="admin-bar">
             <a href="{% url 'article_create' %}" class="btn-new">+ 新建文章</a>
         </div>

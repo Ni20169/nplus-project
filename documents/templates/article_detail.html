@@ -292,7 +292,7 @@ body {
             <span>🗓 {{ article.published_at|date:"Y年m月d日" }}</span>
             {% if article.category %}<span class="article-category">{{ article.category }}</span>{% endif %}
             {% for tag in article.tags.all %}<span class="article-tag">#{{ tag.name }}</span>{% endfor %}
-            {% if user.is_superuser %}
+            {% if user.is_staff or user.is_superuser %}
             <div class="admin-actions">
                 <a href="{% url 'article_edit' article.pk %}" class="btn-edit">编辑</a>
                 <button class="btn-delete" onclick="document.getElementById('deleteModal').classList.add('show')">删除</button>
@@ -308,7 +308,7 @@ body {
 </div>
 
 <!-- Delete Confirm Modal -->
-{% if user.is_superuser %}
+{% if user.is_staff or user.is_superuser %}
 <div class="modal-overlay" id="deleteModal">
     <div class="modal-box">
         <h3>确认删除</h3>
