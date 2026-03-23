@@ -252,7 +252,7 @@ class Tag(models.Model):
 
 
 class Article(models.Model):
-    TYPE_CHOICES = (("note", "学习笔记"), ("essay", "技术随笔"))
+    TYPE_CHOICES = (("note", "学习笔记"), ("essay", "日常随笔"))
 
     article_type = models.CharField("类型", max_length=10, choices=TYPE_CHOICES)
     title = models.CharField("标题", max_length=200)

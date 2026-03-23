@@ -265,7 +265,7 @@ body {
     <a href="{% url 'home' %}" class="brand">N+数据管理小站</a>
     <div class="nav-links">
         <a href="{% url 'article_list' %}?type=note">📖 学习笔记</a>
-        <a href="{% url 'article_list' %}?type=essay">✍️ 技术随笔</a>
+        <a href="{% url 'article_list' %}?type=essay">✍️ 日常随笔</a>
     </div>
 </nav>
 
@@ -276,7 +276,7 @@ body {
         <a href="{% url 'home' %}">首页</a>
         <span>/</span>
         <a href="{% url 'article_list' %}?type={{ article.article_type }}">
-            {% if article.article_type == "note" %}学习笔记{% else %}技术随笔{% endif %}
+            {% if article.article_type == "note" %}学习笔记{% else %}日常随笔{% endif %}
         </a>
         <span>/</span>
         <span>{{ article.title }}</span>
@@ -285,7 +285,7 @@ body {
     <!-- Header -->
     <div class="article-header">
         <span class="article-type-badge {% if article.article_type == 'note' %}badge-note{% else %}badge-essay{% endif %}">
-            {% if article.article_type == "note" %}学习笔记{% else %}技术随笔{% endif %}
+            {% if article.article_type == "note" %}学习笔记{% else %}日常随笔{% endif %}
         </span>
         <h1 class="article-title">{{ article.title }}</h1>
         <div class="article-meta">

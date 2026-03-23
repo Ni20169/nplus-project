@@ -298,14 +298,14 @@ body, html {
         <a href="{% url 'home' %}" class="brand">N+数据管理小站</a>
         <div class="nav-links">
             <a href="{% url 'article_list' %}?type=note">📖 学习笔记</a>
-            <a href="{% url 'article_list' %}?type=essay">✍️ 技术随笔</a>
+            <a href="{% url 'article_list' %}?type=essay">✍️ 日常随笔</a>
         </div>
     </nav>
 
     <!-- Hero -->
     <section class="hero">
-        <h1>数字时代的学习记录</h1>
-        <p>记录技术成长 · 沉淀知识经验</p>
+        <h1>智能数据时代的学习小站</h1>
+        <p>沉淀知识经验 · 记录成长点滴</p>
     </section>
 
     <div class="content-area">
@@ -342,7 +342,7 @@ body, html {
 
             <!-- 技术随笔 -->
             <section class="articles-section">
-                <div class="section-title">✍️ 技术随笔</div>
+                <div class="section-title">✍️ 日常随笔</div>
                 <div class="article-cards">
                     {% for article in recent_essays %}
                     <a href="{% url 'article_detail' article.pk %}" class="article-card">

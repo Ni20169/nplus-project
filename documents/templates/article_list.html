@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{% if article_type == "note" %}学习笔记{% elif article_type == "essay" %}技术随笔{% else %}全部文章{% endif %} - N+数据管理小站</title>
+<title>{% if article_type == "note" %}学习笔记{% elif article_type == "essay" %}日常随笔{% else %}全部文章{% endif %} - N+数据管理小站</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -218,7 +218,7 @@ body {
     <a href="{% url 'home' %}" class="brand">N+数据管理小站</a>
     <div class="nav-links">
         <a href="{% url 'article_list' %}?type=note" class="{% if article_type == 'note' %}active{% endif %}">📖 学习笔记</a>
-        <a href="{% url 'article_list' %}?type=essay" class="{% if article_type == 'essay' %}active{% endif %}">✍️ 技术随笔</a>
+        <a href="{% url 'article_list' %}?type=essay" class="{% if article_type == 'essay' %}active{% endif %}">✍️ 日常随笔</a>
         <a href="{% url 'article_list' %}" class="{% if not article_type %}active{% endif %}">全部</a>
     </div>
 </nav>
@@ -281,7 +281,7 @@ body {
         <div class="page-heading">
             <h1>
                 {% if article_type == "note" %}📖 学习笔记
-                {% elif article_type == "essay" %}✍️ 技术随笔
+                {% elif article_type == "essay" %}✍️ 日常随笔
                 {% else %}全部文章{% endif %}
                 {% if q %}<span style="font-size:14px;color:#637b99;font-weight:400"> · 搜索「{{ q }}」</span>{% endif %}
             </h1>
@@ -300,7 +300,7 @@ body {
             <a href="{% url 'article_detail' article.pk %}" class="article-item">
                 <div class="item-header">
                     <span class="badge {% if article.article_type == 'note' %}badge-note{% else %}badge-essay{% endif %}">
-                        {% if article.article_type == "note" %}笔记{% else %}随笔{% endif %}
+                        {% if article.article_type == "note" %}笔记{% else %}日常{% endif %}
                     </span>
                     <h2>{{ article.title }}</h2>
                 </div>

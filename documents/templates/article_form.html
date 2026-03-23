@@ -206,7 +206,7 @@ input:checked + .toggle-track::before { transform: translateX(20px); background:
                 <label class="field-label" for="id_article_type">类型<span class="field-required">*</span></label>
                 <select class="field-select" name="article_type" id="id_article_type">
                     <option value="note" {% if not article or article.article_type == 'note' %}selected{% endif %}>📖 学习笔记</option>
-                    <option value="essay" {% if article and article.article_type == 'essay' %}selected{% endif %}>✍️ 技术随笔</option>
+                    <option value="essay" {% if article and article.article_type == 'essay' %}selected{% endif %}>✍️ 日常随笔</option>
                 </select>
             </div>
             <div class="field-group">
