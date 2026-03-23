@@ -232,3 +232,42 @@ class ProjectApproval(models.Model):
 
     def __str__(self):
         return f"{self.project_code} - {self.get_approval_type_display()} - {self.get_status_display()}"
+
+
+# -------------------------
+# 公开博客模型
+# -------------------------
+
+class Tag(models.Model):
+    name = models.CharField("标签名", max_length=50, unique=True)
+    created_at = models.DateTimeField("创建时间", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "标签"
+        verbose_name_plural = "标签"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+class Article(models.Model):
+    TYPE_CHOICES = (("note", "学习笔记"), ("essay", "技术随笔"))
+
+    article_type = models.CharField("类型", max_length=10, choices=TYPE_CHOICES)
+    title = models.CharField("标题", max_length=200)
+    content = models.TextField("正文（Markdown）")
+    category = models.CharField("分类", max_length=50, blank=True)
+    tags = models.ManyToManyField(Tag, blank=True, verbose_name="标签")
+    is_published = models.BooleanField("是否发布", default=False)
+    published_at = models.DateTimeField("发布时间", null=True, blank=True)
+    created_at = models.DateTimeField("创建时间", auto_now_add=True)
+    updated_at = models.DateTimeField("更新时间", auto_now=True)
+
+    class Meta:
+        verbose_name = "文章"
+        verbose_name_plural = "文章"
+        ordering = ["-published_at", "-created_at"]
+
+    def __str__(self):
+        return self.title

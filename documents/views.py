@@ -18,7 +18,8 @@ from django.urls import reverse
 from django.utils import timezone
 from openpyxl import Workbook, load_workbook
 
-from .models import DictType, ImportBatch, ImportError, ProjectApproval, ProjectMaster, ProjectMasterLog, UserProfile
+from django.db.models import Q
+from .models import Article, DictType, ImportBatch, ImportError, ProjectApproval, ProjectMaster, ProjectMasterLog, Tag, UserProfile
 
 
 DICT_CODES = [
@@ -154,7 +155,20 @@ def _dict_name_map(dicts):
     return {code: {item.code: item.name for item in items} for code, items in dicts.items()}
 
 
-def home(request):
+def public_home(request):
+    recent_notes = Article.objects.filter(
+        article_type="note", is_published=True
+    ).order_by("-published_at")[:4]
+    recent_essays = Article.objects.filter(
+        article_type="essay", is_published=True
+    ).order_by("-published_at")[:4]
+    return render(request, "public_home.html", {
+        "recent_notes": recent_notes,
+        "recent_essays": recent_essays,
+    })
+
+
+def login_view(request):
     if request.user.is_authenticated:
         return redirect("project_master_list")
 
@@ -175,7 +189,140 @@ def home(request):
 
 def logout_view(request):
     logout(request)
-    return redirect("home")
+    return redirect("home")  # 回公开首页
+
+
+# -----------------------------------------------------------------------
+# 文章视图（公开可读，管理仅限 superuser）
+# -----------------------------------------------------------------------
+
+def article_list(request):
+    article_type = request.GET.get("type", "")
+    category = request.GET.get("category", "").strip()
+    tag_name = request.GET.get("tag", "").strip()
+    q = request.GET.get("q", "").strip()
+
+    articles = Article.objects.filter(is_published=True)
+    if article_type in ("note", "essay"):
+        articles = articles.filter(article_type=article_type)
+    if category:
+        articles = articles.filter(category=category)
+    if tag_name:
+        articles = articles.filter(tags__name=tag_name)
+    if q:
+        articles = articles.filter(Q(title__icontains=q) | Q(content__icontains=q))
+    articles = articles.order_by("-published_at").distinct()
+
+    categories = (
+        Article.objects.filter(is_published=True)
+        .exclude(category="")
+        .values_list("category", flat=True)
+        .distinct()
+        .order_by("category")
+    )
+    tags = Tag.objects.filter(article__is_published=True).distinct().order_by("name")
+
+    return render(request, "article_list.html", {
+        "articles": articles,
+        "article_type": article_type,
+        "category": category,
+        "tag_name": tag_name,
+        "q": q,
+        "categories": categories,
+        "tags": tags,
+    })
+
+
+def article_detail(request, pk):
+    article = get_object_or_404(Article, pk=pk, is_published=True)
+    return render(request, "article_detail.html", {"article": article})
+
+
+@login_required
+def article_create(request):
+    if not request.user.is_superuser:
+        messages.error(request, "无权限")
+        return redirect("public_home")
+    if request.method == "POST":
+        title = request.POST.get("title", "").strip()
+        article_type = request.POST.get("article_type", "note")
+        category = request.POST.get("category", "").strip()
+        content = request.POST.get("content", "")
+        tag_str = request.POST.get("tags", "").strip()
+        is_published = request.POST.get("is_published") == "1"
+
+        if not title or not content:
+            messages.error(request, "标题和正文不能为空")
+        else:
+            published_at = timezone.now() if is_published else None
+            article = Article.objects.create(
+                title=title,
+                article_type=article_type,
+                category=category,
+                content=content,
+                is_published=is_published,
+                published_at=published_at,
+            )
+            if tag_str:
+                for t in [x.strip() for x in tag_str.split(",") if x.strip()]:
+                    tag_obj, _ = Tag.objects.get_or_create(name=t)
+                    article.tags.add(tag_obj)
+            messages.success(request, "文章创建成功")
+            return redirect("article_detail", pk=article.pk)
+    return render(request, "article_form.html", {"form_title": "新建文章", "article": None})
+
+
+@login_required
+def article_edit(request, pk):
+    if not request.user.is_superuser:
+        messages.error(request, "无权限")
+        return redirect("public_home")
+    article = get_object_or_404(Article, pk=pk)
+    if request.method == "POST":
+        title = request.POST.get("title", "").strip()
+        article_type = request.POST.get("article_type", "note")
+        category = request.POST.get("category", "").strip()
+        content = request.POST.get("content", "")
+        tag_str = request.POST.get("tags", "").strip()
+        is_published = request.POST.get("is_published") == "1"
+
+        if not title or not content:
+            messages.error(request, "标题和正文不能为空")
+        else:
+            if is_published and not article.is_published:
+                article.published_at = timezone.now()
+            article.title = title
+            article.article_type = article_type
+            article.category = category
+            article.content = content
+            article.is_published = is_published
+            article.save()
+            article.tags.clear()
+            if tag_str:
+                for t in [x.strip() for x in tag_str.split(",") if x.strip()]:
+                    tag_obj, _ = Tag.objects.get_or_create(name=t)
+                    article.tags.add(tag_obj)
+            messages.success(request, "文章更新成功")
+            return redirect("article_detail", pk=article.pk)
+    existing_tags = ",".join(article.tags.values_list("name", flat=True))
+    return render(request, "article_form.html", {
+        "form_title": "编辑文章",
+        "article": article,
+        "existing_tags": existing_tags,
+    })
+
+
+@login_required
+def article_delete(request, pk):
+    if not request.user.is_superuser:
+        messages.error(request, "无权限")
+        return redirect("public_home")
+    article = get_object_or_404(Article, pk=pk)
+    if request.method == "POST":
+        article.delete()
+        messages.success(request, "文章已删除")
+        return redirect("article_list")
+    return redirect("article_detail", pk=pk)
 
 
 @login_required

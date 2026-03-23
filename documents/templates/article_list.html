@@ -1,0 +1,329 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% if article_type == "note" %}学习笔记{% elif article_type == "essay" %}技术随笔{% else %}全部文章{% endif %} - N+数据管理小站</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+    background: #071e38;
+    color: #e0eeff;
+    min-height: 100vh;
+}
+
+/* Navbar */
+.navbar {
+    height: 56px;
+    background: rgba(5, 18, 40, 0.95);
+    border-bottom: 1px solid rgba(0,191,255,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 36px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+.navbar .brand { font-size: 17px; font-weight: 700; color: #00bfff; text-decoration: none; }
+.nav-links { display: flex; gap: 24px; }
+.nav-links a { color: #cde6ff; text-decoration: none; font-size: 14px; padding: 5px 12px; border-radius: 16px; transition: background 0.2s; }
+.nav-links a:hover, .nav-links a.active { background: rgba(0,191,255,0.12); color: #00bfff; }
+
+/* Layout */
+.layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 28px;
+    max-width: 1100px;
+    margin: 32px auto;
+    padding: 0 20px;
+    align-items: start;
+}
+
+@media (max-width: 720px) {
+    .layout { grid-template-columns: 1fr; }
+    .navbar { padding: 0 16px; }
+}
+
+/* Sidebar */
+.sidebar {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(0,191,255,0.1);
+    border-radius: 14px;
+    padding: 20px;
+    position: sticky;
+    top: 72px;
+}
+
+.sidebar-section { margin-bottom: 22px; }
+.sidebar-section:last-child { margin-bottom: 0; }
+.sidebar-label {
+    font-size: 12px;
+    color: #637b99;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.filter-links { display: flex; flex-direction: column; gap: 5px; }
+.filter-link {
+    display: block;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #cde6ff;
+    text-decoration: none;
+    transition: background 0.15s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.filter-link:hover { background: rgba(0,191,255,0.1); }
+.filter-link.active { background: rgba(0,191,255,0.15); color: #00bfff; font-weight: 600; }
+
+/* Search */
+.search-form { display: flex; gap: 6px; }
+.search-input {
+    flex: 1;
+    padding: 7px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,191,255,0.2);
+    background: rgba(255,255,255,0.04);
+    color: #e0eeff;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+}
+.search-input:focus { border-color: #00bfff; }
+.search-btn {
+    padding: 7px 12px;
+    border-radius: 8px;
+    background: rgba(0,191,255,0.2);
+    border: 1px solid rgba(0,191,255,0.3);
+    color: #00bfff;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.15s;
+}
+.search-btn:hover { background: rgba(0,191,255,0.35); }
+
+/* Main content */
+.main-content {}
+
+.page-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.page-heading h1 { font-size: 20px; color: #fff; }
+.article-count { font-size: 13px; color: #637b99; }
+
+/* Superuser action */
+.admin-bar {
+    margin-bottom: 18px;
+    display: flex;
+    gap: 10px;
+}
+.btn-new {
+    padding: 8px 18px;
+    background: rgba(0,191,255,0.2);
+    border: 1px solid rgba(0,191,255,0.4);
+    border-radius: 8px;
+    color: #00bfff;
+    font-size: 13px;
+    text-decoration: none;
+    transition: background 0.15s;
+}
+.btn-new:hover { background: rgba(0,191,255,0.35); }
+
+/* Article List */
+.article-list { display: flex; flex-direction: column; gap: 14px; }
+
+.article-item {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px;
+    padding: 18px 22px;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+.article-item:hover {
+    background: rgba(0,191,255,0.07);
+    border-color: rgba(0,191,255,0.25);
+    transform: translateX(4px);
+}
+
+.item-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+.item-header h2 { font-size: 16px; font-weight: 600; color: #e0eeff; flex: 1; line-height: 1.4; }
+
+.badge {
+    font-size: 11px;
+    padding: 2px 9px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+.badge-note { background: rgba(0,191,255,0.2); color: #00bfff; }
+.badge-essay { background: rgba(100,200,100,0.2); color: #88dd88; }
+
+.item-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: #637b99;
+}
+.item-category {
+    background: rgba(255,255,255,0.07);
+    padding: 2px 8px;
+    border-radius: 8px;
+    color: #8ab8d8;
+}
+.item-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+.item-tag {
+    background: rgba(255,255,255,0.06);
+    padding: 1px 7px;
+    border-radius: 8px;
+    font-size: 11px;
+    color: #8ab8d8;
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #637b99;
+    font-size: 15px;
+}
+
+/* Pagination (future) */
+.messages-list { margin-bottom: 18px; }
+.msg { padding: 8px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 6px; }
+.msg-error { background: rgba(255,80,80,0.12); border: 1px solid rgba(255,80,80,0.2); color: #ff8080; }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="{% url 'home' %}" class="brand">N+数据管理小站</a>
+    <div class="nav-links">
+        <a href="{% url 'article_list' %}?type=note" class="{% if article_type == 'note' %}active{% endif %}">📖 学习笔记</a>
+        <a href="{% url 'article_list' %}?type=essay" class="{% if article_type == 'essay' %}active{% endif %}">✍️ 技术随笔</a>
+        <a href="{% url 'article_list' %}" class="{% if not article_type %}active{% endif %}">全部</a>
+    </div>
+</nav>
+
+<div class="layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+        <!-- 搜索 -->
+        <div class="sidebar-section">
+            <div class="sidebar-label">搜索</div>
+            <form class="search-form" method="get" action="{% url 'article_list' %}">
+                {% if article_type %}<input type="hidden" name="type" value="{{ article_type }}">{% endif %}
+                <input class="search-input" type="text" name="q" value="{{ q }}" placeholder="标题 / 内容…">
+                <button class="search-btn" type="submit">🔍</button>
+            </form>
+        </div>
+
+        <!-- 分类 -->
+        {% if categories %}
+        <div class="sidebar-section">
+            <div class="sidebar-label">分类</div>
+            <div class="filter-links">
+                <a href="{% url 'article_list' %}{% if article_type %}?type={{ article_type }}{% endif %}" class="filter-link {% if not category %}active{% endif %}">全部分类</a>
+                {% for cat in categories %}
+                <a href="{% url 'article_list' %}?{% if article_type %}type={{ article_type }}&{% endif %}category={{ cat }}" class="filter-link {% if category == cat %}active{% endif %}">{{ cat }}</a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 标签 -->
+        {% if tags %}
+        <div class="sidebar-section">
+            <div class="sidebar-label">标签</div>
+            <div class="filter-links">
+                {% for tag in tags %}
+                <a href="{% url 'article_list' %}?tag={{ tag.name }}{% if article_type %}&type={{ article_type }}{% endif %}" class="filter-link {% if tag_name == tag.name %}active{% endif %}">
+                    # {{ tag.name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+    </aside>
+
+    <!-- Main -->
+    <main class="main-content">
+
+        {% if messages %}
+        <div class="messages-list">
+            {% for message in messages %}
+            <div class="msg msg-error">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="page-heading">
+            <h1>
+                {% if article_type == "note" %}📖 学习笔记
+                {% elif article_type == "essay" %}✍️ 技术随笔
+                {% else %}全部文章{% endif %}
+                {% if q %}<span style="font-size:14px;color:#637b99;font-weight:400"> · 搜索「{{ q }}」</span>{% endif %}
+            </h1>
+            <span class="article-count">共 {{ articles|length }} 篇</span>
+        </div>
+
+        {% if user.is_superuser %}
+        <div class="admin-bar">
+            <a href="{% url 'article_create' %}" class="btn-new">+ 新建文章</a>
+        </div>
+        {% endif %}
+
+        {% if articles %}
+        <div class="article-list">
+            {% for article in articles %}
+            <a href="{% url 'article_detail' article.pk %}" class="article-item">
+                <div class="item-header">
+                    <span class="badge {% if article.article_type == 'note' %}badge-note{% else %}badge-essay{% endif %}">
+                        {% if article.article_type == "note" %}笔记{% else %}随笔{% endif %}
+                    </span>
+                    <h2>{{ article.title }}</h2>
+                </div>
+                <div class="item-meta">
+                    <span>{{ article.published_at|date:"Y-m-d" }}</span>
+                    {% if article.category %}<span class="item-category">{{ article.category }}</span>{% endif %}
+                    {% if article.tags.all %}
+                    <span class="item-tags">
+                        {% for tag in article.tags.all %}<span class="item-tag">#{{ tag.name }}</span>{% endfor %}
+                    </span>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            {% if q %}没有找到「{{ q }}」相关的文章{% else %}暂无文章{% endif %}
+        </div>
+        {% endif %}
+
+    </main>
+</div>
+
+</body>
+</html>

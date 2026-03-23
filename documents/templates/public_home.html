@@ -1,0 +1,464 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>N+数据管理小站</title>
+<script src="{% static 'js/particles.min.js' %}"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body, html {
+    width: 100%;
+    min-height: 100vh;
+    font-family: "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+    color: #e0eeff;
+    overflow-x: hidden;
+}
+
+#particles-js {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: #0a3b66;
+    z-index: 0;
+}
+
+.page {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ---- Navbar ---- */
+.navbar {
+    position: sticky;
+    top: 0;
+    height: 56px;
+    background: rgba(5, 20, 45, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(0,191,255,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 36px;
+    z-index: 100;
+}
+
+.navbar .brand {
+    font-size: 18px;
+    font-weight: 700;
+    color: #00bfff;
+    letter-spacing: 1px;
+    text-decoration: none;
+}
+
+.nav-links {
+    display: flex;
+    gap: 28px;
+}
+
+.nav-links a {
+    color: #cde6ff;
+    text-decoration: none;
+    font-size: 14px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    transition: background 0.2s, color 0.2s;
+}
+
+.nav-links a:hover {
+    background: rgba(0,191,255,0.15);
+    color: #00bfff;
+}
+
+/* ---- Hero ---- */
+.hero {
+    text-align: center;
+    padding: 60px 20px 40px;
+}
+
+.hero h1 {
+    font-size: 36px;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 0 30px rgba(0,191,255,0.5);
+    margin-bottom: 10px;
+}
+
+.hero p {
+    font-size: 15px;
+    color: #8ab8d8;
+    letter-spacing: 2px;
+}
+
+/* ---- Content ---- */
+.content-area {
+    flex: 1;
+    padding: 0 24px 60px;
+    max-width: 1280px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* ---- Weather Card ---- */
+.weather-card {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(0,191,255,0.2);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    padding: 20px 28px;
+    margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    min-height: 80px;
+}
+
+.weather-icon { font-size: 48px; line-height: 1; }
+
+.weather-main { display: flex; flex-direction: column; gap: 4px; }
+
+.weather-temp {
+    font-size: 40px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+}
+
+.weather-desc {
+    font-size: 16px;
+    color: #cde6ff;
+}
+
+.weather-meta {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+    color: #8ab8d8;
+    font-size: 13px;
+}
+
+.weather-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.weather-city {
+    margin-left: auto;
+    color: #8ab8d8;
+    font-size: 13px;
+    align-self: flex-start;
+}
+
+.weather-loading {
+    color: #8ab8d8;
+    font-size: 14px;
+}
+
+/* ---- Article Sections ---- */
+.sections-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+}
+
+@media (max-width: 768px) {
+    .sections-row { grid-template-columns: 1fr; }
+    .navbar { padding: 0 16px; }
+    .navbar .brand { font-size: 15px; }
+    .hero h1 { font-size: 26px; }
+}
+
+.articles-section {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(0,191,255,0.1);
+    border-radius: 16px;
+    padding: 24px;
+    backdrop-filter: blur(8px);
+}
+
+.section-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #00bfff;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid rgba(0,191,255,0.15);
+    padding-bottom: 12px;
+}
+
+.article-cards { display: flex; flex-direction: column; gap: 10px; }
+
+.article-card {
+    display: block;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 14px 16px;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.article-card:hover {
+    background: rgba(0,191,255,0.1);
+    border-color: rgba(0,191,255,0.3);
+    transform: translateX(4px);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.article-card h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #e0eeff;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
+.badge-note { background: rgba(0,191,255,0.2); color: #00bfff; }
+.badge-essay { background: rgba(100,200,100,0.2); color: #88dd88; }
+
+.card-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: #637b99;
+}
+
+.card-category {
+    background: rgba(255,255,255,0.07);
+    padding: 1px 7px;
+    border-radius: 8px;
+    font-size: 11px;
+    color: #8ab8d8;
+}
+
+.empty-hint {
+    color: #506070;
+    font-size: 13px;
+    text-align: center;
+    padding: 24px 0;
+}
+
+.view-more {
+    display: block;
+    text-align: right;
+    margin-top: 14px;
+    font-size: 13px;
+    color: #00bfff;
+    text-decoration: none;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.view-more:hover { opacity: 1; }
+
+/* ---- Footer ---- */
+.footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 12px;
+    color: #3a5068;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+</style>
+</head>
+<body>
+<div id="particles-js"></div>
+<div class="page">
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="{% url 'home' %}" class="brand">N+数据管理小站</a>
+        <div class="nav-links">
+            <a href="{% url 'article_list' %}?type=note">📖 学习笔记</a>
+            <a href="{% url 'article_list' %}?type=essay">✍️ 技术随笔</a>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <h1>数字时代的学习记录</h1>
+        <p>记录技术成长 · 沉淀知识经验</p>
+    </section>
+
+    <div class="content-area">
+
+        <!-- 天气 -->
+        <div class="weather-card" id="weather-widget">
+            <span class="weather-loading">🌤️ 正在获取天气…</span>
+        </div>
+
+        <!-- 文章区 -->
+        <div class="sections-row">
+
+            <!-- 学习笔记 -->
+            <section class="articles-section">
+                <div class="section-title">📖 学习笔记</div>
+                <div class="article-cards">
+                    {% for article in recent_notes %}
+                    <a href="{% url 'article_detail' article.pk %}" class="article-card">
+                        <div class="card-header">
+                            <span class="badge badge-note">笔记</span>
+                            <h3>{{ article.title }}</h3>
+                        </div>
+                        <div class="card-meta">
+                            <span>{{ article.published_at|date:"Y-m-d" }}</span>
+                            {% if article.category %}<span class="card-category">{{ article.category }}</span>{% endif %}
+                        </div>
+                    </a>
+                    {% empty %}
+                    <p class="empty-hint">暂无笔记，敬请期待</p>
+                    {% endfor %}
+                </div>
+                <a href="{% url 'article_list' %}?type=note" class="view-more">查看全部 →</a>
+            </section>
+
+            <!-- 技术随笔 -->
+            <section class="articles-section">
+                <div class="section-title">✍️ 技术随笔</div>
+                <div class="article-cards">
+                    {% for article in recent_essays %}
+                    <a href="{% url 'article_detail' article.pk %}" class="article-card">
+                        <div class="card-header">
+                            <span class="badge badge-essay">随笔</span>
+                            <h3>{{ article.title }}</h3>
+                        </div>
+                        <div class="card-meta">
+                            <span>{{ article.published_at|date:"Y-m-d" }}</span>
+                            {% if article.category %}<span class="card-category">{{ article.category }}</span>{% endif %}
+                        </div>
+                    </a>
+                    {% empty %}
+                    <p class="empty-hint">暂无随笔，敬请期待</p>
+                    {% endfor %}
+                </div>
+                <a href="{% url 'article_list' %}?type=essay" class="view-more">查看全部 →</a>
+            </section>
+
+        </div><!-- /sections-row -->
+    </div><!-- /content-area -->
+
+    <footer class="footer">
+        © 2026 N+数据管理小站
+    </footer>
+</div>
+
+<script>
+// 粒子背景初始化
+particlesJS('particles-js', {
+    "particles": {
+        "number": { "value": 50, "density": { "enable": true, "value_area": 900 } },
+        "color": { "value": "#00bfff" },
+        "shape": { "type": "circle" },
+        "opacity": { "value": 0.35, "random": true },
+        "size": { "value": 2.5, "random": true },
+        "line_linked": { "enable": true, "distance": 140, "color": "#00bfff", "opacity": 0.25, "width": 1 },
+        "move": { "enable": true, "speed": 2, "direction": "none", "random": true, "straight": false, "out_mode": "out", "bounce": false }
+    },
+    "interactivity": {
+        "detect_on": "canvas",
+        "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": false }, "resize": true },
+        "modes": { "grab": { "distance": 120, "line_linked": { "opacity": 0.5 } } }
+    },
+    "retina_detect": true
+});
+
+// 天气组件（调用 wttr.in 免费 API，无需 Key）
+(function() {
+    const CITY = '北京';  // ← 根据需要修改城市
+    const WEATHER_ZH = {
+        'Sunny':'晴天','Clear':'晴朗','Partly cloudy':'多云','Cloudy':'阴天',
+        'Overcast':'阴天','Mist':'薄雾','Fog':'大雾','Blizzard':'暴风雪',
+        'Blowing snow':'风雪','Light drizzle':'小雨','Freezing drizzle':'冻雨',
+        'Light rain':'小雨','Moderate rain':'中雨','Heavy rain':'大雨',
+        'Light snow':'小雪','Moderate snow':'中雪','Heavy snow':'大雪',
+        'Ice pellets':'冰粒','Light rain shower':'小阵雨',
+        'Moderate or heavy rain shower':'阵雨','Torrential rain shower':'暴雨',
+        'Light snow showers':'小阵雪','Moderate or heavy snow showers':'中雪',
+        'Patchy rain possible':'局部有雨','Patchy snow possible':'局部有雪',
+        'Patchy light rain':'局部小雨','Patchy light snow':'局部小雪',
+        'Patchy moderate snow':'中雪','Patchy heavy snow':'大雪',
+        'Thundery outbreaks possible':'雷阵雨','Light sleet':'雨夹雪',
+        'Light freezing rain':'小冻雨','Patchy light drizzle':'零星小雨',
+        'Heavy rain at times':'大雨','Moderate rain at times':'中雨',
+    };
+    const EMOJI_MAP = {
+        '113':'☀️','116':'⛅','119':'☁️','122':'☁️','143':'🌫️',
+        '176':'🌦️','179':'🌨️','182':'🌧️','185':'🌧️','200':'⛈️',
+        '227':'🌨️','230':'❄️','248':'🌫️','260':'🌫️','263':'🌦️',
+        '266':'🌦️','281':'🌧️','284':'🌧️','293':'🌦️','296':'🌦️',
+        '299':'🌦️','302':'🌧️','305':'🌧️','308':'🌧️','311':'🌧️',
+        '317':'🌨️','320':'🌨️','323':'🌨️','326':'🌨️','329':'❄️',
+        '332':'❄️','335':'❄️','338':'❄️','350':'🌧️','353':'🌦️',
+        '356':'🌧️','359':'🌧️','362':'🌨️','365':'🌨️','368':'🌨️',
+        '371':'❄️','374':'🌧️','377':'🌧️','386':'⛈️','389':'⛈️',
+        '392':'⛈️','395':'❄️',
+    };
+
+    fetch('https://wttr.in/' + encodeURIComponent(CITY) + '?format=j1', {
+        signal: AbortSignal.timeout ? AbortSignal.timeout(8000) : undefined
+    })
+    .then(r => r.json())
+    .then(data => {
+        const cc = data.current_condition[0];
+        const temp = cc.temp_C;
+        const feelsLike = cc.FeelsLikeC;
+        const descEn = cc.weatherDesc[0].value;
+        const descZh = WEATHER_ZH[descEn] || descEn;
+        const humidity = cc.humidity;
+        const wind = cc.windspeedKmph;
+        const code = cc.weatherCode;
+        const emoji = EMOJI_MAP[code] || '🌤️';
+        const today = data.weather[0];
+        const maxC = today.maxtempC;
+        const minC = today.mintempC;
+
+        document.getElementById('weather-widget').innerHTML =
+            '<div class="weather-icon">' + emoji + '</div>' +
+            '<div class="weather-main">' +
+                '<div class="weather-temp">' + temp + '°C</div>' +
+                '<div class="weather-desc">' + descZh + '</div>' +
+            '</div>' +
+            '<div class="weather-meta">' +
+                '<span>↑' + maxC + '° ↓' + minC + '°</span>' +
+                '<span>体感 ' + feelsLike + '°C</span>' +
+                '<span>湿度 ' + humidity + '%</span>' +
+                '<span>风速 ' + wind + ' km/h</span>' +
+            '</div>' +
+            '<div class="weather-city">📍 ' + CITY + '</div>';
+    })
+    .catch(function() {
+        document.getElementById('weather-widget').innerHTML =
+            '<span class="weather-loading">暂时无法获取天气数据</span>';
+    });
+})();
+</script>
+</body>
+</html>

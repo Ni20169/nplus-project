@@ -170,11 +170,13 @@ CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.getenv('DJANGO_CSRF_TRUSTED_ORIGIN
 
 # 静态文件目�?
 
-# 登录成功后跳转到项目列表�?
-LOGIN_REDIRECT_URL = '/documents/'        # 对应 ProjectMaster 列表�?
-LOGOUT_REDIRECT_URL = '/'                 # 退出登录回首页
+# 认证相关跳转配置
+LOGIN_URL = '/nplus-portal/'              # 登录页隐蔽地址（不出现在公开首页）
+LOGIN_REDIRECT_URL = '/documents/'        # 登录成功后跳转
+LOGOUT_REDIRECT_URL = '/'                 # 退出登录回公开首页
 
 # Keep legacy integer primary keys to match existing migrations/schema.
+
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # Deployment static files override

@@ -1,0 +1,280 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ form_title }} - N+数据管理小站</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde@2/dist/easymde.min.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+    background: #071e38;
+    color: #e0eeff;
+    min-height: 100vh;
+}
+
+/* Navbar */
+.navbar {
+    height: 56px;
+    background: rgba(5, 18, 40, 0.95);
+    border-bottom: 1px solid rgba(0,191,255,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 36px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+.navbar .brand { font-size: 17px; font-weight: 700; color: #00bfff; text-decoration: none; }
+.nav-back { color: #cde6ff; text-decoration: none; font-size: 14px; padding: 5px 12px; border-radius: 16px; transition: background 0.2s; }
+.nav-back:hover { background: rgba(0,191,255,0.12); color: #00bfff; }
+
+/* Form layout */
+.form-wrap {
+    max-width: 900px;
+    margin: 36px auto;
+    padding: 0 20px 60px;
+}
+
+.form-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 28px;
+}
+
+/* Messages */
+.msg { padding: 10px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; }
+.msg-error { background: rgba(255,80,80,0.1); border: 1px solid rgba(255,80,80,0.2); color: #ff8080; }
+.msg-success { background: rgba(0,200,100,0.1); border: 1px solid rgba(0,200,100,0.2); color: #88dd88; }
+
+/* Form fields */
+.field-group { margin-bottom: 20px; }
+.field-label { display: block; font-size: 13px; color: #8ab8d8; margin-bottom: 7px; font-weight: 500; }
+.field-required { color: #ff8080; margin-left: 3px; }
+
+.field-input, .field-select {
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(0,191,255,0.2);
+    border-radius: 8px;
+    color: #e0eeff;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s;
+    font-family: inherit;
+}
+.field-input:focus, .field-select:focus { border-color: #00bfff; }
+.field-select option { background: #0e2c4a; }
+
+.field-hint { font-size: 12px; color: #506070; margin-top: 5px; }
+
+/* Row */
+.fields-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+}
+@media (max-width: 640px) {
+    .fields-row { grid-template-columns: 1fr; }
+    .navbar { padding: 0 16px; }
+}
+
+/* Toggle switch for is_published */
+.toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+}
+.toggle-label { font-size: 13px; color: #8ab8d8; }
+.toggle-switch {
+    position: relative;
+    width: 42px;
+    height: 22px;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-track {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.1);
+    border-radius: 22px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border: 1px solid rgba(255,255,255,0.15);
+}
+.toggle-track::before {
+    content: '';
+    position: absolute;
+    height: 16px; width: 16px;
+    left: 2px; bottom: 2px;
+    background: #637b99;
+    border-radius: 50%;
+    transition: 0.2s;
+}
+input:checked + .toggle-track { background: rgba(0,191,255,0.3); border-color: #00bfff; }
+input:checked + .toggle-track::before { transform: translateX(20px); background: #00bfff; }
+
+/* Editor override */
+.EasyMDEContainer .CodeMirror {
+    background: rgba(0,0,0,0.3) !important;
+    color: #d0e8ff !important;
+    border: 1px solid rgba(0,191,255,0.2) !important;
+    border-radius: 0 0 8px 8px !important;
+    font-family: "Cascadia Code","Fira Code","Courier New",monospace !important;
+    font-size: 14px !important;
+}
+.EasyMDEContainer .editor-toolbar {
+    background: rgba(0,0,0,0.25) !important;
+    border: 1px solid rgba(0,191,255,0.2) !important;
+    border-bottom: none !important;
+    border-radius: 8px 8px 0 0 !important;
+}
+.EasyMDEContainer .editor-toolbar button { color: #8ab8d8 !important; }
+.EasyMDEContainer .editor-toolbar button:hover,
+.EasyMDEContainer .editor-toolbar button.active {
+    background: rgba(0,191,255,0.15) !important;
+    color: #00bfff !important;
+}
+.EasyMDEContainer .editor-toolbar i.separator { border-color: rgba(255,255,255,0.1) !important; }
+.editor-preview { background: #071e38 !important; color: #d0e8ff !important; }
+.editor-preview-side { background: #071e38 !important; border-color: rgba(0,191,255,0.15) !important; }
+
+/* Submit area */
+.submit-row {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+}
+.btn-save {
+    padding: 10px 28px;
+    background: rgba(0,191,255,0.2);
+    border: 1px solid rgba(0,191,255,0.4);
+    border-radius: 8px;
+    color: #00bfff;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.15s;
+}
+.btn-save:hover { background: rgba(0,191,255,0.35); }
+.btn-cancel {
+    padding: 10px 22px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    color: #8ab8d8;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    transition: background 0.15s;
+}
+.btn-cancel:hover { background: rgba(255,255,255,0.08); }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="{% url 'home' %}" class="brand">N+数据管理小站</a>
+    <a href="{% url 'article_list' %}" class="nav-back">← 返回列表</a>
+</nav>
+
+<div class="form-wrap">
+    <h1 class="form-title">{{ form_title }}</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+        <div class="msg {% if message.tags == 'error' %}msg-error{% else %}msg-success{% endif %}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" id="article-form">
+        {% csrf_token %}
+
+        <!-- 基本信息行 -->
+        <div class="fields-row">
+            <div class="field-group">
+                <label class="field-label" for="id_article_type">类型<span class="field-required">*</span></label>
+                <select class="field-select" name="article_type" id="id_article_type">
+                    <option value="note" {% if not article or article.article_type == 'note' %}selected{% endif %}>📖 学习笔记</option>
+                    <option value="essay" {% if article and article.article_type == 'essay' %}selected{% endif %}>✍️ 技术随笔</option>
+                </select>
+            </div>
+            <div class="field-group">
+                <label class="field-label" for="id_category">分类</label>
+                <input class="field-input" type="text" name="category" id="id_category"
+                       value="{{ article.category|default:'' }}" placeholder="如：Python / Django…">
+            </div>
+            <div class="field-group">
+                <label class="field-label" for="id_tags">标签（逗号分隔）</label>
+                <input class="field-input" type="text" name="tags" id="id_tags"
+                       value="{{ existing_tags|default:'' }}" placeholder="如：Django,ORM,数据库">
+            </div>
+        </div>
+
+        <!-- 标题 -->
+        <div class="field-group">
+            <label class="field-label" for="id_title">标题<span class="field-required">*</span></label>
+            <input class="field-input" type="text" name="title" id="id_title"
+                   value="{{ article.title|default:'' }}" placeholder="请输入文章标题">
+        </div>
+
+        <!-- 正文（Markdown 编辑器） -->
+        <div class="field-group">
+            <label class="field-label" for="id_content">正文（支持 Markdown）<span class="field-required">*</span></label>
+            <textarea name="content" id="id_content">{{ article.content|default:'' }}</textarea>
+        </div>
+
+        <!-- 发布状态 -->
+        <div class="field-group">
+            <div class="toggle-row">
+                <label class="toggle-switch">
+                    <input type="checkbox" name="is_published" value="1"
+                           id="id_is_published" {% if article and article.is_published %}checked{% endif %}>
+                    <span class="toggle-track"></span>
+                </label>
+                <span class="toggle-label">立即发布（取消则保存为草稿）</span>
+            </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="submit-row">
+            <button type="submit" class="btn-save">💾 保存</button>
+            {% if article %}
+            <a href="{% url 'article_detail' article.pk %}" class="btn-cancel">取消</a>
+            {% else %}
+            <a href="{% url 'article_list' %}" class="btn-cancel">取消</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/easymde@2/dist/easymde.min.js"></script>
+<script>
+var easyMDE = new EasyMDE({
+    element: document.getElementById('id_content'),
+    spellChecker: false,
+    autofocus: false,
+    placeholder: '在此输入 Markdown 内容…\n\n支持 # 标题、**加粗**、`代码`、```代码块```、> 引用 等语法',
+    toolbar: [
+        'bold', 'italic', 'heading', '|',
+        'code', 'quote', 'unordered-list', 'ordered-list', '|',
+        'link', 'image', 'table', 'horizontal-rule', '|',
+        'preview', 'side-by-side', 'fullscreen', '|',
+        'guide'
+    ],
+    status: ['lines', 'words'],
+    minHeight: '380px',
+});
+</script>
+</body>
+</html>
