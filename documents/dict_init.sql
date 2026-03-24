@@ -1,7 +1,6 @@
 -- 统一字典中心初始化（字典类型）
 INSERT INTO documents_dicttype (code, name, "group", description, is_active, sort_order, version, created_at, updated_at)
 VALUES
-('ORG', '项目机构', '基础字典', '项目机构字典', true, 10, '', NOW(), NOW()),
 ('BUSINESS_UNIT', '业务板块', '基础字典', '业务板块字典', true, 20, '', NOW(), NOW()),
 ('DEPT', '项目承担部门', '基础字典', '项目承担部门字典', true, 30, '', NOW(), NOW()),
 ('PROJECT_TYPE', '项目类型', '基础字典', '项目类型字典', true, 40, '', NOW(), NOW()),

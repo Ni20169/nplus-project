@@ -32,7 +32,6 @@
   - `remark`：备注
 
 ### 推荐字典类型编码
-- `ORG`：项目机构
 - `BUSINESS_UNIT`：业务板块
 - `DEPT`：项目承担部门
 - `PROJECT_TYPE`：项目类型

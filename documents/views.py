@@ -23,7 +23,6 @@ from .models import Article, DictType, ImportBatch, ImportError, ProjectApproval
 
 
 DICT_CODES = [
-    "ORG",
     "BUSINESS_UNIT",
     "DEPT",
     "PROJECT_TYPE",
@@ -573,7 +572,6 @@ def project_master_list(request):
         }
     else:
         # 查询项目筛选
-        org_name_values = [v.strip() for v in request.GET.getlist("org_name") if v.strip()]
         province_code_values = [v.strip() for v in request.GET.getlist("province_code") if v.strip()]
         business_unit_values = [v.strip() for v in request.GET.getlist("business_unit") if v.strip()]
         dept_values = [v.strip() for v in request.GET.getlist("dept") if v.strip()]
@@ -585,7 +583,7 @@ def project_master_list(request):
         search = {
             "project_code": request.GET.get("project_code", "").strip(),
             "project_name": request.GET.get("project_name", "").strip(),
-            "org_name": org_name_values,
+            "org_name": request.GET.get("org_name", "").strip(),
             "parent_pj_code": request.GET.get("parent_pj_code", "").strip(),
             "province_code": province_code_values,
             "business_unit": business_unit_values,
@@ -604,7 +602,7 @@ def project_master_list(request):
         if search["project_name"]:
             qs = qs.filter(project_name__icontains=search["project_name"])
         if search["org_name"]:
-            qs = qs.filter(org_name__in=search["org_name"])
+            qs = qs.filter(org_name__icontains=search["org_name"])
         if search["parent_pj_code"]:
             qs = qs.filter(parent_pj_code__icontains=search["parent_pj_code"])
         if search["province_code"]:

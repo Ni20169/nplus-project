@@ -7,7 +7,6 @@ from documents.models import DictType, DictItem
 
 
 DICT_TYPES = [
-    ("ORG", "项目机构", "基础字典", "项目机构字典", 10),
     ("BUSINESS_UNIT", "业务板块", "基础字典", "业务板块字典", 20),
     ("DEPT", "项目承担部门", "基础字典", "项目承担部门字典", 30),
     ("PROJECT_TYPE", "项目类型", "基础字典", "项目类型字典", 40),

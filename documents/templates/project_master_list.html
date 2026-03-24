@@ -1200,17 +1200,7 @@
                             </div>
                             <div class="field">
                                 <label>项目机构名称</label>
-                                <div class="multi-select" data-name="org_name">
-                                    <div class="multi-select-display" onclick="toggleMultiSelect(this)" data-default="请选择项目机构">请选择项目机构</div>
-                                    <div class="multi-select-dropdown">
-                                        {% for item in dicts.ORG %}
-                                            <label class="multi-select-option">
-                                                <input type="checkbox" name="org_name" value="{{ item.code }}" {% if item.code in search.org_name %}checked{% endif %}>
-                                                <span>{{ item.name }}</span>
-                                            </label>
-                                        {% endfor %}
-                                    </div>
-                                </div>
+                                <input type="text" name="org_name" value="{{ search.org_name|default:'' }}" placeholder="输入项目机构名称关键词搜索">
                             </div>
 
                             <div class="field">
