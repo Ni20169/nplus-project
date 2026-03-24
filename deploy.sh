@@ -9,13 +9,13 @@ set -Eeuo pipefail
 # 4) health checks (local socket + external URL)
 
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BRANCH="${DEPLOY_BRANCH:-master}"
+BRANCH="${DEPLOY_BRANCH:-main}"
 GUNICORN_SERVICE="${GUNICORN_SERVICE:-gunicorn}"
 NGINX_SERVICE="${NGINX_SERVICE:-nginx}"
 SOCKET_PATH="${SOCKET_PATH:-/run/nplus_project/nplus_project.sock}"
 SOCKET_WAIT_SECONDS="${SOCKET_WAIT_SECONDS:-20}"
 HEALTH_URL="${HEALTH_URL:-https://npbpm.cn/}"
-PYTHON_BIN="${PYTHON_BIN:-python}"
+PYTHON_BIN="${PYTHON_BIN:-$APP_DIR/venv/bin/python}"
 
 log() {
   printf "\n[%s] %s\n" "$(date '+%Y-%m-%d %H:%M:%S')" "$*"
