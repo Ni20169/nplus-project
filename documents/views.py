@@ -342,6 +342,9 @@ def project_master_list(request):
     dict_map = _dict_name_map(dicts)
     is_list_filter = request.GET.get("list_filter") == "1"
     force_add_form = request.GET.get("show_add") == "1"
+    force_search_form = request.GET.get("show_search") == "1"
+    force_update_panel = request.GET.get("show_update") == "1"
+    force_approval_panel = request.GET.get("show_approval") == "1"
     query_keys = [
         "project_code",
         "project_name",
@@ -369,8 +372,20 @@ def project_master_list(request):
             not is_list_filter
             and not has_query_request
             and not force_add_form
+            and not force_search_form
+            and not force_update_panel
+            and not force_approval_panel
             and not permissions["can_view_project_list"]
         ):
+            return _redirect_no_permission(request)
+
+        if force_add_form and not permissions["can_create_project"]:
+            return _redirect_no_permission(request)
+        if force_search_form and not permissions["can_query_project"]:
+            return _redirect_no_permission(request)
+        if force_update_panel and not permissions["can_update_project"]:
+            return _redirect_no_permission(request)
+        if force_approval_panel and not permissions["can_approval_manage"]:
             return _redirect_no_permission(request)
 
     if request.method == "POST" and request.POST.get("form_type") == "create":
@@ -423,7 +438,7 @@ def project_master_list(request):
         except Exception as exc:
             messages.error(request, f"保存失败：{exc}")
 
-    show_update_panel = False
+    show_update_panel = force_update_panel
 
     if request.method == "POST" and request.POST.get("form_type") == "update":
         if not permissions["can_update_project"]:
@@ -782,6 +797,7 @@ def project_master_list(request):
     show_add_form = (request.method == "POST" and request.POST.get("form_type") == "create") or force_add_form
     if not permissions["can_create_project"]:
         show_add_form = False
+    show_approval_panel = force_approval_panel and permissions["can_approval_manage"]
     
     # 构建项目列表导出参数
     list_export_params = "&".join([f"{k}={v}" for k, v in list_filter.items() if v])
@@ -816,7 +832,8 @@ def project_master_list(request):
             "update_target": update_target,
             "update_code": update_code,
             "show_update_panel": show_update_panel,
-            "show_search_form": has_search_params and permissions["can_query_project"],
+            "show_search_form": (has_search_params or force_search_form) and permissions["can_query_project"],
+            "show_approval_panel": show_approval_panel,
             "is_query_result": is_query_result,
             "show_action_column": show_action_column,
             "show_add_form": show_add_form,

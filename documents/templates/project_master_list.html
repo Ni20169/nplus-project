@@ -928,7 +928,7 @@
         }
     </style>
 </head>
-<body data-show-update-panel="{% if show_update_panel %}true{% else %}false{% endif %}" data-show-search-form="{% if show_search_form %}true{% else %}false{% endif %}" data-is-query-result="{% if is_query_result %}true{% else %}false{% endif %}" data-can-create-project="{% if permissions.can_create_project %}true{% else %}false{% endif %}" data-can-query-project="{% if permissions.can_query_project %}true{% else %}false{% endif %}" data-can-update-project="{% if permissions.can_update_project %}true{% else %}false{% endif %}" data-can-view-project-list="{% if permissions.can_view_project_list %}true{% else %}false{% endif %}" data-can-approval-manage="{% if permissions.can_approval_manage %}true{% else %}false{% endif %}">
+<body data-show-update-panel="{% if show_update_panel %}true{% else %}false{% endif %}" data-show-search-form="{% if show_search_form %}true{% else %}false{% endif %}" data-show-approval-panel="{% if show_approval_panel %}true{% else %}false{% endif %}" data-is-query-result="{% if is_query_result %}true{% else %}false{% endif %}" data-can-create-project="{% if permissions.can_create_project %}true{% else %}false{% endif %}" data-can-query-project="{% if permissions.can_query_project %}true{% else %}false{% endif %}" data-can-update-project="{% if permissions.can_update_project %}true{% else %}false{% endif %}" data-can-view-project-list="{% if permissions.can_view_project_list %}true{% else %}false{% endif %}" data-can-approval-manage="{% if permissions.can_approval_manage %}true{% else %}false{% endif %}">
     <div class="watermark">
         {% for _ in "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890" %}
             <span>{{ request.user.username }}</span>
@@ -1038,7 +1038,7 @@
 
                 <!-- 审批管理面板 -->
                 {% if permissions.can_approval_manage %}
-                <div class="search-form" id="approvalPanel" style="display: none;">
+                <div class="search-form" id="approvalPanel" style="display: {% if show_approval_panel %}block{% else %}none{% endif %};">
                     <h3>
                         审批管理
                         <span class="collapse-btn" onclick="hideApprovalPanel()">收起</span>
@@ -2073,19 +2073,28 @@
         document.addEventListener('DOMContentLoaded', function() {
             // 初始化面板显示状态
             const updatePanel = document.getElementById('updatePanel');
+            const approvalPanel = document.getElementById('approvalPanel');
             const dataTable = document.getElementById('dataTable');
             // 从HTML数据属性获取初始化状态
             const showUpdatePanel = document.body.dataset.showUpdatePanel === 'true';
             const showSearchFormMode = document.body.dataset.showSearchForm === 'true';
+            const showApprovalPanelMode = document.body.dataset.showApprovalPanel === 'true';
             const isQueryResult = document.body.dataset.isQueryResult === 'true';
-            if (showUpdatePanel) {
+            if (showApprovalPanelMode) {
+                if (approvalPanel) approvalPanel.style.display = 'block';
+                if (updatePanel) updatePanel.style.display = 'none';
+                if (dataTable) dataTable.style.display = 'none';
+            } else if (showUpdatePanel) {
+                if (approvalPanel) approvalPanel.style.display = 'none';
                 if (updatePanel) updatePanel.style.display = 'block';
                 if (dataTable) dataTable.style.display = 'none';
             } else if (showSearchFormMode && !isQueryResult) {
                 // 查询页签（未提交查询）只显示查询条件，不显示列表
+                if (approvalPanel) approvalPanel.style.display = 'none';
                 if (updatePanel) updatePanel.style.display = 'none';
                 if (dataTable) dataTable.style.display = 'none';
             } else {
+                if (approvalPanel) approvalPanel.style.display = 'none';
                 if (updatePanel) updatePanel.style.display = 'none';
                 if (dataTable) {
                     dataTable.style.display = (!canViewProjectList && !isQueryResult) ? 'none' : 'block';

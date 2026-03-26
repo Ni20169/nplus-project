@@ -128,7 +128,11 @@
                     <li>
                         <a class="menu-level-2" data-submenu-target="menu-project-master" href="#" onclick="toggleSubMenu('menu-project-master', this); return false;">项目主数据管理<span class="caret">▼</span></a>
                         <ul class="menu-list menu-level-3" id="menu-project-master">
-                            <li><a href="{% url 'project_master_list' %}">进入项目主数据管理</a></li>
+                            <li><a href="{% url 'project_master_list' %}?show_add=1">新增项目</a></li>
+                            <li><a href="{% url 'project_master_list' %}?show_search=1">查询项目</a></li>
+                            <li><a href="{% url 'project_master_list' %}?show_update=1">信息更新</a></li>
+                            <li><a href="{% url 'project_master_list' %}">项目列表</a></li>
+                            <li><a href="{% url 'project_master_list' %}?show_approval=1">审批管理</a></li>
                         </ul>
                     </li>
                     <li>
