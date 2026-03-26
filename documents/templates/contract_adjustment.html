@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>合同调整管理</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "PingFang SC","Microsoft YaHei","Noto Sans SC","Source Han Sans SC",sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container { display: flex; min-height: 100vh; width: 100%; max-width: 100%; }
+        .container.sidebar-hidden .sidebar { width: 0; min-width: 0; padding: 0; overflow: hidden; }
+        .container.sidebar-hidden .resize-handle { display: none; }
+        .sidebar {
+            width: 240px; min-width: 200px; max-width: 360px;
+            background-color: #2f3542; color: white;
+            padding: 16px 16px 56px 20px; position: relative;
+            display: flex; flex-direction: column;
+        }
+        .resize-handle { position: absolute; top: 0; right: 0; width: 6px; height: 100%; cursor: col-resize; background: rgba(255,255,255,0.08); }
+        .menu-section { margin-bottom: 12px; }
+        .menu-toggle { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-radius: 6px; cursor: pointer; background: rgba(255,255,255,0.06); font-weight: 600; }
+        .menu-toggle.level-1 { color: #f39c12; font-weight: 700; }
+        .menu-toggle .caret, .menu-level-2 .caret { font-size: 12px; opacity: 0.8; transition: transform 0.2s; }
+        .menu-toggle.open .caret, .menu-level-2.open .caret { transform: rotate(180deg); }
+        .menu-list { list-style: none; margin-top: 8px; padding-left: 8px; display: none; }
+        .menu-list.show { display: block; }
+        .menu-list li { margin-bottom: 10px; }
+        .menu-list li a { color: white; text-decoration: none; display: block; padding: 6px 8px; border-radius: 4px; transition: background-color 0.2s; }
+        .menu-level-2 { display: flex; align-items: center; justify-content: space-between; font-weight: 600; background: rgba(255,255,255,0.04); padding: 6px 8px; border-radius: 4px; }
+        .menu-level-3 a { padding-left: 14px; font-size: 13px; color: #ecf0f1; }
+        .menu-list li a:hover { background-color: #57606f; }
+        .menu-list li a.active { background-color: #3d84c6; font-weight: 600; }
+        .menu-list ul.menu-list { margin-top: 6px; padding-left: 12px; }
+        .sidebar-footer { position: absolute; bottom: 12px; left: 20px; right: 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: #dfe4ea; }
+        .sidebar-footer a.logout-link { padding: 4px 8px; border-radius: 4px; background: rgba(255,255,255,0.16); color: #fff; text-decoration: none; font-size: 12px; }
+        .main-content { flex: 1; padding: 8px 24px 0; position: relative; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        .watermark { position: fixed; inset: 0; pointer-events: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); grid-auto-rows: 160px; align-content: start; z-index: 4; overflow: hidden; }
+        .watermark span { display: flex; align-items: center; justify-content: center; color: rgba(0,0,0,0.06); font-size: 15px; font-weight: 600; letter-spacing: 1px; white-space: nowrap; transform: rotate(-45deg); }
+        .watermark span:nth-child(odd) { transform: translateX(70px) rotate(-45deg); }
+        .content-wrap { position: relative; z-index: 3; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .page-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; flex-shrink: 0; }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .header-right { text-align: right; }
+        .user-info { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+        .system-time { font-size: 14px; color: #666; }
+        .toggle-sidebar-btn { padding: 4px 8px; border: 1px solid #dcdcdc; border-radius: 4px; background: #fff; cursor: pointer; font-size: 12px; color: #333; }
+        .logout-btn { color: #3498db; text-decoration: none; font-size: 14px; padding: 4px 8px; border-radius: 4px; transition: background-color 0.2s; }
+        .logout-btn:hover { background-color: #e3f2fd; }
+        .main-content h1 { margin: 0; font-size: 20px; color: #1f2d3d; }
+        .action-buttons { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 8px; flex-shrink: 0; }
+        .action-buttons button, .action-buttons a { padding: 8px 14px; border: 1px solid transparent; border-radius: 4px; cursor: pointer; font-size: 14px; text-decoration: none; color: white; min-width: 96px; text-align: center; display: inline-block; }
+        .btn-add { background-color: #2ecc71; border-color: #2ecc71; color: #fff; font-weight: 600; }
+        .btn-search { background-color: #3498db; border-color: #3498db; color: #fff; font-weight: 600; }
+        .btn-cancel { background-color: #95a5a6; color: #fff; border: none; cursor: pointer; }
+        .badge-warning { background: #e67e22; color: #fff; padding: 3px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; margin-left: 4px; }
+        .badge-danger { background: #e74c3c; color: #fff; padding: 3px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; margin-left: 4px; }
+        .message-stack { margin: 8px 0 12px; display: grid; gap: 6px; flex-shrink: 0; }
+        .message { padding: 8px 12px; border-radius: 4px; font-size: 13px; border: 1px solid transparent; }
+        .message.success { background: #eaf9f0; border-color: #c8e6c9; color: #2e7d32; }
+        .message.error { background: #fff1f1; border-color: #ffd5d5; color: #c0392b; }
+        .panel { margin-bottom: 14px; padding: 16px; background-color: #f7f9fc; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.06); flex-shrink: 0; }
+        .panel.hidden { display: none; }
+        .panel h3 { margin-bottom: 12px; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+        .collapse-btn { font-size: 12px; color: #4464a3; cursor: pointer; padding: 2px 6px; border-radius: 4px; border: 1px solid #cdd8ee; background: #eef3ff; }
+        .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px 16px; }
+        .field label { display: block; font-size: 12px; color: #111; font-weight: 600; margin-bottom: 3px; }
+        .required-star { color: #e74c3c; font-weight: 700; margin-right: 4px; }
+        .form-grid input, .form-grid select, .form-grid textarea { padding: 6px 8px; border: 1px solid #ddd; border-radius: 4px; width: 100%; font-size: 13px; font-family: inherit; }
+        .form-grid textarea { resize: vertical; min-height: 36px; }
+        .form-actions { margin-top: 12px; display: flex; gap: 8px; }
+        .form-actions button { padding: 8px 14px; font-size: 13px; border-radius: 4px; min-width: 96px; border: none; cursor: pointer; color: #fff; }
+        .col-span-2 { grid-column: span 2; }
+        .data-table { background-color: rgba(255,255,255,0.9); border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.06); padding: 8px; flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+        .table-meta { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #666; margin: 4px 4px 8px; flex-shrink: 0; }
+        .table-wrapper { flex: 1; overflow: auto; scrollbar-gutter: stable both-edges; }
+        table { width: 100%; border-collapse: collapse; min-width: 1400px; table-layout: auto; }
+        table thead { position: sticky; top: 0; background: #fff; z-index: 10; box-shadow: 0 2px 2px rgba(0,0,0,0.1); }
+        th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #eee; font-size: 13px; white-space: nowrap; }
+        th { background-color: #f3f6f9; font-weight: 600; }
+        tr:hover { background-color: #f9fbfd; }
+        .filter-row input, .filter-row select { width: 100%; padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+        .filter-row th { background: #f9fafb; padding: 4px 6px; }
+        .tag { padding: 2px 8px; border-radius: 10px; font-size: 11px; white-space: nowrap; display: inline-block; }
+        .tag-draft { background: #e8e8e8; color: #444; }
+        .tag-in-review { background: #fff3cd; color: #856404; }
+        .tag-approved { background: #d4edda; color: #155724; }
+        .tag-returned { background: #f8d7da; color: #721c24; }
+        .td-number { text-align: right; font-variant-numeric: tabular-nums; }
+        .status-form { display: flex; align-items: center; gap: 4px; flex-wrap: nowrap; }
+        .status-form select { padding: 3px 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px; min-width: 80px; }
+        .status-form input[type=text] { padding: 3px 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px; width: 90px; }
+        .status-form button { padding: 3px 8px; background: #3498db; color: #fff; border: none; border-radius: 3px; font-size: 12px; cursor: pointer; white-space: nowrap; }
+        @media (max-width: 1200px) { .form-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 900px) { .form-grid { grid-template-columns: repeat(2, 1fr); } .sidebar { display: none; } }
+    </style>
+</head>
+<body>
+    <div class="watermark">
+        {% for _ in "12345678901234567890123456789012345678901234567890123456789012345678901234567890" %}
+            <span>{{ request.user.username }}</span>
+        {% endfor %}
+    </div>
+    <div class="container" id="layoutRoot">
+        <div class="sidebar" id="sidebar">
+            <div class="menu-section">
+                <div class="menu-toggle level-1" data-target="menu-system">系统管理<span class="caret">▼</span></div>
+                <ul class="menu-list" id="menu-system">
+                    {% if permissions.can_user_manage %}
+                    <li><a href="{% url 'user_list' %}">用户管理</a></li>
+                    {% if request.user.is_staff %}
+                    <li><a href="{% url 'permission_manage' %}">权限管理</a></li>
+                    {% endif %}
+                    {% endif %}
+                </ul>
+            </div>
+            <div class="menu-section">
+                <div class="menu-toggle level-1 open" data-target="menu-projects">项目管理<span class="caret">▼</span></div>
+                <ul class="menu-list show" id="menu-projects">
+                    <li>
+                        <a class="menu-level-2" href="{% url 'project_master_list' %}" style="text-decoration:none;color:#ecf0f1;">项目主数据管理</a>
+                    </li>
+                    <li>
+                        <a class="menu-level-2 open" href="#" onclick="toggleSubMenu('menu-contract-sub', this); return false;">合同管理<span class="caret">▼</span></a>
+                        <ul class="menu-list show menu-level-3" id="menu-contract-sub">
+                            <li><a href="{% url 'contract_counterparty_list' %}">往来单位管理</a></li>
+                            <li><a href="{% url 'contract_list' %}">合同台账</a></li>
+                            <li><a href="{% url 'contract_adjustment_list' %}" class="active">合同调整</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            <div class="resize-handle" id="resizeHandle"></div>
+            <div class="sidebar-footer">
+                <span>{{ request.user.username }}</span>
+                <a class="logout-link" href="{% url 'logout' %}">退出</a>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="content-wrap">
+                <div class="page-header">
+                    <div class="header-left">
+                        <button class="toggle-sidebar-btn" type="button" id="toggleSidebar">隐藏菜单</button>
+                        <h1>
+                            合同调整管理
+                            {% if in_review_count %}<span class="badge-warning" title="待审批">{{ in_review_count }} 待审批</span>{% endif %}
+                            {% if returned_count %}<span class="badge-danger" title="已退回">{{ returned_count }} 已退回</span>{% endif %}
+                        </h1>
+                    </div>
+                    <div class="header-right">
+                        <div class="user-info">
+                            <span>当前用户：{{ request.user.username }}</span>
+                            <a class="logout-btn" href="{% url 'logout' %}">登出</a>
+                        </div>
+                        <div class="system-time" id="systemTime"></div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn-add" onclick="showPanel('addForm')">新增调整</button>
+                    <button class="btn-search" onclick="showPanel('filterPanel')">查询筛选</button>
+                </div>
+
+                {% if messages %}
+                <div class="message-stack">
+                    {% for message in messages %}
+                        <div class="message {{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- 新增调整 -->
+                <div class="panel hidden" id="addForm">
+                    <h3>新增合同调整 <span class="collapse-btn" onclick="togglePanelBody('addForm')">收起</span></h3>
+                    <div class="panel-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="form_type" value="create_adjustment">
+                            <div class="form-grid">
+                                <div class="field">
+                                    <label><span class="required-star">*</span>关联合同</label>
+                                    <select name="contract_id" required>
+                                        <option value="">请选择合同</option>
+                                        {% for contract in contracts %}
+                                            <option value="{{ contract.id }}">{{ contract.contract_ct_code }} — {{ contract.contract_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label><span class="required-star">*</span>调整类型</label>
+                                    <select name="adjustment_type" required>
+                                        <option value="">请选择</option>
+                                        {% for value, label in adjustment_type_choices %}
+                                            <option value="{{ value }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label>调整单号</label>
+                                    <input type="text" name="adjustment_no" placeholder="可为空，系统自动生成">
+                                </div>
+                                <div class="field">
+                                    <label>调整日期</label>
+                                    <input type="date" name="adjustment_date">
+                                </div>
+                                <div class="field">
+                                    <label>本次含税调整额（元）</label>
+                                    <input type="number" name="change_amount_tax" step="0.01" placeholder="正数=增加，负数=减少">
+                                </div>
+                                <div class="field">
+                                    <label>本次不含税调整额（元）</label>
+                                    <input type="number" name="change_amount_notax" step="0.01" placeholder="正数=增加，负数=减少">
+                                </div>
+                                <div class="field">
+                                    <label>审批状态</label>
+                                    <select name="approval_status">
+                                        {% for value, label in approval_status_choices %}
+                                            <option value="{{ value }}" {% if value == "DRAFT" %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="field col-span-2">
+                                    <label>备注</label>
+                                    <input type="text" name="remark" placeholder="可为空">
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn-add">保存</button>
+                                <button type="button" class="btn-cancel" onclick="hidePanel('addForm')">取消</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 查询筛选 -->
+                <div class="panel hidden" id="filterPanel">
+                    <h3>查询筛选 <span class="collapse-btn" onclick="togglePanelBody('filterPanel')">收起</span></h3>
+                    <div class="panel-body">
+                        <form method="get">
+                            <div class="form-grid">
+                                <div class="field">
+                                    <label>CT码</label>
+                                    <input type="text" name="adj_ct_code" value="{{ filters.adj_ct_code }}" placeholder="关键词">
+                                </div>
+                                <div class="field">
+                                    <label>调整类型</label>
+                                    <select name="adjustment_type">
+                                        <option value="">全部</option>
+                                        {% for value, label in adjustment_type_choices %}
+                                            <option value="{{ value }}" {% if filters.adjustment_type == value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label>审批状态</label>
+                                    <select name="approval_status">
+                                        <option value="">全部</option>
+                                        {% for value, label in approval_status_choices %}
+                                            <option value="{{ value }}" {% if filters.approval_status == value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label>调整单号</label>
+                                    <input type="text" name="adjustment_no" value="{{ filters.adjustment_no }}" placeholder="关键词">
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn-search">查询</button>
+                                <a class="btn-cancel" style="padding:8px 14px;font-size:13px;border-radius:4px;min-width:96px;display:inline-flex;align-items:center;justify-content:center;" href="{% url 'contract_adjustment_list' %}">重置</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 数据列表 -->
+                <div class="data-table" id="dataTable">
+                    <div class="table-meta">
+                        <span>共 <strong>{{ total_count }}</strong> 条记录{% if total_count > 500 %}，当前显示前 500 条{% endif %}</span>
+                        <span>合同调整台账</span>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>CT码快照</th>
+                                    <th>调整单号</th>
+                                    <th>调整类型</th>
+                                    <th>审批状态</th>
+                                    <th>调整前含税（元）</th>
+                                    <th>本次含税调整（元）</th>
+                                    <th>调整后含税（元）</th>
+                                    <th>调整日期</th>
+                                    <th>审批人</th>
+                                    <th>创建时间</th>
+                                    {% if permissions.can_approve_contract %}
+                                    <th>操作</th>
+                                    {% endif %}
+                                </tr>
+                                <tr class="filter-row">
+                                    <th><input type="text" id="f_ct" placeholder="筛选CT码" oninput="filterTable()"></th>
+                                    <th><input type="text" id="f_no" placeholder="筛选单号" oninput="filterTable()"></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    {% if permissions.can_approve_contract %}
+                                    <th></th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody">
+                            {% for item in adjustments %}
+                            <tr>
+                                <td>{{ item.ct_code_snapshot|default:item.contract.contract_ct_code|default:"—" }}</td>
+                                <td>{{ item.adjustment_no|default:"—" }}</td>
+                                <td>{{ item.get_adjustment_type_display|default:"—" }}</td>
+                                <td>
+                                    {% if item.approval_status == "DRAFT" %}
+                                        <span class="tag tag-draft">草稿</span>
+                                    {% elif item.approval_status == "IN_REVIEW" %}
+                                        <span class="tag tag-in-review">审批中</span>
+                                    {% elif item.approval_status == "APPROVED" %}
+                                        <span class="tag tag-approved">已批准</span>
+                                    {% elif item.approval_status == "RETURNED" %}
+                                        <span class="tag tag-returned">已退回</span>
+                                    {% else %}
+                                        <span class="tag tag-draft">{{ item.approval_status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="td-number">
+                                    {% if item.amount_before_tax is not None %}{{ item.amount_before_tax|floatformat:2 }}{% else %}—{% endif %}
+                                </td>
+                                <td class="td-number" style="{% if item.change_amount_tax and item.change_amount_tax > 0 %}color:#155724{% elif item.change_amount_tax and item.change_amount_tax < 0 %}color:#721c24{% endif %}">
+                                    {% if item.change_amount_tax is not None %}{{ item.change_amount_tax|floatformat:2 }}{% else %}—{% endif %}
+                                </td>
+                                <td class="td-number">
+                                    {% if item.amount_after_tax is not None %}{{ item.amount_after_tax|floatformat:2 }}{% else %}—{% endif %}
+                                </td>
+                                <td>{{ item.adjustment_date|date:"Y-m-d"|default:"—" }}</td>
+                                <td>{{ item.approver_name|default:"—" }}</td>
+                                <td>{{ item.created_at|date:"Y-m-d" }}</td>
+                                {% if permissions.can_approve_contract %}
+                                <td>
+                                    <form class="status-form" method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="form_type" value="update_adjustment_status">
+                                        <input type="hidden" name="adjustment_id" value="{{ item.id }}">
+                                        <select name="to_status">
+                                            <option value="">更新状态</option>
+                                            {% for value, label in approval_status_choices %}
+                                                <option value="{{ value }}"{% if item.approval_status == value %} disabled{% endif %}>{{ label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <input type="text" name="comment" placeholder="审批意见">
+                                        <button type="submit">更新</button>
+                                    </form>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="{% if permissions.can_approve_contract %}11{% else %}10{% endif %}" style="text-align:center;color:#999;padding:20px;">暂无数据，请新增合同调整记录</td>
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.menu-toggle').forEach(toggle => {
+            const targetId = toggle.getAttribute('data-target');
+            const target = document.getElementById(targetId);
+            if (target && target.classList.contains('show')) toggle.classList.add('open');
+            toggle.addEventListener('click', () => {
+                if (!target) return;
+                const isOpen = target.classList.toggle('show');
+                toggle.classList.toggle('open', isOpen);
+            });
+        });
+
+        function toggleSubMenu(id, triggerEl) {
+            const target = document.getElementById(id);
+            if (target) {
+                const isOpen = target.classList.toggle('show');
+                if (triggerEl) triggerEl.classList.toggle('open', isOpen);
+            }
+        }
+
+        const layoutRoot = document.getElementById('layoutRoot');
+        document.getElementById('toggleSidebar').addEventListener('click', () => {
+            layoutRoot.classList.toggle('sidebar-hidden');
+            document.getElementById('toggleSidebar').textContent =
+                layoutRoot.classList.contains('sidebar-hidden') ? '显示菜单' : '隐藏菜单';
+        });
+
+        function showPanel(id) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+        function hidePanel(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+        function togglePanelBody(panelId) {
+            const body = document.querySelector('#' + panelId + ' .panel-body');
+            const btn = document.querySelector('#' + panelId + ' .collapse-btn');
+            if (!body) return;
+            const hidden = body.style.display === 'none';
+            body.style.display = hidden ? '' : 'none';
+            if (btn) btn.textContent = hidden ? '收起' : '展开';
+        }
+
+        function filterTable() {
+            const fCt = (document.getElementById('f_ct').value || '').toLowerCase();
+            const fNo = (document.getElementById('f_no').value || '').toLowerCase();
+            document.querySelectorAll('#tableBody tr').forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (!cells.length) return;
+                const show = (!fCt || cells[0].textContent.toLowerCase().includes(fCt))
+                    && (!fNo || cells[1].textContent.toLowerCase().includes(fNo));
+                row.style.display = show ? '' : 'none';
+            });
+        }
+
+        function updateTime() {
+            const el = document.getElementById('systemTime');
+            if (el) el.textContent = new Date().toLocaleString('zh-CN', {
+                year:'numeric', month:'2-digit', day:'2-digit',
+                hour:'2-digit', minute:'2-digit', second:'2-digit'
+            });
+        }
+        updateTime(); setInterval(updateTime, 1000);
+    </script>
+</body>
+</html>

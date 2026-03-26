@@ -968,6 +968,19 @@
                     </li>
                 </ul>
             </div>
+                <div class="menu-section">
+                    <div class="menu-toggle level-1 open" data-target="menu-contracts">合同管理<span class="caret">▼</span></div>
+                    <ul class="menu-list show" id="menu-contracts">
+                        <li>
+                            <a class="menu-level-2 open" href="#" onclick="toggleSubMenu('menu-contract-sub', this); return false;">合同管理<span class="caret">▼</span></a>
+                            <ul class="menu-list show menu-level-3" id="menu-contract-sub">
+                                <li><a href="{% url 'contract_counterparty_list' %}">往来单位管理</a></li>
+                                <li><a href="{% url 'contract_list' %}">合同台账</a></li>
+                                <li><a href="{% url 'contract_adjustment_list' %}">合同调整</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
             <div class="resize-handle" id="resizeHandle"></div>
         </div>
 
