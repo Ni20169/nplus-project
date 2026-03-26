@@ -123,6 +123,10 @@
             color: #69a7e8;
         }
 
+        .menu-list li a.menu-level-2 {
+            color: #69a7e8;
+        }
+
         .menu-level-3 a {
             padding-left: 14px;
             font-size: 13px;
@@ -948,7 +952,7 @@
                 <div class="menu-toggle level-1 open" data-target="menu-projects">项目管理<span class="caret">▼</span></div>
                 <ul class="menu-list show" id="menu-projects">
                     <li>
-                        <a class="menu-level-2 open" href="#" onclick="toggleSubMenu('menu-project-master', this); return false;">项目主数据管理<span class="caret">▼</span></a>
+                        <a class="menu-level-2 open" data-submenu-target="menu-project-master" href="#" onclick="toggleSubMenu('menu-project-master', this); return false;">项目主数据管理<span class="caret">▼</span></a>
                         <ul class="menu-list show menu-level-3" id="menu-project-master">
                             {% if permissions.can_create_project %}
                             <li><a href="#" onclick="showAddForm()">新增项目</a></li>
@@ -968,8 +972,8 @@
                         </ul>
                     </li>
                     <li>
-                        <a class="menu-level-2 open" href="#" onclick="toggleSubMenu('menu-contract-sub', this); return false;">合同管理<span class="caret">▼</span></a>
-                        <ul class="menu-list show menu-level-3" id="menu-contract-sub">
+                        <a class="menu-level-2" data-submenu-target="menu-contract-sub" href="#" onclick="toggleSubMenu('menu-contract-sub', this); return false;">合同管理<span class="caret">▼</span></a>
+                        <ul class="menu-list menu-level-3" id="menu-contract-sub">
                             <li><a href="{% url 'contract_counterparty_list' %}">往来单位管理</a></li>
                             <li><a href="{% url 'contract_list' %}">合同台账</a></li>
                             <li><a href="{% url 'contract_adjustment_list' %}">合同调整</a></li>
@@ -1992,14 +1996,59 @@
             setDisplay('updatePanel', 'none');
         }
 
+        const menuStateStorageKey = 'documents.sidebar.menu-state';
+
+        function readMenuState() {
+            try {
+                return JSON.parse(localStorage.getItem(menuStateStorageKey) || '{}');
+            } catch (error) {
+                return {};
+            }
+        }
+
+        function writeMenuState(state) {
+            try {
+                localStorage.setItem(menuStateStorageKey, JSON.stringify(state));
+            } catch (error) {
+                console.warn('Failed to persist menu state', error);
+            }
+        }
+
+        function setMenuState(targetId, isOpen, persist = true) {
+            const target = document.getElementById(targetId);
+            if (!target) return;
+
+            target.classList.toggle('show', isOpen);
+
+            document.querySelectorAll(`.menu-toggle[data-target="${targetId}"]`).forEach((trigger) => {
+                trigger.classList.toggle('open', isOpen);
+            });
+            document.querySelectorAll(`.menu-level-2[data-submenu-target="${targetId}"]`).forEach((trigger) => {
+                trigger.classList.toggle('open', isOpen);
+            });
+
+            if (persist) {
+                const state = readMenuState();
+                state[targetId] = isOpen;
+                writeMenuState(state);
+            }
+        }
+
+        function initializeMenuState(defaults) {
+            const savedState = readMenuState();
+            Object.entries(defaults).forEach(([targetId, defaultOpen]) => {
+                const isOpen = Object.prototype.hasOwnProperty.call(savedState, targetId)
+                    ? savedState[targetId]
+                    : defaultOpen;
+                setMenuState(targetId, isOpen, false);
+            });
+        }
+
         function toggleSubMenu(id, triggerEl) {
             const target = document.getElementById(id);
-            if (target) {
-                const isOpen = target.classList.toggle('show');
-                if (triggerEl) {
-                    triggerEl.classList.toggle('open', isOpen);
-                }
-            }
+            if (!target) return;
+            const isOpen = !target.classList.contains('show');
+            setMenuState(id, isOpen);
         }
 
         function refreshList() {
@@ -2075,16 +2124,19 @@
                 });
             }
 
+            initializeMenuState({
+                'menu-system': true,
+                'menu-projects': true,
+                'menu-project-master': true,
+                'menu-contract-sub': false,
+            });
+
             document.querySelectorAll('.menu-toggle').forEach((toggle) => {
                 const targetId = toggle.getAttribute('data-target');
-                const target = document.getElementById(targetId);
-                if (target && target.classList.contains('show')) {
-                    toggle.classList.add('open');
-                }
                 toggle.addEventListener('click', () => {
+                    const target = document.getElementById(targetId);
                     if (!target) return;
-                    const isOpen = target.classList.toggle('show');
-                    toggle.classList.toggle('open', isOpen);
+                    setMenuState(targetId, !target.classList.contains('show'));
                 });
             });
 
