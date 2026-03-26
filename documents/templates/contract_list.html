@@ -103,6 +103,19 @@
         .td-number { text-align: right; font-variant-numeric: tabular-nums; }
         @media (max-width: 1200px) { .form-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 900px) { .form-grid { grid-template-columns: repeat(2, 1fr); } .sidebar { display: none; } }
+        /* 可搜索下拉 */
+        .ss-wrap { position: relative; }
+        .ss-input { padding: 6px 8px; border: 1px solid #ddd; border-radius: 4px; width: 100%; font-size: 13px; font-family: inherit; box-sizing: border-box; }
+        .ss-input:focus { outline: none; border-color: #4a90d9; box-shadow: 0 0 0 2px rgba(74,144,217,0.15); }
+        .ss-dropdown { position: absolute; z-index: 200; background: #fff; border: 1px solid #c0cfe0; border-radius: 4px; max-height: 220px; overflow-y: auto; width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.12); display: none; }
+        .ss-item { padding: 7px 10px; cursor: pointer; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ss-item:hover, .ss-item.focused { background: #e8f0fe; }
+        .ss-item.hidden { display: none; }
+        .ss-item.selected { background: #dceefb; font-weight: 600; }
+        .ss-no-result { padding: 7px 10px; font-size: 12px; color: #999; pointer-events: none; display: none; }
+        .tag-exec { padding: 3px 8px; border-radius: 10px; font-size: 11px; display: inline-block; }
+        .tag-exec-yes { background: #d4edda; color: #155724; }
+        .tag-exec-no { background: #f8d7da; color: #721c24; }
     </style>
 </head>
 <body>
@@ -226,21 +239,30 @@
                             <div class="form-grid">
                                 <div class="field">
                                     <label><span class="required-star">*</span>项目</label>
-                                    <select name="project_id" required>
-                                        <option value="">请选择项目</option>
-                                        {% for project in projects %}
-                                            <option value="{{ project.id }}">{{ project.project_code }} — {{ project.project_name }}</option>
-                                        {% endfor %}
-                                    </select>
+                                    <div class="ss-wrap">
+                                        <input type="text" class="ss-input" id="ss-project-input" placeholder="输入关键词筛选项目…" autocomplete="off">
+                                        <input type="hidden" name="project_id" id="project_id_val">
+                                        <div class="ss-dropdown" id="ss-project-dropdown">
+                                            <div class="ss-item ss-placeholder" data-value="">（请选择项目）</div>
+                                            {% for project in projects %}
+                                            <div class="ss-item" data-value="{{ project.id }}">{{ project.project_code }} — {{ project.project_name }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div id="project-exec-badge" style="margin-top:4px;display:none;"></div>
                                 </div>
                                 <div class="field">
                                     <label>往来单位</label>
-                                    <select name="counterparty_id">
-                                        <option value="">请选择往来单位</option>
-                                        {% for cp in counterparties %}
-                                            <option value="{{ cp.id }}">{{ cp.party_name }}</option>
-                                        {% endfor %}
-                                    </select>
+                                    <div class="ss-wrap">
+                                        <input type="text" class="ss-input" id="ss-cp-input" placeholder="输入关键词筛选往来单位…" autocomplete="off">
+                                        <input type="hidden" name="counterparty_id" id="counterparty_id_val">
+                                        <div class="ss-dropdown" id="ss-cp-dropdown">
+                                            <div class="ss-item ss-placeholder" data-value="">（请选择往来单位）</div>
+                                            {% for cp in counterparties %}
+                                            <div class="ss-item" data-value="{{ cp.id }}">{{ cp.party_name }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="field">
                                     <label><span class="required-star">*</span>CT码</label>
@@ -415,6 +437,7 @@
                                     <th>CT码</th>
                                     <th>合同名称</th>
                                     <th>项目编码</th>
+                                    <th>执行层</th>
                                     <th>签约方</th>
                                     <th>来源系统</th>
                                     <th>方向</th>
@@ -430,6 +453,7 @@
                                     <th><input type="text" id="f_ct" placeholder="筛选CT码" oninput="filterTable()"></th>
                                     <th><input type="text" id="f_name" placeholder="筛选名称" oninput="filterTable()"></th>
                                     <th><input type="text" id="f_proj" placeholder="筛选项目" oninput="filterTable()"></th>
+                                    <th></th>
                                     <th><input type="text" id="f_party" placeholder="筛选签约方" oninput="filterTable()"></th>
                                     <th></th>
                                     <th></th>
@@ -448,6 +472,13 @@
                                 <td>{{ item.contract_ct_code }}</td>
                                 <td>{{ item.contract_name }}</td>
                                 <td>{{ item.project.project_code|default:"—" }}</td>
+                                <td>
+                                    {% if item.project.is_execution_level %}
+                                        <span class="tag tag-exec tag-exec-yes">执行层</span>
+                                    {% else %}
+                                        <span class="tag tag-exec tag-exec-no">非执行层</span>
+                                    {% endif %}
+                                </td>
                                 <td>{{ item.counterparty.party_name|default:"—" }}</td>
                                 <td>{{ item.get_source_system_display|default:"—" }}</td>
                                 <td>{{ item.get_contract_direction_display|default:"—" }}</td>
@@ -476,7 +507,7 @@
                                 <td>{{ item.created_by|default:"—" }}</td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="13" style="text-align:center;color:#999;padding:20px;">暂无数据，请新增或导入合同台账</td></tr>
+                            <tr><td colspan="14" style="text-align:center;color:#999;padding:20px;">暂无数据，请新增或导入合同台账</td></tr>
                             {% endfor %}
                             </tbody>
                         </table>
@@ -591,8 +622,8 @@
                 const show = (!fCt || cells[0].textContent.toLowerCase().includes(fCt))
                     && (!fName || cells[1].textContent.toLowerCase().includes(fName))
                     && (!fProj || cells[2].textContent.toLowerCase().includes(fProj))
-                    && (!fParty || cells[3].textContent.toLowerCase().includes(fParty))
-                    && (!fDept || cells[9].textContent.toLowerCase().includes(fDept));
+                    && (!fParty || cells[4].textContent.toLowerCase().includes(fParty))
+                    && (!fDept || cells[10].textContent.toLowerCase().includes(fDept));
                 row.style.display = show ? '' : 'none';
             });
         }
@@ -605,6 +636,100 @@
             });
         }
         updateTime(); setInterval(updateTime, 1000);
+
+        /* ---- 项目元数据（用于执行层自动带出） ---- */
+        const projectMeta = {
+            {% for project in projects %}"{{ project.id }}": {"is_execution_level": {{ project.is_execution_level|lower }}}{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        };
+
+        /* ---- 通用可搜索下拉初始化 ---- */
+        function initSS(inputEl, dropdownEl, hiddenEl, onSelect) {
+            if (!inputEl || !dropdownEl || !hiddenEl) return;
+            const items = Array.from(dropdownEl.querySelectorAll('.ss-item'));
+            let noRes = dropdownEl.querySelector('.ss-no-result');
+            if (!noRes) {
+                noRes = document.createElement('div');
+                noRes.className = 'ss-no-result';
+                noRes.textContent = '无匹配项';
+                dropdownEl.appendChild(noRes);
+            }
+            const wrap = inputEl.closest('.ss-wrap');
+
+            const open = () => { dropdownEl.style.display = 'block'; };
+            const close = () => { dropdownEl.style.display = 'none'; };
+
+            inputEl.addEventListener('focus', open);
+            inputEl.addEventListener('input', () => {
+                const q = inputEl.value.toLowerCase();
+                let any = false;
+                items.forEach(item => {
+                    if (item.classList.contains('ss-placeholder')) {
+                        item.classList.toggle('hidden', !!q);
+                        return;
+                    }
+                    const match = !q || item.textContent.toLowerCase().includes(q);
+                    item.classList.toggle('hidden', !match);
+                    if (match) any = true;
+                });
+                noRes.style.display = (q && !any) ? 'block' : 'none';
+                open();
+            });
+            items.forEach(item => {
+                item.addEventListener('mousedown', e => {
+                    e.preventDefault();
+                    hiddenEl.value = item.dataset.value;
+                    inputEl.value = item.dataset.value ? item.textContent.trim() : '';
+                    items.forEach(i => i.classList.remove('selected'));
+                    if (item.dataset.value) item.classList.add('selected');
+                    close();
+                    if (onSelect) onSelect(item.dataset.value);
+                });
+            });
+            document.addEventListener('mousedown', e => {
+                if (!wrap.contains(e.target)) close();
+            });
+        }
+
+        /* 项目下拉 */
+        initSS(
+            document.getElementById('ss-project-input'),
+            document.getElementById('ss-project-dropdown'),
+            document.getElementById('project_id_val'),
+            function(val) {
+                const badge = document.getElementById('project-exec-badge');
+                const meta = projectMeta[val];
+                if (meta) {
+                    badge.style.display = 'inline-block';
+                    badge.innerHTML = meta.is_execution_level
+                        ? '<span class="tag-exec tag-exec-yes">✓ 执行层项目</span>'
+                        : '<span class="tag-exec tag-exec-no">✗ 非执行层</span>';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        );
+
+        /* 往来单位下拉 */
+        initSS(
+            document.getElementById('ss-cp-input'),
+            document.getElementById('ss-cp-dropdown'),
+            document.getElementById('counterparty_id_val'),
+            null
+        );
+
+        /* 表单提交前校验项目必选 */
+        document.addEventListener('submit', function(e) {
+            const form = e.target;
+            if (form.querySelector('input[name="form_type"]') &&
+                form.querySelector('input[name="form_type"]').value === 'create_contract') {
+                if (!document.getElementById('project_id_val').value) {
+                    e.preventDefault();
+                    alert('请选择项目');
+                    document.getElementById('ss-project-input').focus();
+                }
+            }
+        });
     </script>
 </body>
 </html>

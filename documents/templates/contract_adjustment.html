@@ -101,6 +101,16 @@
         .status-form button { padding: 3px 8px; background: #3498db; color: #fff; border: none; border-radius: 3px; font-size: 12px; cursor: pointer; white-space: nowrap; }
         @media (max-width: 1200px) { .form-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 900px) { .form-grid { grid-template-columns: repeat(2, 1fr); } .sidebar { display: none; } }
+        /* 可搜索下拉 */
+        .ss-wrap { position: relative; }
+        .ss-input { padding: 6px 8px; border: 1px solid #ddd; border-radius: 4px; width: 100%; font-size: 13px; font-family: inherit; box-sizing: border-box; }
+        .ss-input:focus { outline: none; border-color: #4a90d9; box-shadow: 0 0 0 2px rgba(74,144,217,0.15); }
+        .ss-dropdown { position: absolute; z-index: 200; background: #fff; border: 1px solid #c0cfe0; border-radius: 4px; max-height: 220px; overflow-y: auto; width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.12); display: none; }
+        .ss-item { padding: 7px 10px; cursor: pointer; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ss-item:hover, .ss-item.focused { background: #e8f0fe; }
+        .ss-item.hidden { display: none; }
+        .ss-item.selected { background: #dceefb; font-weight: 600; }
+        .ss-no-result { padding: 7px 10px; font-size: 12px; color: #999; pointer-events: none; display: none; }
     </style>
 </head>
 <body>
@@ -195,12 +205,16 @@
                             <div class="form-grid">
                                 <div class="field">
                                     <label><span class="required-star">*</span>关联合同</label>
-                                    <select name="contract_id" required>
-                                        <option value="">请选择合同</option>
-                                        {% for contract in contracts %}
-                                            <option value="{{ contract.id }}">{{ contract.contract_ct_code }} — {{ contract.contract_name }}</option>
-                                        {% endfor %}
-                                    </select>
+                                    <div class="ss-wrap">
+                                        <input type="text" class="ss-input" id="ss-contract-input" placeholder="输入CT码或合同名称筛选…" autocomplete="off">
+                                        <input type="hidden" name="contract_id" id="contract_id_val">
+                                        <div class="ss-dropdown" id="ss-contract-dropdown">
+                                            <div class="ss-item ss-placeholder" data-value="">（请选择合同）</div>
+                                            {% for contract in contracts %}
+                                            <div class="ss-item" data-value="{{ contract.id }}">{{ contract.contract_ct_code }} — {{ contract.contract_name }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="field">
                                     <label><span class="required-star">*</span>调整类型</label>
@@ -507,6 +521,73 @@
             });
         }
         updateTime(); setInterval(updateTime, 1000);
+
+        /* ---- 通用可搜索下拉初始化 ---- */
+        function initSS(inputEl, dropdownEl, hiddenEl, onSelect) {
+            if (!inputEl || !dropdownEl || !hiddenEl) return;
+            const items = Array.from(dropdownEl.querySelectorAll('.ss-item'));
+            let noRes = dropdownEl.querySelector('.ss-no-result');
+            if (!noRes) {
+                noRes = document.createElement('div');
+                noRes.className = 'ss-no-result';
+                noRes.textContent = '无匹配项';
+                dropdownEl.appendChild(noRes);
+            }
+            const wrap = inputEl.closest('.ss-wrap');
+            const open = () => { dropdownEl.style.display = 'block'; };
+            const close = () => { dropdownEl.style.display = 'none'; };
+            inputEl.addEventListener('focus', open);
+            inputEl.addEventListener('input', () => {
+                const q = inputEl.value.toLowerCase();
+                let any = false;
+                items.forEach(item => {
+                    if (item.classList.contains('ss-placeholder')) {
+                        item.classList.toggle('hidden', !!q);
+                        return;
+                    }
+                    const match = !q || item.textContent.toLowerCase().includes(q);
+                    item.classList.toggle('hidden', !match);
+                    if (match) any = true;
+                });
+                noRes.style.display = (q && !any) ? 'block' : 'none';
+                open();
+            });
+            items.forEach(item => {
+                item.addEventListener('mousedown', e => {
+                    e.preventDefault();
+                    hiddenEl.value = item.dataset.value;
+                    inputEl.value = item.dataset.value ? item.textContent.trim() : '';
+                    items.forEach(i => i.classList.remove('selected'));
+                    if (item.dataset.value) item.classList.add('selected');
+                    close();
+                    if (onSelect) onSelect(item.dataset.value);
+                });
+            });
+            document.addEventListener('mousedown', e => {
+                if (!wrap.contains(e.target)) close();
+            });
+        }
+
+        /* 合同下拉 */
+        initSS(
+            document.getElementById('ss-contract-input'),
+            document.getElementById('ss-contract-dropdown'),
+            document.getElementById('contract_id_val'),
+            null
+        );
+
+        /* 表单提交前校验合同必选 */
+        document.addEventListener('submit', function(e) {
+            const form = e.target;
+            const ftEl = form.querySelector('input[name="form_type"]');
+            if (ftEl && ftEl.value === 'create_adjustment') {
+                if (!document.getElementById('contract_id_val').value) {
+                    e.preventDefault();
+                    alert('请选择关联合同');
+                    document.getElementById('ss-contract-input').focus();
+                }
+            }
+        });
     </script>
 </body>
 </html>
