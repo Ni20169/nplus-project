@@ -452,6 +452,8 @@ class ContractMaster(models.Model):
     def save(self, *args, **kwargs):
         self.project_code_snapshot = self.project.project_code
         self.counterparty_name_snapshot = self.counterparty.party_name
+        self.undertaking_dept_name = self.project.dept or ""
+        self.undertaking_dept_code = ""
         if not self.contract_year and self.sign_date:
             self.contract_year = str(self.sign_date.year)
         super().save(*args, **kwargs)

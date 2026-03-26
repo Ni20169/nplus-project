@@ -147,8 +147,8 @@ def contract_list_view(request):
                     source_contract_no=request.POST.get("source_contract_no", "").strip(),
                     contract_direction=request.POST.get("contract_direction", "").strip(),
                     contract_category=request.POST.get("contract_category", "").strip(),
-                    undertaking_dept_code=request.POST.get("undertaking_dept_code", "").strip(),
-                    undertaking_dept_name=request.POST.get("undertaking_dept_name", "").strip(),
+                    undertaking_dept_code="",
+                    undertaking_dept_name=project.dept or "",
                     contract_year=request.POST.get("contract_year", "").strip(),
                     sign_date=request.POST.get("sign_date") or None,
                     effective_date=request.POST.get("effective_date") or None,
@@ -204,10 +204,7 @@ def contract_list_view(request):
     if filters["contract_status"]:
         qs = qs.filter(contract_status=filters["contract_status"])
     if filters["undertaking_dept"]:
-        qs = qs.filter(
-            Q(undertaking_dept_code__icontains=filters["undertaking_dept"])
-            | Q(undertaking_dept_name__icontains=filters["undertaking_dept"])
-        )
+        qs = qs.filter(undertaking_dept_name__icontains=filters["undertaking_dept"])
     if filters["contract_year"]:
         qs = qs.filter(contract_year__icontains=filters["contract_year"])
     if filters["counterparty_name"]:
@@ -459,8 +456,6 @@ def import_contract_ledger(request):
         "\u6765\u6e90\u7cfb\u7edf": "source_system",
         "\u5408\u540c\u65b9\u5411": "contract_direction",
         "\u5408\u540c\u5206\u7c7b": "contract_category",
-        "\u627f\u62c5\u90e8\u95e8\u7f16\u7801": "undertaking_dept_code",
-        "\u627f\u62c5\u90e8\u95e8\u540d\u79f0": "undertaking_dept_name",
         "\u5408\u540c\u5e74\u4efd": "contract_year",
         "\u539f\u59cb\u542b\u7a0e\u91d1\u989d": "original_amount_tax",
         "\u539f\u59cb\u4e0d\u542b\u7a0e\u91d1\u989d": "original_amount_notax",
@@ -509,8 +504,8 @@ def import_contract_ledger(request):
                 "source_system": row_data.get("source_system", "MANUAL"),
                 "contract_direction": row_data.get("contract_direction", "NONE"),
                 "contract_category": row_data.get("contract_category", "OTHER"),
-                "undertaking_dept_code": row_data.get("undertaking_dept_code", ""),
-                "undertaking_dept_name": row_data.get("undertaking_dept_name", ""),
+                "undertaking_dept_code": "",
+                "undertaking_dept_name": project.dept or "",
                 "contract_year": row_data.get("contract_year", ""),
                 "original_amount_tax": _to_decimal(row_data.get("original_amount_tax", "0")),
                 "original_amount_notax": _to_decimal(row_data.get("original_amount_notax", "0")),

@@ -224,7 +224,7 @@
                             </div>
                         </div>
                         <div class="hint" style="margin-top:10px;padding:8px;background:#e3f2fd;border-radius:4px;color:#555;">
-                            Excel 列头（顺序不限）：<strong>CT码</strong>（必填，contract_ct_code）、<strong>合同名称</strong>（必填）、项目编码、往来单位信用代码、合同编号、来源系统、合同方向、合同分类、承担部门编码、承担部门名称、合同年份、签约日期、含税原始金额、不含税原始金额、合同状态、备注
+                            Excel 列头（顺序不限）：<strong>CT码</strong>（必填，contract_ct_code）、<strong>合同名称</strong>（必填）、项目编码、签约对方信用代码、合同编号、来源系统、合同方向、合同分类、合同年份、签约日期、含税原始金额、不含税原始金额、合同状态、备注。承担部门会根据所选项目自动带出。
                         </div>
                     </div>
                 </div>
@@ -252,12 +252,12 @@
                                     <div id="project-exec-badge" style="margin-top:4px;display:none;"></div>
                                 </div>
                                 <div class="field">
-                                    <label>往来单位</label>
+                                    <label>签约对方</label>
                                     <div class="ss-wrap">
-                                        <input type="text" class="ss-input" id="ss-cp-input" placeholder="输入关键词筛选往来单位…" autocomplete="off">
+                                        <input type="text" class="ss-input" id="ss-cp-input" placeholder="输入关键词筛选签约对方…" autocomplete="off">
                                         <input type="hidden" name="counterparty_id" id="counterparty_id_val">
                                         <div class="ss-dropdown" id="ss-cp-dropdown">
-                                            <div class="ss-item ss-placeholder" data-value="">（请选择往来单位）</div>
+                                            <div class="ss-item ss-placeholder" data-value="">（请选择签约对方）</div>
                                             {% for cp in counterparties %}
                                             <div class="ss-item" data-value="{{ cp.id }}">{{ cp.party_name }}</div>
                                             {% endfor %}
@@ -304,12 +304,8 @@
                                     </select>
                                 </div>
                                 <div class="field">
-                                    <label>承担部门编码</label>
-                                    <input type="text" name="undertaking_dept_code" placeholder="可为空">
-                                </div>
-                                <div class="field">
-                                    <label>承担部门名称</label>
-                                    <input type="text" name="undertaking_dept_name" placeholder="可为空">
+                                    <label>我方承担部门</label>
+                                    <input type="text" id="undertaking_dept_name_display" placeholder="选择项目后自动带出" readonly style="background-color:#f5f5f5;cursor:not-allowed;">
                                 </div>
                                 <div class="field">
                                     <label>合同年份</label>
@@ -412,7 +408,7 @@
                                     <input type="number" name="contract_year" value="{{ filters.contract_year }}" placeholder="如 2024" min="2000" max="2099">
                                 </div>
                                 <div class="field">
-                                    <label>往来单位名称</label>
+                                    <label>签约对方名称</label>
                                     <input type="text" name="counterparty_name" value="{{ filters.counterparty_name }}" placeholder="关键词">
                                 </div>
                             </div>
@@ -438,7 +434,7 @@
                                     <th>合同名称</th>
                                     <th>项目编码</th>
                                     <th>执行层</th>
-                                    <th>签约方</th>
+                                    <th>签约对方</th>
                                     <th>来源系统</th>
                                     <th>方向</th>
                                     <th>分类</th>
@@ -454,7 +450,7 @@
                                     <th><input type="text" id="f_name" placeholder="筛选名称" oninput="filterTable()"></th>
                                     <th><input type="text" id="f_proj" placeholder="筛选项目" oninput="filterTable()"></th>
                                     <th></th>
-                                    <th><input type="text" id="f_party" placeholder="筛选签约方" oninput="filterTable()"></th>
+                                    <th><input type="text" id="f_party" placeholder="筛选签约对方" oninput="filterTable()"></th>
                                     <th></th>
                                     <th></th>
                                     <th></th>
@@ -639,7 +635,7 @@
 
         /* ---- 项目元数据（用于执行层自动带出） ---- */
         const projectMeta = {
-            {% for project in projects %}"{{ project.id }}": {"is_execution_level": {{ project.is_execution_level|lower }}}{% if not forloop.last %},{% endif %}
+            {% for project in projects %}"{{ project.id }}": {"is_execution_level": {{ project.is_execution_level|yesno:'true,false' }}, "dept": "{{ project.dept|escapejs }}"}{% if not forloop.last %},{% endif %}
             {% endfor %}
         };
 
@@ -698,14 +694,17 @@
             document.getElementById('project_id_val'),
             function(val) {
                 const badge = document.getElementById('project-exec-badge');
+                const deptInput = document.getElementById('undertaking_dept_name_display');
                 const meta = projectMeta[val];
                 if (meta) {
                     badge.style.display = 'inline-block';
                     badge.innerHTML = meta.is_execution_level
                         ? '<span class="tag-exec tag-exec-yes">✓ 执行层项目</span>'
                         : '<span class="tag-exec tag-exec-no">✗ 非执行层</span>';
+                    if (deptInput) deptInput.value = meta.dept || '';
                 } else {
                     badge.style.display = 'none';
+                    if (deptInput) deptInput.value = '';
                 }
             }
         );
