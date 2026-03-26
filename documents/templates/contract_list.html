@@ -210,7 +210,7 @@
                                     <input type="file" name="import_file" accept=".xlsx" required style="font-size:13px;">
                                     <button type="submit">导入（仅新增）</button>
                                 </form>
-                                <div class="hint">同一 CT码 已存在的行跳过，不覆盖</div>
+                                <div class="hint">同一 CT码（CT+12位数字）已存在的行跳过，不覆盖</div>
                             </div>
                             <div class="import-card">
                                 <h4>合同台账导入（新增+更新）</h4>
@@ -220,11 +220,11 @@
                                     <input type="file" name="import_file" accept=".xlsx" required style="font-size:13px;">
                                     <button type="submit" class="upsert">导入（新增/更新）</button>
                                 </form>
-                                <div class="hint">按 CT码 匹配，已存在则更新，否则新增</div>
+                                <div class="hint">按 CT码（CT+12位数字）匹配，已存在则更新，否则新增</div>
                             </div>
                         </div>
                         <div class="hint" style="margin-top:10px;padding:8px;background:#e3f2fd;border-radius:4px;color:#555;">
-                            Excel 列头（顺序不限）：<strong>CT码</strong>（必填，contract_ct_code）、<strong>合同名称</strong>（必填）、项目编码、签约对方信用代码、合同编号、来源系统、合同方向、合同分类、合同年份、签约日期、含税原始金额、不含税原始金额、合同状态、备注。承担部门会根据所选项目自动带出。
+                            Excel 列头（顺序不限）：<strong>CT码</strong>（必填，格式为 CT+12位数字，例如 CT202400000001，字段名 contract_ct_code）、<strong>合同名称</strong>（必填）、项目编码、签约对方信用代码、合同编号、来源系统、合同方向、合同分类、合同年份、签约日期、含税原始金额、不含税原始金额、合同状态、备注。承担部门会根据所选项目自动带出。
                         </div>
                     </div>
                 </div>
@@ -266,7 +266,7 @@
                                 </div>
                                 <div class="field">
                                     <label><span class="required-star">*</span>CT码</label>
-                                    <input type="text" name="contract_ct_code" placeholder="如 CT2024-001" required style="text-transform:uppercase;">
+                                    <input type="text" name="contract_ct_code" placeholder="例如 CT202400000001" required maxlength="14" pattern="CT\d{12}" title="CT码格式为CT+12位数字" style="text-transform:uppercase;">
                                 </div>
                                 <div class="field">
                                     <label><span class="required-star">*</span>合同名称</label>
@@ -635,7 +635,7 @@
 
         /* ---- 项目元数据（用于执行层自动带出） ---- */
         const projectMeta = {
-            {% for project in projects %}"{{ project.id }}": {"is_execution_level": {{ project.is_execution_level|yesno:'true,false' }}, "dept": "{{ project.dept|escapejs }}"}{% if not forloop.last %},{% endif %}
+            {% for project in projects %}"{{ project.id }}": {"is_execution_level": {{ project.is_execution_level|yesno:'true,false' }}, "dept": "{{ project.dept_name|escapejs }}"}{% if not forloop.last %},{% endif %}
             {% endfor %}
         };
 

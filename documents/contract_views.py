@@ -15,6 +15,7 @@ from .models import (
     CONTRACT_CATEGORY_CHOICES,
     CONTRACT_DIRECTION_CHOICES,
     CONTRACT_STATUS_CHOICES,
+    DictType,
     PARTY_TYPE_CHOICES,
     SOURCE_SYSTEM_CHOICES,
     ContractAdjustment,
@@ -30,6 +31,17 @@ CT_CODE_PATTERN = re.compile(r"^CT\d{12}$")
 def _get_permissions(user):
     from .views import _get_user_permissions
     return _get_user_permissions(user)
+
+
+def _get_dept_name_map():
+    dept_type = DictType.objects.filter(code="DEPT", is_active=True).prefetch_related("items").first()
+    if not dept_type:
+        return {}
+    return {
+        item.code: item.name
+        for item in dept_type.items.all()
+        if item.is_active
+    }
 
 
 def _to_decimal(value, default="0"):
@@ -124,6 +136,7 @@ def contract_counterparty_view(request):
 @login_required
 def contract_list_view(request):
     permissions = _get_permissions(request.user)
+    dept_name_map = _get_dept_name_map()
 
     if request.method == "POST" and request.POST.get("form_type") == "create_contract":
         project_id = request.POST.get("project_id", "").strip()
@@ -148,7 +161,7 @@ def contract_list_view(request):
                     contract_direction=request.POST.get("contract_direction", "").strip(),
                     contract_category=request.POST.get("contract_category", "").strip(),
                     undertaking_dept_code="",
-                    undertaking_dept_name=project.dept or "",
+                    undertaking_dept_name=dept_name_map.get(project.dept, project.dept or ""),
                     contract_year=request.POST.get("contract_year", "").strip(),
                     sign_date=request.POST.get("sign_date") or None,
                     effective_date=request.POST.get("effective_date") or None,
@@ -210,9 +223,13 @@ def contract_list_view(request):
     if filters["counterparty_name"]:
         qs = qs.filter(counterparty_name_snapshot__icontains=filters["counterparty_name"])
 
+    projects = list(ProjectMaster.objects.filter(is_deleted=False).order_by("-project_code"))
+    for project in projects:
+        project.dept_name = dept_name_map.get(project.dept, project.dept or "")
+
     context = {
         "contracts": list(qs.order_by("-created_at")[:300]),
-        "projects": ProjectMaster.objects.filter(is_deleted=False).order_by("-project_code"),
+        "projects": projects,
         "counterparties": Counterparty.objects.filter(status="ACTIVE").order_by("party_name"),
         "filters": filters,
         "permissions": permissions,
@@ -505,7 +522,7 @@ def import_contract_ledger(request):
                 "contract_direction": row_data.get("contract_direction", "NONE"),
                 "contract_category": row_data.get("contract_category", "OTHER"),
                 "undertaking_dept_code": "",
-                "undertaking_dept_name": project.dept or "",
+                "undertaking_dept_name": dept_name_map.get(project.dept, project.dept or ""),
                 "contract_year": row_data.get("contract_year", ""),
                 "original_amount_tax": _to_decimal(row_data.get("original_amount_tax", "0")),
                 "original_amount_notax": _to_decimal(row_data.get("original_amount_notax", "0")),

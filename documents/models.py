@@ -452,7 +452,15 @@ class ContractMaster(models.Model):
     def save(self, *args, **kwargs):
         self.project_code_snapshot = self.project.project_code
         self.counterparty_name_snapshot = self.counterparty.party_name
-        self.undertaking_dept_name = self.project.dept or ""
+        dept_name = self.project.dept or ""
+        if self.project and self.project.dept:
+            dept_type = DictType.objects.filter(code="DEPT", is_active=True).prefetch_related("items").first()
+            if dept_type:
+                dept_name = next(
+                    (item.name for item in dept_type.items.all() if item.code == self.project.dept and item.is_active),
+                    self.project.dept,
+                )
+        self.undertaking_dept_name = dept_name
         self.undertaking_dept_code = ""
         if not self.contract_year and self.sign_date:
             self.contract_year = str(self.sign_date.year)
