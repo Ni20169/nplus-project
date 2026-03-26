@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import contract_views
 
 urlpatterns = [
     # 公开首页
@@ -24,5 +25,8 @@ urlpatterns = [
     path("documents/approvals/<int:approval_id>/action/", views.approve_action, name="approve_action"),
     path("documents/users/", views.user_list, name="user_list"),
     path("documents/permissions/", views.permission_manage, name="permission_manage"),
+    path("documents/contracts/", contract_views.contract_module, name="contract_module"),
+    path("documents/contracts/import/counterparty/", contract_views.import_counterparty_ledger, name="import_counterparty_ledger"),
+    path("documents/contracts/import/contract/", contract_views.import_contract_ledger, name="import_contract_ledger"),
     path("logout/", views.logout_view, name="logout"),
 ]

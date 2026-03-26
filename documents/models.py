@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import models
 from django.core.validators import RegexValidator
 from django.contrib.auth.models import User
@@ -6,6 +8,65 @@ from django.dispatch import receiver
 
 
 PJ_CODE_REGEX = r"^PJ\d{10}$"
+CT_CODE_REGEX = r"^CT\d{12}$"
+
+SOURCE_SYSTEM_CHOICES = (
+    ("SUBCONTRACT", "分包系统"),
+    ("SUPPLYCHAIN", "供应链系统"),
+    ("ZHZZ", "智慧中咨系统"),
+    ("PROJECT", "项管系统"),
+    ("MANUAL", "手工录入"),
+)
+
+CONTRACT_DIRECTION_CHOICES = (
+    ("INCOME", "收入合同"),
+    ("EXPENSE", "支出合同"),
+    ("NONE", "无收出合同"),
+)
+
+CONTRACT_CATEGORY_CHOICES = (
+    ("MAIN", "主合同"),
+    ("SUBCONTRACT", "分包合同"),
+    ("PURCHASE", "采购合同"),
+    ("SERVICE", "服务合同"),
+    ("OTHER", "其他"),
+)
+
+CONTRACT_STATUS_CHOICES = (
+    ("DRAFT", "草稿"),
+    ("SIGNED", "已签订"),
+    ("ACTIVE", "履约中"),
+    ("CLOSED", "已完结"),
+    ("TERMINATED", "已终止"),
+)
+
+PARTY_TYPE_CHOICES = (
+    ("OWNER", "业主"),
+    ("SUPPLIER", "供应商"),
+    ("SUBCONTRACTOR", "分包商"),
+    ("OTHER_VENDOR", "其他外委单位"),
+)
+
+ADJUSTMENT_TYPE_CHOICES = (
+    ("SUPPLEMENT", "补充合同/补充协议"),
+    ("FINAL_SETTLEMENT", "最终结算"),
+    ("MANUAL_CORRECTION", "手工修正"),
+    ("OTHER", "其他"),
+)
+
+APPROVAL_STATUS_CHOICES = (
+    ("DRAFT", "草稿"),
+    ("IN_REVIEW", "审批中"),
+    ("APPROVED", "审批通过"),
+    ("RETURNED", "退回"),
+)
+
+ACTION_TYPE_CHOICES = (
+    ("SUBMIT", "提交"),
+    ("APPROVE", "通过"),
+    ("RETURN", "退回"),
+    ("EDIT", "修改"),
+)
 
 
 class DictType(models.Model):
@@ -273,3 +334,301 @@ class Article(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Counterparty(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    party_name = models.CharField("单位名称", max_length=200)
+    party_type = models.CharField("单位类型", max_length=20, choices=PARTY_TYPE_CHOICES)
+    credit_code = models.CharField("统一社会信用代码", max_length=18, unique=True)
+    contact_name = models.CharField("联系人", max_length=50, blank=True)
+    contact_phone = models.CharField("联系电话", max_length=30, blank=True)
+    status = models.CharField("状态", max_length=20, default="ACTIVE")
+    remark = models.CharField("备注", max_length=500, blank=True)
+    created_at = models.DateTimeField("创建时间", auto_now_add=True)
+    updated_at = models.DateTimeField("更新时间", auto_now=True)
+
+    class Meta:
+        verbose_name = "往来单位"
+        verbose_name_plural = "往来单位"
+        ordering = ["party_name"]
+        indexes = [
+            models.Index(fields=["party_name"], name="idx_counterparty_name"),
+        ]
+
+    def __str__(self):
+        return f"{self.party_name} ({self.credit_code})"
+
+
+class ContractMaster(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    project = models.ForeignKey(
+        ProjectMaster,
+        on_delete=models.PROTECT,
+        related_name="contracts",
+        verbose_name="所属项目",
+    )
+    counterparty = models.ForeignKey(
+        Counterparty,
+        on_delete=models.PROTECT,
+        related_name="contracts",
+        verbose_name="签约相对方",
+    )
+
+    project_code_snapshot = models.CharField("项目主数据编码快照", max_length=12)
+    contract_ct_code = models.CharField(
+        "合同CT码",
+        max_length=14,
+        unique=True,
+        validators=[RegexValidator(CT_CODE_REGEX, "CT码格式必须为CT+12位数字")],
+    )
+
+    contract_name = models.CharField("合同名称", max_length=200)
+    contract_no = models.CharField("合同编号", max_length=100, blank=True)
+    source_system = models.CharField("来源系统", max_length=20, choices=SOURCE_SYSTEM_CHOICES)
+    source_record_id = models.CharField("来源记录ID", max_length=100, blank=True)
+    source_contract_no = models.CharField("来源合同编号", max_length=100, blank=True)
+
+    contract_direction = models.CharField("合同方向", max_length=20, choices=CONTRACT_DIRECTION_CHOICES)
+    contract_category = models.CharField("合同分类", max_length=20, choices=CONTRACT_CATEGORY_CHOICES)
+    undertaking_dept_code = models.CharField("承担部门编码", max_length=50, blank=True)
+    undertaking_dept_name = models.CharField("承担部门名称", max_length=100, blank=True)
+    contract_year = models.CharField("合同年份", max_length=4, blank=True)
+    counterparty_name_snapshot = models.CharField("签约方名称快照", max_length=200)
+
+    sign_date = models.DateField("签订日期", null=True, blank=True)
+    effective_date = models.DateField("生效日期", null=True, blank=True)
+    close_date = models.DateField("完结日期", null=True, blank=True)
+
+    original_amount_tax = models.DecimalField("原始含税金额", max_digits=18, decimal_places=2, default=Decimal("0.00"))
+    original_amount_notax = models.DecimalField("原始不含税金额", max_digits=18, decimal_places=2, default=Decimal("0.00"))
+    original_tax_rate = models.DecimalField("原始税率", max_digits=5, decimal_places=4, null=True, blank=True)
+
+    current_amount_tax = models.DecimalField("当前含税金额", max_digits=18, decimal_places=2, default=Decimal("0.00"))
+    current_amount_notax = models.DecimalField("当前不含税金额", max_digits=18, decimal_places=2, default=Decimal("0.00"))
+    current_tax_rate = models.DecimalField("当前税率", max_digits=5, decimal_places=4, null=True, blank=True)
+
+    approved_adjustment_count = models.PositiveIntegerField("已通过调整次数", default=0)
+    last_adjustment_date = models.DateField("最近一次已通过调整日期", null=True, blank=True)
+
+    contract_status = models.CharField("合同状态", max_length=20, choices=CONTRACT_STATUS_CHOICES, default="SIGNED")
+    remark = models.CharField("备注", max_length=500, blank=True)
+    is_deleted = models.BooleanField("是否删除", default=False)
+    data_version = models.PositiveIntegerField("数据版本", default=1)
+    created_at = models.DateTimeField("创建时间", auto_now_add=True)
+    updated_at = models.DateTimeField("更新时间", auto_now=True)
+
+    class Meta:
+        verbose_name = "合同主表"
+        verbose_name_plural = "合同主表"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["project"], name="idx_contract_project"),
+            models.Index(fields=["counterparty"], name="idx_contract_counterparty"),
+            models.Index(fields=["source_system"], name="idx_contract_source"),
+            models.Index(fields=["contract_direction"], name="idx_contract_direction"),
+            models.Index(fields=["contract_category"], name="idx_contract_category"),
+            models.Index(fields=["contract_status"], name="idx_contract_status"),
+            models.Index(fields=["undertaking_dept_code"], name="idx_contract_dept"),
+            models.Index(fields=["contract_year"], name="idx_contract_year"),
+            models.Index(fields=["project_code_snapshot"], name="idx_contract_proj_snapshot"),
+            models.Index(fields=["project", "contract_direction"], name="idx_contract_proj_dir"),
+            models.Index(fields=["project", "contract_category"], name="idx_contract_proj_cat"),
+            models.Index(fields=["undertaking_dept_code", "contract_year"], name="idx_contract_dept_year"),
+            models.Index(fields=["project", "contract_year"], name="idx_contract_proj_year"),
+            models.Index(fields=["source_system", "source_contract_no"], name="idx_contract_source_no"),
+        ]
+
+    def clean(self):
+        if self.current_amount_tax < 0 or self.current_amount_notax < 0:
+            raise ValidationError("当前金额不允许为负值")
+        if self.original_amount_tax < 0 or self.original_amount_notax < 0:
+            raise ValidationError("原始金额不允许为负值")
+
+    def save(self, *args, **kwargs):
+        self.project_code_snapshot = self.project.project_code
+        self.counterparty_name_snapshot = self.counterparty.party_name
+        if not self.contract_year and self.sign_date:
+            self.contract_year = str(self.sign_date.year)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.contract_ct_code} - {self.contract_name}"
+
+
+class ContractAdjustment(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    contract = models.ForeignKey(
+        ContractMaster,
+        on_delete=models.CASCADE,
+        related_name="adjustments",
+        verbose_name="合同",
+    )
+    project = models.ForeignKey(
+        ProjectMaster,
+        on_delete=models.PROTECT,
+        related_name="contract_adjustments",
+        verbose_name="项目",
+    )
+
+    project_code_snapshot = models.CharField("项目主数据编码快照", max_length=12)
+    contract_ct_code_snapshot = models.CharField("合同CT码快照", max_length=14)
+    contract_name_snapshot = models.CharField("合同名称快照", max_length=200)
+
+    adjustment_type = models.CharField("调整类型", max_length=20, choices=ADJUSTMENT_TYPE_CHOICES)
+    adjustment_no = models.CharField("调整单号", max_length=100)
+    adjustment_date = models.DateField("调整日期")
+    effective_date = models.DateField("生效日期", null=True, blank=True)
+
+    before_amount_tax = models.DecimalField("调整前含税金额", max_digits=18, decimal_places=2, default=Decimal("0.00"))
+    before_amount_notax = models.DecimalField("调整前不含税金额", max_digits=18, decimal_places=2, default=Decimal("0.00"))
+    before_tax_rate = models.DecimalField("调整前税率", max_digits=5, decimal_places=4, null=True, blank=True)
+    before_counterparty = models.ForeignKey(
+        Counterparty,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="before_adjustments",
+        verbose_name="调整前签约方",
+    )
+    before_counterparty_name = models.CharField("调整前签约方名称", max_length=200, blank=True)
+
+    change_amount_tax = models.DecimalField("本次含税调整金额", max_digits=18, decimal_places=2, default=Decimal("0.00"))
+    change_amount_notax = models.DecimalField("本次不含税调整金额", max_digits=18, decimal_places=2, default=Decimal("0.00"))
+    after_tax_rate = models.DecimalField("调整后税率", max_digits=5, decimal_places=4, null=True, blank=True)
+    after_counterparty = models.ForeignKey(
+        Counterparty,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="after_adjustments",
+        verbose_name="调整后签约方",
+    )
+    remark = models.CharField("备注", max_length=500, blank=True)
+
+    after_amount_tax = models.DecimalField("调整后含税金额", max_digits=18, decimal_places=2, default=Decimal("0.00"))
+    after_amount_notax = models.DecimalField("调整后不含税金额", max_digits=18, decimal_places=2, default=Decimal("0.00"))
+    after_counterparty_name = models.CharField("调整后签约方名称", max_length=200, blank=True)
+
+    approval_status = models.CharField("审批状态", max_length=20, choices=APPROVAL_STATUS_CHOICES, default="DRAFT")
+    submitted_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="submitted_contract_adjustments",
+        verbose_name="提交人",
+    )
+    submitted_at = models.DateTimeField("提交时间", null=True, blank=True)
+    approver = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="approved_contract_adjustments",
+        verbose_name="审批人",
+    )
+    approver_name = models.CharField("审批人姓名", max_length=50, default="倪明珠")
+    approved_at = models.DateTimeField("审批通过时间", null=True, blank=True)
+    approval_comment = models.CharField("审批意见", max_length=500, blank=True)
+    return_reason = models.CharField("退回原因", max_length=500, blank=True)
+    approval_suggestion = models.TextField("审批辅助建议", blank=True)
+    suggestion_generated_at = models.DateTimeField("建议生成时间", null=True, blank=True)
+
+    source_system = models.CharField("来源系统", max_length=20, choices=SOURCE_SYSTEM_CHOICES)
+    source_record_id = models.CharField("来源记录ID", max_length=100, blank=True)
+    created_at = models.DateTimeField("创建时间", auto_now_add=True)
+    updated_at = models.DateTimeField("更新时间", auto_now=True)
+
+    class Meta:
+        verbose_name = "合同调整记录"
+        verbose_name_plural = "合同调整记录"
+        ordering = ["-adjustment_date", "-created_at"]
+        indexes = [
+            models.Index(fields=["contract"], name="idx_adj_contract"),
+            models.Index(fields=["project"], name="idx_adj_project"),
+            models.Index(fields=["approval_status"], name="idx_adj_status"),
+            models.Index(fields=["adjustment_type"], name="idx_adj_type"),
+            models.Index(fields=["adjustment_date"], name="idx_adj_date"),
+            models.Index(fields=["source_system"], name="idx_adj_source"),
+            models.Index(fields=["contract_ct_code_snapshot"], name="idx_adj_ct_snapshot"),
+            models.Index(fields=["contract", "approval_status"], name="idx_adj_contract_status"),
+            models.Index(fields=["contract", "adjustment_type"], name="idx_adj_contract_type"),
+            models.Index(fields=["project", "approval_status"], name="idx_adj_project_status"),
+            models.Index(fields=["contract_ct_code_snapshot", "approval_status"], name="idx_adj_ct_status"),
+        ]
+
+    def clean(self):
+        expected_tax = (self.before_amount_tax or Decimal("0.00")) + (self.change_amount_tax or Decimal("0.00"))
+        expected_notax = (self.before_amount_notax or Decimal("0.00")) + (self.change_amount_notax or Decimal("0.00"))
+        if self.after_amount_tax != expected_tax:
+            raise ValidationError("含税金额不满足：调整前 + 本次调整 = 调整后")
+        if self.after_amount_notax != expected_notax:
+            raise ValidationError("不含税金额不满足：调整前 + 本次调整 = 调整后")
+        if self.after_amount_tax < 0 or self.after_amount_notax < 0:
+            raise ValidationError("调整后金额不允许为负值")
+
+    def save(self, *args, **kwargs):
+        if not self.project_id:
+            self.project = self.contract.project
+        self.project_code_snapshot = self.contract.project_code_snapshot
+        self.contract_ct_code_snapshot = self.contract.contract_ct_code
+        self.contract_name_snapshot = self.contract.contract_name
+
+        if self._state.adding and not self.before_counterparty_id:
+            self.before_counterparty = self.contract.counterparty
+            self.before_counterparty_name = self.contract.counterparty_name_snapshot
+            self.before_amount_tax = self.contract.current_amount_tax
+            self.before_amount_notax = self.contract.current_amount_notax
+            self.before_tax_rate = self.contract.current_tax_rate
+
+        if not self.after_tax_rate:
+            self.after_tax_rate = self.before_tax_rate
+        if not self.after_counterparty_id:
+            self.after_counterparty = self.before_counterparty
+        if self.after_counterparty_id:
+            self.after_counterparty_name = self.after_counterparty.party_name
+
+        self.after_amount_tax = (self.before_amount_tax or Decimal("0.00")) + (self.change_amount_tax or Decimal("0.00"))
+        self.after_amount_notax = (self.before_amount_notax or Decimal("0.00")) + (self.change_amount_notax or Decimal("0.00"))
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.contract_ct_code_snapshot} - {self.adjustment_no}"
+
+
+class ContractAdjustmentActionLog(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    adjustment = models.ForeignKey(
+        ContractAdjustment,
+        on_delete=models.CASCADE,
+        related_name="action_logs",
+        verbose_name="调整记录",
+    )
+    action_type = models.CharField("动作类型", max_length=20, choices=ACTION_TYPE_CHOICES)
+    action_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="contract_adjustment_actions",
+        verbose_name="操作人",
+    )
+    action_at = models.DateTimeField("操作时间", auto_now_add=True)
+    comment = models.CharField("动作说明", max_length=500, blank=True)
+    from_status = models.CharField("动作前状态", max_length=20, blank=True)
+    to_status = models.CharField("动作后状态", max_length=20, blank=True)
+    created_at = models.DateTimeField("创建时间", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "合同调整动作日志"
+        verbose_name_plural = "合同调整动作日志"
+        ordering = ["-action_at", "-id"]
+        indexes = [
+            models.Index(fields=["adjustment"], name="idx_adjlog_adjustment"),
+            models.Index(fields=["action_type"], name="idx_adjlog_action"),
+            models.Index(fields=["action_by"], name="idx_adjlog_user"),
+            models.Index(fields=["action_at"], name="idx_adjlog_at"),
+            models.Index(fields=["adjustment", "action_at"], name="idx_adjlog_adjustment_at"),
+        ]
+
+    def __str__(self):
+        return f"{self.adjustment_id}-{self.action_type}"

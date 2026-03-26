@@ -1,5 +1,17 @@
 from django.contrib import admin
-from .models import DictType, DictItem, ProjectMaster, ImportBatch, ImportError, ProjectMasterLog, UserProfile
+from .models import (
+    ContractAdjustment,
+    ContractAdjustmentActionLog,
+    ContractMaster,
+    Counterparty,
+    DictItem,
+    DictType,
+    ImportBatch,
+    ImportError,
+    ProjectMaster,
+    ProjectMasterLog,
+    UserProfile,
+)
 
 
 @admin.register(DictType)
@@ -46,3 +58,52 @@ class ProjectMasterLogAdmin(admin.ModelAdmin):
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = ("user", "department")
     search_fields = ("user__username", "department")
+
+
+@admin.register(Counterparty)
+class CounterpartyAdmin(admin.ModelAdmin):
+    list_display = ("party_name", "party_type", "credit_code", "status", "updated_at")
+    search_fields = ("party_name", "credit_code", "contact_name", "contact_phone")
+    list_filter = ("party_type", "status")
+
+
+@admin.register(ContractMaster)
+class ContractMasterAdmin(admin.ModelAdmin):
+    list_display = (
+        "contract_ct_code",
+        "contract_name",
+        "project_code_snapshot",
+        "contract_direction",
+        "contract_category",
+        "contract_status",
+        "current_amount_tax",
+    )
+    search_fields = (
+        "contract_ct_code",
+        "contract_name",
+        "project_code_snapshot",
+        "counterparty_name_snapshot",
+    )
+    list_filter = ("source_system", "contract_direction", "contract_category", "contract_status", "contract_year")
+
+
+@admin.register(ContractAdjustment)
+class ContractAdjustmentAdmin(admin.ModelAdmin):
+    list_display = (
+        "contract_ct_code_snapshot",
+        "adjustment_type",
+        "adjustment_no",
+        "approval_status",
+        "change_amount_tax",
+        "after_amount_tax",
+        "adjustment_date",
+    )
+    search_fields = ("contract_ct_code_snapshot", "contract_name_snapshot", "adjustment_no")
+    list_filter = ("adjustment_type", "approval_status", "source_system")
+
+
+@admin.register(ContractAdjustmentActionLog)
+class ContractAdjustmentActionLogAdmin(admin.ModelAdmin):
+    list_display = ("adjustment", "action_type", "action_by", "action_at")
+    search_fields = ("adjustment__contract_ct_code_snapshot", "action_by__username", "comment")
+    list_filter = ("action_type",)

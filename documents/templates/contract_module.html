@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>合同模块</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "PingFang SC","Microsoft YaHei","Noto Sans SC","Source Han Sans SC",sans-serif;
+            font-size: 14px;
+            background: #f5f5f5;
+            color: #333;
+        }
+        .layout { display: flex; min-height: 100vh; }
+        .sidebar {
+            width: 220px;
+            background: #2f3542;
+            color: #fff;
+            padding: 16px;
+        }
+        .sidebar h3 { font-size: 16px; margin-bottom: 12px; }
+        .sidebar a {
+            display: block;
+            color: #fff;
+            text-decoration: none;
+            margin: 8px 0;
+            padding: 6px 8px;
+            border-radius: 4px;
+        }
+        .sidebar a:hover { background: #57606f; }
+        .content { flex: 1; padding: 16px 20px; }
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 14px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        h2 { font-size: 20px; margin-bottom: 10px; }
+        h4 { margin-bottom: 8px; }
+        form.inline { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        input, select, button, textarea {
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            padding: 6px 8px;
+            font-size: 13px;
+            min-height: 32px;
+        }
+        textarea { min-width: 220px; }
+        button {
+            background: #1677ff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover { background: #0958d9; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1100px;
+        }
+        th, td {
+            border-bottom: 1px solid #eee;
+            padding: 8px 6px;
+            text-align: left;
+            white-space: nowrap;
+        }
+        .table-wrap { overflow: auto; max-height: 320px; }
+        .tips { color: #666; font-size: 12px; margin-top: 6px; }
+        .msg { margin-bottom: 10px; }
+        .msg .ok { color: #0a7d19; }
+        .msg .err { color: #c30000; }
+        .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <h3>项目管理</h3>
+        <a href="{% url 'project_master_list' %}">项目主数据</a>
+        <a href="{% url 'contract_module' %}">合同模块</a>
+        <a href="{% url 'user_list' %}">用户管理</a>
+        <a href="{% url 'logout' %}">退出登录</a>
+    </aside>
+    <main class="content">
+        <h2>合同模块</h2>
+        {% if messages %}
+        <div class="msg">
+            {% for message in messages %}
+                <div class="{% if message.tags == 'error' %}err{% else %}ok{% endif %}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <h4>导入台账</h4>
+            <form class="inline" method="post" action="{% url 'import_counterparty_ledger' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="mode" value="insert">
+                <label>往来单位台账（仅新增）</label>
+                <input type="file" name="import_file" required>
+                <button type="submit">导入</button>
+            </form>
+            <form class="inline" method="post" action="{% url 'import_counterparty_ledger' %}" enctype="multipart/form-data" style="margin-top:8px;">
+                {% csrf_token %}
+                <input type="hidden" name="mode" value="upsert">
+                <label>往来单位台账（upsert）</label>
+                <input type="file" name="import_file" required>
+                <button type="submit">导入</button>
+            </form>
+            <form class="inline" method="post" action="{% url 'import_contract_ledger' %}" enctype="multipart/form-data" style="margin-top:8px;">
+                {% csrf_token %}
+                <input type="hidden" name="mode" value="insert">
+                <label>合同台账（仅新增）</label>
+                <input type="file" name="import_file" required>
+                <button type="submit">导入</button>
+            </form>
+            <form class="inline" method="post" action="{% url 'import_contract_ledger' %}" enctype="multipart/form-data" style="margin-top:8px;">
+                {% csrf_token %}
+                <input type="hidden" name="mode" value="upsert">
+                <label>合同台账（upsert）</label>
+                <input type="file" name="import_file" required>
+                <button type="submit">导入</button>
+            </form>
+            <div class="tips">说明：CT码必须符合 CT+12位数字，after_amount 自动计算且不允许负值。</div>
+        </div>
+
+        <div class="card">
+            <h4>新增往来单位</h4>
+            <form class="inline" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="create_counterparty">
+                <input name="party_name" placeholder="单位名称" required>
+                <select name="party_type" required>
+                    <option value="OWNER">业主</option>
+                    <option value="SUPPLIER">供应商</option>
+                    <option value="SUBCONTRACTOR">分包商</option>
+                    <option value="OTHER_VENDOR">其他外委单位</option>
+                </select>
+                <input name="credit_code" placeholder="统一社会信用代码" required>
+                <input name="contact_name" placeholder="联系人">
+                <input name="contact_phone" placeholder="联系电话">
+                <button type="submit">保存</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h4>新增合同</h4>
+            <form class="inline" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="create_contract">
+                <select name="project_id" required>
+                    <option value="">选择项目</option>
+                    {% for p in projects %}
+                        <option value="{{ p.id }}">{{ p.project_code }} - {{ p.project_name }}</option>
+                    {% endfor %}
+                </select>
+                <select name="counterparty_id" required>
+                    <option value="">选择往来单位</option>
+                    {% for c in counterparties %}
+                        <option value="{{ c.id }}">{{ c.party_name }}</option>
+                    {% endfor %}
+                </select>
+                <input name="contract_ct_code" placeholder="CT码" required>
+                <input name="contract_name" placeholder="合同名称" required>
+                <select name="source_system" required>
+                    {% for value, label in source_system_choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <select name="contract_direction" required>
+                    {% for value, label in contract_direction_choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <select name="contract_category" required>
+                    {% for value, label in contract_category_choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <input name="undertaking_dept_code" placeholder="承担部门编码">
+                <input name="undertaking_dept_name" placeholder="承担部门名称">
+                <input name="contract_year" placeholder="合同年份">
+                <input type="number" step="0.01" name="original_amount_tax" placeholder="原始含税金额" required>
+                <input type="number" step="0.01" name="original_amount_notax" placeholder="原始不含税金额" required>
+                <select name="contract_status">
+                    {% for value, label in contract_status_choices %}
+                        <option value="{{ value }}" {% if value == 'SIGNED' %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit">保存</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h4>新增调整记录</h4>
+            <form class="inline" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="create_adjustment">
+                <select name="contract_id" required>
+                    <option value="">选择合同</option>
+                    {% for c in contracts %}
+                        <option value="{{ c.id }}">{{ c.contract_ct_code }} - {{ c.contract_name }}</option>
+                    {% endfor %}
+                </select>
+                <select name="adjustment_type" required>
+                    {% for value, label in adjustment_type_choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <input name="adjustment_no" placeholder="调整单号" required>
+                <input type="date" name="adjustment_date" required>
+                <input type="number" step="0.01" name="change_amount_tax" placeholder="本次含税调整金额" required>
+                <input type="number" step="0.01" name="change_amount_notax" placeholder="本次不含税调整金额" required>
+                <select name="approval_status">
+                    {% for value, label in approval_status_choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit">保存</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h4>合同列表</h4>
+            <form class="inline" method="get" style="margin-bottom:8px;">
+                <input name="project_code" value="{{ contract_filters.project_code }}" placeholder="项目编码">
+                <input name="contract_ct_code" value="{{ contract_filters.contract_ct_code }}" placeholder="CT码">
+                <input name="contract_name" value="{{ contract_filters.contract_name }}" placeholder="合同名称">
+                <input name="undertaking_dept" value="{{ contract_filters.undertaking_dept }}" placeholder="承担部门">
+                <input name="contract_year" value="{{ contract_filters.contract_year }}" placeholder="合同年份">
+                <button type="submit">查询</button>
+            </form>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>CT码</th>
+                        <th>合同名称</th>
+                        <th>项目编码</th>
+                        <th>签约方</th>
+                        <th>方向</th>
+                        <th>分类</th>
+                        <th>当前含税金额</th>
+                        <th>状态</th>
+                        <th>承担部门</th>
+                        <th>年份</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in contracts %}
+                    <tr>
+                        <td>{{ item.contract_ct_code }}</td>
+                        <td>{{ item.contract_name }}</td>
+                        <td>{{ item.project_code_snapshot }}</td>
+                        <td>{{ item.counterparty_name_snapshot }}</td>
+                        <td>{{ item.get_contract_direction_display }}</td>
+                        <td>{{ item.get_contract_category_display }}</td>
+                        <td>{{ item.current_amount_tax }}</td>
+                        <td>{{ item.get_contract_status_display }}</td>
+                        <td>{{ item.undertaking_dept_name }}</td>
+                        <td>{{ item.contract_year }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="10">暂无数据</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <h4>调整记录列表</h4>
+            <form class="inline" method="get" style="margin-bottom:8px;">
+                <input name="adj_ct_code" value="{{ adjustment_filters.adj_ct_code }}" placeholder="CT码">
+                <select name="adjustment_type">
+                    <option value="">全部调整类型</option>
+                    {% for value, label in adjustment_type_choices %}
+                        <option value="{{ value }}" {% if adjustment_filters.adjustment_type == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <select name="approval_status">
+                    <option value="">全部状态</option>
+                    {% for value, label in approval_status_choices %}
+                        <option value="{{ value }}" {% if adjustment_filters.approval_status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit">查询</button>
+            </form>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>CT码</th>
+                        <th>调整单号</th>
+                        <th>调整类型</th>
+                        <th>审批状态</th>
+                        <th>前含税</th>
+                        <th>调整含税</th>
+                        <th>后含税</th>
+                        <th>调整日期</th>
+                        <th>状态操作</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in adjustments %}
+                    <tr>
+                        <td>{{ item.contract_ct_code_snapshot }}</td>
+                        <td>{{ item.adjustment_no }}</td>
+                        <td>{{ item.get_adjustment_type_display }}</td>
+                        <td>{{ item.get_approval_status_display }}</td>
+                        <td>{{ item.before_amount_tax }}</td>
+                        <td>{{ item.change_amount_tax }}</td>
+                        <td>{{ item.after_amount_tax }}</td>
+                        <td>{{ item.adjustment_date }}</td>
+                        <td>
+                            <form class="inline" method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="form_type" value="update_adjustment_status">
+                                <input type="hidden" name="adjustment_id" value="{{ item.id }}">
+                                <select name="to_status">
+                                    {% for value, label in approval_status_choices %}
+                                        <option value="{{ value }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                                <input name="comment" placeholder="说明">
+                                <button type="submit">更新</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="9">暂无数据</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
