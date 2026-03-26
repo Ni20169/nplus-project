@@ -82,6 +82,8 @@ def contract_counterparty_view(request):
                     contact_phone=request.POST.get("contact_phone", "").strip(),
                     status=request.POST.get("status", "ACTIVE").strip() or "ACTIVE",
                     remark=request.POST.get("remark", "").strip(),
+                    created_by=request.user.username,
+                    updated_by=request.user.username,
                 )
             messages.success(request, "往来单位已新增")
         except Exception as exc:
@@ -159,6 +161,8 @@ def contract_list_view(request):
                     current_tax_rate=_to_decimal(request.POST.get("current_tax_rate"), default="0") if request.POST.get("current_tax_rate", "").strip() else None,
                     contract_status=request.POST.get("contract_status", "SIGNED").strip() or "SIGNED",
                     remark=request.POST.get("remark", "").strip(),
+                    created_by=request.user.username,
+                    updated_by=request.user.username,
                 )
                 if contract.current_amount_tax == Decimal("0") and contract.current_amount_notax == Decimal("0"):
                     contract.current_amount_tax = contract.original_amount_tax
@@ -259,6 +263,8 @@ def contract_adjustment_view(request):
                         approver_name="\u502a\u660e\u73e0",
                         source_system=request.POST.get("source_system", contract.source_system).strip() or contract.source_system,
                         source_record_id=request.POST.get("source_record_id", "").strip(),
+                        created_by=request.user.username,
+                        updated_by=request.user.username,
                     )
                     adjustment.save()
                     _log_adjustment_action(
@@ -296,6 +302,7 @@ def contract_adjustment_view(request):
                     if to_status == "APPROVED":
                         adjustment.approver = request.user
                         adjustment.approved_at = timezone.now()
+                    adjustment.updated_by = request.user.username
                     adjustment.save()
                     if to_status == "APPROVED" and from_status != "APPROVED":
                         _apply_adjustment_to_contract(adjustment)
@@ -415,10 +422,11 @@ def import_counterparty_ledger(request):
         if obj and mode == "upsert":
             for key, value in defaults.items():
                 setattr(obj, key, value)
+            obj.updated_by = request.user.username
             obj.save()
             updated += 1
             continue
-        Counterparty.objects.create(credit_code=code, **defaults)
+        Counterparty.objects.create(credit_code=code, created_by=request.user.username, updated_by=request.user.username, **defaults)
         created += 1
 
     messages.success(request, f"\u5f80\u6765\u5355\u4f4d\u5bfc\u5165\u5b8c\u6210\uff1a\u65b0\u589e {created} \u6761\uff0c\u66f4\u65b0 {updated} \u6761\uff0c\u8df3\u8fc7 {skipped} \u6761")
@@ -524,11 +532,12 @@ def import_contract_ledger(request):
         if obj and mode == "upsert":
             for key, value in defaults.items():
                 setattr(obj, key, value)
+            obj.updated_by = request.user.username
             obj.full_clean()
             obj.save()
             updated += 1
             continue
-        new_contract = ContractMaster(contract_ct_code=ct_code, **defaults)
+        new_contract = ContractMaster(contract_ct_code=ct_code, created_by=request.user.username, updated_by=request.user.username, **defaults)
         new_contract.full_clean()
         new_contract.save()
         created += 1

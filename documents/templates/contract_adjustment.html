@@ -138,9 +138,9 @@
                     <li>
                         <a class="menu-level-2 open" data-submenu-target="menu-contract-sub" href="#" onclick="toggleSubMenu('menu-contract-sub', this); return false;">合同管理<span class="caret">▼</span></a>
                         <ul class="menu-list show menu-level-3" id="menu-contract-sub">
-                            <li><a href="{% url 'contract_counterparty_list' %}">往来单位管理</a></li>
                             <li><a href="{% url 'contract_list' %}">合同台账</a></li>
                             <li><a href="{% url 'contract_adjustment_list' %}" class="active">合同调整</a></li>
+                            <li><a href="{% url 'contract_counterparty_list' %}">往来单位管理</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -309,6 +309,7 @@
                                     <th>调整日期</th>
                                     <th>审批人</th>
                                     <th>创建时间</th>
+                                    <th>创建人</th>
                                     {% if permissions.can_approve_contract %}
                                     <th>操作</th>
                                     {% endif %}
@@ -316,6 +317,7 @@
                                 <tr class="filter-row">
                                     <th><input type="text" id="f_ct" placeholder="筛选CT码" oninput="filterTable()"></th>
                                     <th><input type="text" id="f_no" placeholder="筛选单号" oninput="filterTable()"></th>
+                                    <th></th>
                                     <th></th>
                                     <th></th>
                                     <th></th>
@@ -360,6 +362,7 @@
                                 <td>{{ item.adjustment_date|date:"Y-m-d"|default:"—" }}</td>
                                 <td>{{ item.approver_name|default:"—" }}</td>
                                 <td>{{ item.created_at|date:"Y-m-d" }}</td>
+                                <td>{{ item.created_by|default:"—" }}</td>
                                 {% if permissions.can_approve_contract %}
                                 <td>
                                     <form class="status-form" method="post">
@@ -380,7 +383,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="{% if permissions.can_approve_contract %}11{% else %}10{% endif %}" style="text-align:center;color:#999;padding:20px;">暂无数据，请新增合同调整记录</td>
+                                <td colspan="{% if permissions.can_approve_contract %}12{% else %}11{% endif %}" style="text-align:center;color:#999;padding:20px;">暂无数据，请新增合同调整记录</td>
                             </tr>
                             {% endfor %}
                             </tbody>

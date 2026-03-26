@@ -347,6 +347,8 @@ class Counterparty(models.Model):
     remark = models.CharField("备注", max_length=500, blank=True)
     created_at = models.DateTimeField("创建时间", auto_now_add=True)
     updated_at = models.DateTimeField("更新时间", auto_now=True)
+    created_by = models.CharField("创建人", max_length=50, blank=True, default="")
+    updated_by = models.CharField("更新人", max_length=50, blank=True, default="")
 
     class Meta:
         verbose_name = "往来单位"
@@ -417,6 +419,8 @@ class ContractMaster(models.Model):
     data_version = models.PositiveIntegerField("数据版本", default=1)
     created_at = models.DateTimeField("创建时间", auto_now_add=True)
     updated_at = models.DateTimeField("更新时间", auto_now=True)
+    created_by = models.CharField("创建人", max_length=50, blank=True, default="")
+    updated_by = models.CharField("更新人", max_length=50, blank=True, default="")
 
     class Meta:
         verbose_name = "合同主表"
@@ -539,6 +543,8 @@ class ContractAdjustment(models.Model):
     source_record_id = models.CharField("来源记录ID", max_length=100, blank=True)
     created_at = models.DateTimeField("创建时间", auto_now_add=True)
     updated_at = models.DateTimeField("更新时间", auto_now=True)
+    created_by = models.CharField("创建人", max_length=50, blank=True, default="")
+    updated_by = models.CharField("更新人", max_length=50, blank=True, default="")
 
     class Meta:
         verbose_name = "合同调整记录"

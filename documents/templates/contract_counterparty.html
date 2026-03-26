@@ -133,9 +133,9 @@
                     <li>
                         <a class="menu-level-2 open" data-submenu-target="menu-contract-sub" href="#" onclick="toggleSubMenu('menu-contract-sub', this); return false;">合同管理<span class="caret">▼</span></a>
                         <ul class="menu-list show menu-level-3" id="menu-contract-sub">
-                            <li><a href="{% url 'contract_counterparty_list' %}" class="active">往来单位管理</a></li>
                             <li><a href="{% url 'contract_list' %}">合同台账</a></li>
                             <li><a href="{% url 'contract_adjustment_list' %}">合同调整</a></li>
+                            <li><a href="{% url 'contract_counterparty_list' %}" class="active">往来单位管理</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -320,6 +320,7 @@
                                     <th>状态</th>
                                     <th>备注</th>
                                     <th>创建时间</th>
+                                    <th>创建人</th>
                                 </tr>
                                 <tr class="filter-row">
                                     <th><input type="text" id="f_name" placeholder="筛选名称" oninput="filterTable()"></th>
@@ -328,6 +329,7 @@
                                     <th></th>
                                     <th></th>
                                     <th><input type="text" id="f_status" placeholder="筛选状态" oninput="filterTable()"></th>
+                                    <th></th>
                                     <th></th>
                                     <th></th>
                                 </tr>
@@ -349,9 +351,10 @@
                                 </td>
                                 <td>{{ item.remark|default:"—" }}</td>
                                 <td>{{ item.created_at|date:"Y-m-d" }}</td>
+                                <td>{{ item.created_by|default:"—" }}</td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="8" style="text-align:center;color:#999;padding:20px;">暂无数据，请新增或导入往来单位</td></tr>
+                            <tr><td colspan="9" style="text-align:center;color:#999;padding:20px;">暂无数据，请新增或导入往来单位</td></tr>
                             {% endfor %}
                             </tbody>
                         </table>
