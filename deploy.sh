@@ -9,7 +9,6 @@ set -Eeuo pipefail
 # 4) health checks (local socket + external URL)
 
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BRANCH="${DEPLOY_BRANCH:-main}"
 GUNICORN_SERVICE="${GUNICORN_SERVICE:-gunicorn}"
 NGINX_SERVICE="${NGINX_SERVICE:-nginx}"
 SOCKET_PATH="${SOCKET_PATH:-/run/nplus_project/nplus_project.sock}"
@@ -36,6 +35,19 @@ require_cmd() {
 require_cmd git
 require_cmd "$PYTHON_BIN"
 require_cmd systemctl
+
+detect_default_branch() {
+  local remote_head
+  remote_head="$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || true)"
+  if [[ -n "$remote_head" ]]; then
+    printf "%s\n" "${remote_head#origin/}"
+    return 0
+  fi
+
+  git rev-parse --abbrev-ref HEAD 2>/dev/null || printf "%s\n" "master"
+}
+
+BRANCH="${DEPLOY_BRANCH:-$(detect_default_branch)}"
 
 wait_for_socket() {
   local socket_path="$1"
