@@ -38,8 +38,6 @@
         .menu-list li a:hover { background-color: #57606f; }
         .menu-list li a.active { background-color: #3d84c6; font-weight: 600; }
         .menu-list ul.menu-list { margin-top: 6px; padding-left: 12px; }
-        .sidebar-footer { position: absolute; bottom: 12px; left: 20px; right: 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: #dfe4ea; }
-        .sidebar-footer a.logout-link { padding: 4px 8px; border-radius: 4px; background: rgba(255,255,255,0.16); color: #fff; text-decoration: none; font-size: 12px; }
         .main-content { flex: 1; padding: 8px 24px 0; position: relative; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         .watermark { position: fixed; inset: 0; pointer-events: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); grid-auto-rows: 160px; align-content: start; z-index: 4; overflow: hidden; }
         .watermark span { display: flex; align-items: center; justify-content: center; color: rgba(0,0,0,0.06); font-size: 15px; font-weight: 600; letter-spacing: 1px; white-space: nowrap; transform: rotate(-45deg); }
@@ -51,7 +49,7 @@
         .user-info { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
         .system-time { font-size: 14px; color: #666; }
         .toggle-sidebar-btn { padding: 4px 8px; border: 1px solid #dcdcdc; border-radius: 4px; background: #fff; cursor: pointer; font-size: 12px; color: #333; }
-        .logout-btn { color: #3498db; text-decoration: none; font-size: 14px; padding: 4px 8px; border-radius: 4px; transition: background-color 0.2s; }
+        .logout-btn { color: #3498db; text-decoration: none; font-size: 18px; line-height: 1; padding: 4px 8px; border-radius: 4px; transition: background-color 0.2s; display: inline-flex; align-items: center; justify-content: center; }
         .logout-btn:hover { background-color: #e3f2fd; }
         .main-content h1 { margin: 0; font-size: 20px; color: #1f2d3d; }
         .action-buttons { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 8px; flex-shrink: 0; }
@@ -161,10 +159,6 @@
                 </ul>
             </div>
             <div class="resize-handle" id="resizeHandle"></div>
-            <div class="sidebar-footer">
-                <span>{{ request.user.username }}</span>
-                <a class="logout-link" href="{% url 'logout' %}">退出</a>
-            </div>
         </div>
 
         <div class="main-content">
@@ -177,7 +171,7 @@
                     <div class="header-right">
                         <div class="user-info">
                             <span>当前用户：{{ request.user.username }}</span>
-                            <a class="logout-btn" href="{% url 'logout' %}">登出</a>
+                            <a class="logout-btn" href="{% url 'logout' %}" title="退出登录" aria-label="退出登录">&#x23FB;</a>
                         </div>
                         <div class="system-time" id="systemTime"></div>
                     </div>

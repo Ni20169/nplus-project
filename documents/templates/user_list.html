@@ -77,26 +77,45 @@
             background-color: #57606f;
         }
 
-        .sidebar-footer {
-            position: absolute;
-            bottom: 12px;
-            left: 20px;
-            right: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-            font-size: 13px;
-            color: #dfe4ea;
-        }
-
         .logout-btn {
+            color: #3498db;
+            text-decoration: none;
+            font-size: 18px;
+            line-height: 1;
             padding: 4px 8px;
             border-radius: 4px;
-            background: rgba(255,255,255,0.16);
-            color: #fff;
-            text-decoration: none;
-            font-size: 12px;
+            transition: background-color 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logout-btn:hover {
+            background-color: #e3f2fd;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .header-right {
+            text-align: right;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .system-time {
+            font-size: 14px;
+            color: #666;
         }
 
         .main-content {
@@ -212,10 +231,6 @@
                     <li><a href="{% url 'project_master_list' %}">项目主数据</a></li>
                 </ul>
             </div>
-            <div class="sidebar-footer">
-                <span>当前用户：{{ request.user.username }}</span>
-                <a class="logout-btn" href="{% url 'logout' %}">登出</a>
-            </div>
         </div>
 
         <div class="main-content">
@@ -226,7 +241,16 @@
             </div>
 
             <div class="content">
-                <h1>用户管理</h1>
+                <div class="page-header">
+                    <h1>用户管理</h1>
+                    <div class="header-right">
+                        <div class="user-info">
+                            <span>当前用户：{{ request.user.username }}</span>
+                            <a class="logout-btn" href="{% url 'logout' %}" title="退出登录" aria-label="退出登录">&#x23FB;</a>
+                        </div>
+                        <div class="system-time" id="systemTime"></div>
+                    </div>
+                </div>
                 <div class="card">
                     {% if messages %}
                         {% for message in messages %}
@@ -326,6 +350,19 @@
                 }
             });
         });
+
+        function updateTime() {
+            const el = document.getElementById('systemTime');
+            if (el) {
+                el.textContent = new Date().toLocaleString('zh-CN', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit'
+                });
+            }
+        }
+
+        updateTime();
+        setInterval(updateTime, 1000);
     </script>
 </body>
 </html>
