@@ -32,7 +32,7 @@
         .menu-list.show { display: block; }
         .menu-list li { margin-bottom: 10px; }
         .menu-list li a { color: white; text-decoration: none; display: block; padding: 6px 8px; border-radius: 4px; transition: background-color 0.2s; }
-        .menu-level-2 { display: flex; align-items: center; justify-content: space-between; font-weight: 600; background: rgba(255,255,255,0.04); padding: 6px 8px; border-radius: 4px; }
+        .menu-level-2 { display: flex; align-items: center; justify-content: space-between; font-weight: 600; background: #3d84c6; padding: 6px 8px; border-radius: 4px; }
         .menu-level-3 a { padding-left: 14px; font-size: 13px; color: #ecf0f1; }
         .menu-list li a:hover { background-color: #57606f; }
         .menu-list li a.active { background-color: #3d84c6; font-weight: 600; }
@@ -92,6 +92,8 @@
         .tag-approved { background: #d4edda; color: #155724; }
         .tag-returned { background: #f8d7da; color: #721c24; }
         .td-number { text-align: right; font-variant-numeric: tabular-nums; }
+            .amount-positive { color: #155724; }
+            .amount-negative { color: #721c24; }
         .status-form { display: flex; align-items: center; gap: 4px; flex-wrap: nowrap; }
         .status-form select { padding: 3px 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px; min-width: 80px; }
         .status-form input[type=text] { padding: 3px 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px; width: 90px; }
@@ -341,7 +343,7 @@
                                 <td class="td-number">
                                     {% if item.amount_before_tax is not None %}{{ item.amount_before_tax|floatformat:2 }}{% else %}—{% endif %}
                                 </td>
-                                <td class="td-number" style="{% if item.change_amount_tax and item.change_amount_tax > 0 %}color:#155724{% elif item.change_amount_tax and item.change_amount_tax < 0 %}color:#721c24{% endif %}">
+                                <td class="td-number{% if item.change_amount_tax and item.change_amount_tax > 0 %} amount-positive{% elif item.change_amount_tax and item.change_amount_tax < 0 %} amount-negative{% endif %}">
                                     {% if item.change_amount_tax is not None %}{{ item.change_amount_tax|floatformat:2 }}{% else %}—{% endif %}
                                 </td>
                                 <td class="td-number">
