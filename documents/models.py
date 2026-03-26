@@ -239,6 +239,7 @@ class ProjectApproval(models.Model):
 # -------------------------
 
 class Tag(models.Model):
+    id = models.BigAutoField(primary_key=True)
     name = models.CharField("标签名", max_length=50, unique=True)
     created_at = models.DateTimeField("创建时间", auto_now_add=True)
 
@@ -252,6 +253,7 @@ class Tag(models.Model):
 
 
 class Article(models.Model):
+    id = models.BigAutoField(primary_key=True)
     TYPE_CHOICES = (("note", "学习笔记"), ("essay", "日常随笔"))
 
     article_type = models.CharField("类型", max_length=10, choices=TYPE_CHOICES)
