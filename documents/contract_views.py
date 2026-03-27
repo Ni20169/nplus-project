@@ -194,12 +194,19 @@ def contract_counterparty_view(request):
     permissions = _get_permissions(request.user)
 
     if request.method == "POST" and request.POST.get("form_type") == "create_counterparty":
+        credit_code = request.POST.get("credit_code", "").strip().upper()
+        if len(credit_code) != 18:
+            messages.error(request, "统一社会信用代码必须为18位")
+            return redirect("contract_counterparty_list")
+        if Counterparty.objects.filter(credit_code=credit_code).exists():
+            messages.error(request, "统一社会信用代码已存在，请确保唯一")
+            return redirect("contract_counterparty_list")
         try:
             with transaction.atomic():
                 Counterparty.objects.create(
                     party_name=request.POST.get("party_name", "").strip(),
                     party_type=request.POST.get("party_type", "").strip(),
-                    credit_code=request.POST.get("credit_code", "").strip().upper(),
+                    credit_code=credit_code,
                     contact_name=request.POST.get("contact_name", "").strip(),
                     contact_phone=request.POST.get("contact_phone", "").strip(),
                     status=request.POST.get("status", "ACTIVE").strip() or "ACTIVE",
