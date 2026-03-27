@@ -529,7 +529,8 @@ def import_counterparty_ledger(request):
             return redirect("contract_counterparty_list")
 
     created = updated = skipped = 0
-    for row in ws.iter_rows(min_row=2, values_only=True):
+    invalid_credit_code_rows = []
+    for row_no, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
         row_data = {
             field: str(row[idx] if idx < len(row) and row[idx] is not None else "").strip()
             for field, idx in idx_map.items()
@@ -538,6 +539,10 @@ def import_counterparty_ledger(request):
             skipped += 1
             continue
         code = row_data["credit_code"].upper()
+        if len(code) != 18:
+            invalid_credit_code_rows.append(row_no)
+            skipped += 1
+            continue
         defaults = {
             "party_name": row_data.get("party_name", ""),
             "party_type": row_data.get("party_type", "OTHER_VENDOR"),
@@ -560,7 +565,13 @@ def import_counterparty_ledger(request):
         Counterparty.objects.create(credit_code=code, created_by=request.user.username, updated_by=request.user.username, **defaults)
         created += 1
 
-    messages.success(request, f"\u5f80\u6765\u5355\u4f4d\u5bfc\u5165\u5b8c\u6210\uff1a\u65b0\u589e {created} \u6761\uff0c\u66f4\u65b0 {updated} \u6761\uff0c\u8df3\u8fc7 {skipped} \u6761")
+    messages.success(
+        request,
+        f"\u5f80\u6765\u5355\u4f4d\u5bfc\u5165\u5b8c\u6210\uff1a\u65b0\u589e {created} \u6761\uff0c\u66f4\u65b0 {updated} \u6761\uff0c\u8df3\u8fc7 {skipped} \u6761\uff0c\u5176\u4e2d\u7edf\u4e00\u793e\u4f1a\u4fe1\u7528\u4ee3\u780118\u4f4d\u957f\u5ea6\u4e0d\u5408\u6cd5 {len(invalid_credit_code_rows)} \u6761"
+    )
+    if invalid_credit_code_rows:
+        row_text = "\u3001".join(str(i) for i in invalid_credit_code_rows)
+        messages.error(request, f"\u7edf\u4e00\u793e\u4f1a\u4fe1\u7528\u4ee3\u780118\u4f4d\u957f\u5ea6\u4e0d\u5408\u6cd5\u884c\u53f7\uff1a\u7b2c {row_text} \u884c")
     return redirect("contract_counterparty_list")
 
 

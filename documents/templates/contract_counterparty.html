@@ -71,8 +71,7 @@
         .field label { display: block; font-size: 12px; color: #111; font-weight: 600; margin-bottom: 3px; }
         .required-star { color: #e74c3c; font-weight: 700; margin-right: 4px; }
         .form-grid input, .form-grid select { padding: 6px 8px; border: 1px solid #ddd; border-radius: 4px; width: 100%; font-size: 13px; font-family: inherit; }
-        .input-with-note { display: flex; align-items: center; gap: 8px; }
-        .input-note { color: #9aa0a6; font-size: 12px; white-space: nowrap; }
+        .input-note { color: #9aa0a6; font-size: 12px; margin-bottom: 4px; }
         .form-actions { margin-top: 12px; display: flex; gap: 8px; }
         .form-actions button { padding: 8px 14px; font-size: 13px; border-radius: 4px; min-width: 96px; border: none; cursor: pointer; color: #fff; }
         .import-section { display: flex; flex-wrap: wrap; gap: 16px; }
@@ -206,7 +205,7 @@
                             </div>
                         </div>
                         <div class="hint" style="margin-top:10px;padding:8px;background:#e3f2fd;border-radius:4px;color:#555;">
-                            Excel 列头（顺序不限）：<strong>单位名称</strong>（必填）、<strong>单位类型</strong>（必填，值：OWNER/SUPPLIER/SUBCONTRACTOR/SUPPLY_SUB/OTHER_VENDOR）、<strong>统一社会信用代码</strong>（必填）、联系人、联系电话、状态（ACTIVE/INACTIVE，默认ACTIVE）、备注
+                            Excel 列头（顺序不限）：<strong>单位名称</strong>（必填）、<strong>单位类型</strong>（必填，值：OWNER/SUPPLIER/SUBCONTRACTOR/SUPPLY_SUB/OTHER_VENDOR）、<strong>统一社会信用代码</strong>（必填，18位）、联系人、联系电话、状态（ACTIVE/INACTIVE，默认ACTIVE）、备注
                         </div>
                     </div>
                 </div>
@@ -233,11 +232,9 @@
                                     </select>
                                 </div>
                                 <div class="field">
+                                    <div class="input-note">无信用代码的，采用18位自编码，例如个人：GR000***、项目部：XMB000***</div>
                                     <label><span class="required-star">*</span>统一社会信用代码</label>
-                                    <div class="input-with-note">
-                                        <input type="text" name="credit_code" placeholder="18位统一社会信用代码" required style="text-transform:uppercase;" maxlength="18">
-                                        <span class="input-note">无信用代码的，采用18位自编码，例如个人：GR000***、项目部：XMB000***</span>
-                                    </div>
+                                    <input type="text" name="credit_code" placeholder="18位统一社会信用代码" required style="text-transform:uppercase;" maxlength="18">
                                 </div>
                                 <div class="field">
                                     <label>状态</label>
