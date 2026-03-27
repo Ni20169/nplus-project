@@ -72,6 +72,7 @@ def export_counterparty_template(request):
     ws_ref.append(["单位类型", "OWNER", "业主"])
     ws_ref.append(["单位类型", "SUPPLIER", "供应商"])
     ws_ref.append(["单位类型", "SUBCONTRACTOR", "分包商"])
+    ws_ref.append(["单位类型", "SUPPLY_SUB", "供应&分包商"])
     ws_ref.append(["单位类型", "OTHER_VENDOR", "其他外委单位"])
     ws_ref.append(["状态", "ACTIVE", "启用"])
     ws_ref.append(["状态", "INACTIVE", "停用"])

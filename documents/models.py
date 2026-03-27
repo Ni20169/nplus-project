@@ -44,6 +44,7 @@ PARTY_TYPE_CHOICES = (
     ("OWNER", "业主"),
     ("SUPPLIER", "供应商"),
     ("SUBCONTRACTOR", "分包商"),
+    ("SUPPLY_SUB", "供应&分包商"),
     ("OTHER_VENDOR", "其他外委单位"),
 )
 
