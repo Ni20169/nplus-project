@@ -5,9 +5,10 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Q, Sum, Count
+from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
-from openpyxl import load_workbook
+from openpyxl import Workbook, load_workbook
 
 from .models import (
     ADJUSTMENT_TYPE_CHOICES,
@@ -49,6 +50,114 @@ def _to_decimal(value, default="0"):
     if text == "":
         text = default
     return Decimal(text)
+
+
+@login_required
+def export_counterparty_template(request):
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "往来单位导入模板"
+    ws.append([
+        "单位名称",
+        "单位类型",
+        "统一社会信用代码",
+        "联系人",
+        "联系电话",
+        "状态",
+        "备注",
+    ])
+
+    ws_ref = wb.create_sheet(title="字典参考")
+    ws_ref.append(["字段", "可选值", "说明"])
+    ws_ref.append(["单位类型", "OWNER", "业主"])
+    ws_ref.append(["单位类型", "SUPPLIER", "供应商"])
+    ws_ref.append(["单位类型", "SUBCONTRACTOR", "分包商"])
+    ws_ref.append(["单位类型", "OTHER_VENDOR", "其他外委单位"])
+    ws_ref.append(["状态", "ACTIVE", "启用"])
+    ws_ref.append(["状态", "INACTIVE", "停用"])
+
+    ws.column_dimensions["A"].width = 30
+    ws.column_dimensions["B"].width = 18
+    ws.column_dimensions["C"].width = 26
+    ws.column_dimensions["D"].width = 16
+    ws.column_dimensions["E"].width = 16
+    ws.column_dimensions["F"].width = 12
+    ws.column_dimensions["G"].width = 30
+    ws_ref.column_dimensions["A"].width = 16
+    ws_ref.column_dimensions["B"].width = 20
+    ws_ref.column_dimensions["C"].width = 28
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = "attachment; filename=counterparty_import_template.xlsx"
+    wb.save(response)
+    return response
+
+
+@login_required
+def export_contract_template(request):
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "合同台账导入模板"
+    ws.append([
+        "项目主数据编码",
+        "合同CT码",
+        "合同名称",
+        "统一社会信用代码",
+        "合同编号",
+        "来源系统",
+        "合同方向",
+        "合同分类",
+        "合同年份",
+        "原始含税金额",
+        "原始不含税金额",
+        "原始税率",
+        "当前含税金额",
+        "当前不含税金额",
+        "当前税率",
+        "合同状态",
+        "备注",
+    ])
+
+    ws_ref = wb.create_sheet(title="字典参考")
+    ws_ref.append(["字段", "可选值", "说明"])
+    for value, label in SOURCE_SYSTEM_CHOICES:
+        ws_ref.append(["来源系统", value, label])
+    for value, label in CONTRACT_DIRECTION_CHOICES:
+        ws_ref.append(["合同方向", value, label])
+    for value, label in CONTRACT_CATEGORY_CHOICES:
+        ws_ref.append(["合同分类", value, label])
+    for value, label in CONTRACT_STATUS_CHOICES:
+        ws_ref.append(["合同状态", value, label])
+
+    ws.column_dimensions["A"].width = 18
+    ws.column_dimensions["B"].width = 18
+    ws.column_dimensions["C"].width = 30
+    ws.column_dimensions["D"].width = 24
+    ws.column_dimensions["E"].width = 20
+    ws.column_dimensions["F"].width = 16
+    ws.column_dimensions["G"].width = 16
+    ws.column_dimensions["H"].width = 16
+    ws.column_dimensions["I"].width = 12
+    ws.column_dimensions["J"].width = 16
+    ws.column_dimensions["K"].width = 16
+    ws.column_dimensions["L"].width = 12
+    ws.column_dimensions["M"].width = 16
+    ws.column_dimensions["N"].width = 16
+    ws.column_dimensions["O"].width = 12
+    ws.column_dimensions["P"].width = 14
+    ws.column_dimensions["Q"].width = 30
+    ws_ref.column_dimensions["A"].width = 16
+    ws_ref.column_dimensions["B"].width = 20
+    ws_ref.column_dimensions["C"].width = 28
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = "attachment; filename=contract_import_template.xlsx"
+    wb.save(response)
+    return response
 
 
 def _log_adjustment_action(adjustment, action_type, user, comment="", from_status="", to_status=""):

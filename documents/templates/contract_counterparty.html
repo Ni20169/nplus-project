@@ -177,6 +177,11 @@
                     <div class="panel-body">
                         <div class="import-section">
                             <div class="import-card">
+                                <h4>导入模板下载</h4>
+                                <a href="{% url 'export_counterparty_template' %}" class="btn-import" style="display:inline-block;padding:6px 14px;border-radius:4px;text-decoration:none;color:#fff;">下载 Excel 模板</a>
+                                <div class="hint">推荐先下载模板，按模板列头填写后再导入</div>
+                            </div>
+                            <div class="import-card">
                                 <h4>往来单位台账导入（仅新增）</h4>
                                 <form method="post" action="{% url 'import_counterparty_ledger' %}" enctype="multipart/form-data">
                                     {% csrf_token %}
