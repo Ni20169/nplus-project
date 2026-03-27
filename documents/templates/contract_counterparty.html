@@ -57,6 +57,7 @@
         .btn-add { background-color: #2ecc71; border-color: #2ecc71; color: #fff; font-weight: 600; }
         .btn-search { background-color: #3498db; border-color: #3498db; color: #fff; font-weight: 600; }
         .btn-import { background-color: #F25A4A; }
+        .btn-template { background-color: #00BDBD; border-color: #00BDBD; color: #fff; }
         .btn-cancel { background-color: #95a5a6; color: #fff; border: none; cursor: pointer; }
         .message-stack { margin: 8px 0 12px; display: grid; gap: 6px; flex-shrink: 0; }
         .message { padding: 8px 12px; border-radius: 4px; font-size: 13px; border: 1px solid transparent; }
@@ -178,7 +179,7 @@
                         <div class="import-section">
                             <div class="import-card">
                                 <h4>导入模板下载</h4>
-                                <a href="{% url 'export_counterparty_template' %}" class="btn-import" style="display:inline-block;padding:6px 14px;border-radius:4px;text-decoration:none;color:#fff;">下载 Excel 模板</a>
+                                <a href="{% url 'export_counterparty_template' %}" class="btn-template" style="display:inline-block;padding:6px 14px;border:1px solid;border-radius:4px;text-decoration:none;">下载 Excel 模板</a>
                                 <div class="hint">推荐先下载模板，按模板列头填写后再导入</div>
                             </div>
                             <div class="import-card">
