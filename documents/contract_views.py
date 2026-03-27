@@ -65,6 +65,14 @@ def export_counterparty_template(request):
         "联系电话",
         "状态",
         "备注",
+        "成立日期",
+        "所属省份",
+        "所属城市",
+        "企业类型",
+        "所属行业",
+        "曾用名",
+        "注册地址",
+        "经营范围",
     ])
 
     ws_ref = wb.create_sheet(title="字典参考")
@@ -76,6 +84,12 @@ def export_counterparty_template(request):
     ws_ref.append(["单位类型", "OTHER_VENDOR", "其他外委单位"])
     ws_ref.append(["状态", "ACTIVE", "启用"])
     ws_ref.append(["状态", "INACTIVE", "停用"])
+    
+    # 前段省份列表
+    province_dict = DictType.objects.filter(code="PROVINCE", is_active=True).first()
+    if province_dict:
+        for item in province_dict.items.filter(is_active=True).order_by("sort_order", "code")[:50]:
+            ws_ref.append(["所属省份", item.code, item.name])
 
     ws.column_dimensions["A"].width = 30
     ws.column_dimensions["B"].width = 18
@@ -84,6 +98,14 @@ def export_counterparty_template(request):
     ws.column_dimensions["E"].width = 16
     ws.column_dimensions["F"].width = 12
     ws.column_dimensions["G"].width = 30
+    ws.column_dimensions["H"].width = 14
+    ws.column_dimensions["I"].width = 14
+    ws.column_dimensions["J"].width = 14
+    ws.column_dimensions["K"].width = 14
+    ws.column_dimensions["L"].width = 14
+    ws.column_dimensions["M"].width = 14
+    ws.column_dimensions["N"].width = 30
+    ws.column_dimensions["O"].width = 30
     ws_ref.column_dimensions["A"].width = 16
     ws_ref.column_dimensions["B"].width = 20
     ws_ref.column_dimensions["C"].width = 28
@@ -192,6 +214,10 @@ def _apply_adjustment_to_contract(adjustment):
 @login_required
 def contract_counterparty_view(request):
     permissions = _get_permissions(request.user)
+    
+    # 获取省份字典
+    province_dict = DictType.objects.filter(code="PROVINCE", is_active=True).first()
+    province_items = province_dict.items.filter(is_active=True).order_by("sort_order", "code") if province_dict else []
 
     if request.method == "POST" and request.POST.get("form_type") == "create_counterparty":
         credit_code = request.POST.get("credit_code", "").strip().upper()
@@ -201,6 +227,16 @@ def contract_counterparty_view(request):
         if Counterparty.objects.filter(credit_code=credit_code).exists():
             messages.error(request, "统一社会信用代码已存在，请确保唯一")
             return redirect("contract_counterparty_list")
+        
+        established_date_str = request.POST.get("established_date", "").strip()
+        established_date = None
+        if established_date_str:
+            try:
+                from datetime import datetime
+                established_date = datetime.strptime(established_date_str, "%Y-%m-%d").date()
+            except ValueError:
+                pass
+        
         try:
             with transaction.atomic():
                 Counterparty.objects.create(
@@ -211,6 +247,14 @@ def contract_counterparty_view(request):
                     contact_phone=request.POST.get("contact_phone", "").strip(),
                     status=request.POST.get("status", "ACTIVE").strip() or "ACTIVE",
                     remark=request.POST.get("remark", "").strip(),
+                    established_date=established_date,
+                    province_code=request.POST.get("province_code", "").strip(),
+                    city=request.POST.get("city", "").strip(),
+                    enterprise_type=request.POST.get("enterprise_type", "").strip(),
+                    industry=request.POST.get("industry", "").strip(),
+                    former_name=request.POST.get("former_name", "").strip(),
+                    registration_address=request.POST.get("registration_address", "").strip(),
+                    business_scope=request.POST.get("business_scope", "").strip(),
                     created_by=request.user.username,
                     updated_by=request.user.username,
                 )
@@ -240,6 +284,7 @@ def contract_counterparty_view(request):
         "filters": filters,
         "permissions": permissions,
         "party_type_choices": PARTY_TYPE_CHOICES,
+        "province_items": list(province_items),
         "active_menu": "contract_counterparty",
         "total_count": qs.count(),
     }
@@ -517,6 +562,14 @@ def import_counterparty_ledger(request):
         "\u8054\u7cfb\u7535\u8bdd": "contact_phone",
         "\u72b6\u6001": "status",
         "\u5907\u6ce8": "remark",
+        "\u6210\u7acb\u65e5\u671f": "established_date",
+        "\u6240\u5c5e\u7701\u4efd": "province_code",
+        "\u6240\u5c5e\u57ce\u5e02": "city",
+        "\u4f01\u4e1a\u7c7b\u578b": "enterprise_type",
+        "\u6240\u5c5e\u884c\u4e1a": "industry",
+        "\u66fe\u7528\u540d": "former_name",
+        "\u6ce8\u518c\u5730\u5740": "registration_address",
+        "\u7ecf\u8425\u8303\u56f4": "business_scope",
     }
     idx_map = {}
     for idx, header in enumerate(headers):
@@ -543,6 +596,16 @@ def import_counterparty_ledger(request):
             invalid_credit_code_rows.append(row_no)
             skipped += 1
             continue
+        
+        # 解析成立日期
+        established_date = None
+        if row_data.get("established_date"):
+            try:
+                from datetime import datetime
+                established_date = datetime.strptime(row_data["established_date"], "%Y-%m-%d").date()
+            except ValueError:
+                pass
+        
         defaults = {
             "party_name": row_data.get("party_name", ""),
             "party_type": row_data.get("party_type", "OTHER_VENDOR"),
@@ -550,6 +613,14 @@ def import_counterparty_ledger(request):
             "contact_phone": row_data.get("contact_phone", ""),
             "status": row_data.get("status", "ACTIVE") or "ACTIVE",
             "remark": row_data.get("remark", ""),
+            "established_date": established_date,
+            "province_code": row_data.get("province_code", ""),
+            "city": row_data.get("city", ""),
+            "enterprise_type": row_data.get("enterprise_type", ""),
+            "industry": row_data.get("industry", ""),
+            "former_name": row_data.get("former_name", ""),
+            "registration_address": row_data.get("registration_address", ""),
+            "business_scope": row_data.get("business_scope", ""),
         }
         obj = Counterparty.objects.filter(credit_code=code).first()
         if obj and mode == "insert":
