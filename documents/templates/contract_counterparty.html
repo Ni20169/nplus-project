@@ -72,6 +72,8 @@
         .required-star { color: #e74c3c; font-weight: 700; margin-right: 4px; }
         .form-grid input, .form-grid select { padding: 6px 8px; border: 1px solid #ddd; border-radius: 4px; width: 100%; font-size: 13px; font-family: inherit; }
         .input-note { color: #9aa0a6; font-size: 12px; margin-bottom: 4px; }
+        .field-note-floating { position: relative; }
+        .field-note-floating .input-note { position: absolute; left: 0; top: -18px; margin: 0; white-space: normal; line-height: 1.2; }
         .form-actions { margin-top: 12px; display: flex; gap: 8px; }
         .form-actions button { padding: 8px 14px; font-size: 13px; border-radius: 4px; min-width: 96px; border: none; cursor: pointer; color: #fff; }
         .import-section { display: flex; flex-wrap: wrap; gap: 16px; }
@@ -231,7 +233,7 @@
                                         {% endfor %}
                                     </select>
                                 </div>
-                                <div class="field">
+                                <div class="field field-note-floating">
                                     <div class="input-note">无信用代码的，采用18位自编码，例如个人：GR000***、项目部：XMB000***</div>
                                     <label><span class="required-star">*</span>统一社会信用代码</label>
                                     <input type="text" name="credit_code" placeholder="18位统一社会信用代码" required style="text-transform:uppercase;" maxlength="18">
