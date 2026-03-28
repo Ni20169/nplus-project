@@ -97,6 +97,11 @@
         .status-form select { padding: 3px 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px; min-width: 80px; }
         .status-form input[type=text] { padding: 3px 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px; width: 90px; }
         .status-form button { padding: 3px 8px; background: #3498db; color: #fff; border: none; border-radius: 3px; font-size: 12px; cursor: pointer; white-space: nowrap; }
+        .pagination { display: flex; justify-content: center; gap: 8px; align-items: center; padding: 12px 8px; border-top: 1px solid #eee; flex-shrink: 0; flex-wrap: wrap; }
+        .pagination-btn, .pagination-link { display: inline-block; padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; color: #333; font-size: 13px; text-decoration: none; cursor: pointer; }
+        .pagination-btn:hover, .pagination-link:hover { background: #f0f0f0; border-color: #999; }
+        .pagination-disabled { display: inline-block; padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #f5f5f5; color: #ccc; font-size: 13px; }
+        .pagination-current { display: inline-block; padding: 6px 10px; color: #666; font-size: 13px; }
         @media (max-width: 1200px) { .form-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 900px) { .form-grid { grid-template-columns: repeat(2, 1fr); } .sidebar { display: none; } }
         /* 可搜索下拉 */
@@ -306,7 +311,7 @@
                 <!-- 数据列表 -->
                 <div class="data-table" id="dataTable">
                     <div class="table-meta">
-                        <span>共 <strong>{{ total_count }}</strong> 条记录{% if total_count > 500 %}，当前显示前 500 条{% endif %}</span>
+                        <span>共 <strong>{{ paginator.count }}</strong> 条记录，当前第 {{ page_obj.number }}/{{ paginator.num_pages }} 页</span>
                         <span>合同调整台账</span>
                     </div>
                     <div class="table-wrapper">
@@ -324,24 +329,10 @@
                                     <th>审批人</th>
                                     <th>创建时间</th>
                                     <th>创建人</th>
+                                    <th>更新时间</th>
+                                    <th>更新人</th>
                                     {% if permissions.can_approve_contract %}
                                     <th>操作</th>
-                                    {% endif %}
-                                </tr>
-                                <tr class="filter-row">
-                                    <th><input type="text" id="f_ct" placeholder="筛选CT码" oninput="filterTable()"></th>
-                                    <th><input type="text" id="f_no" placeholder="筛选单号" oninput="filterTable()"></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    {% if permissions.can_approve_contract %}
-                                    <th></th>
                                     {% endif %}
                                 </tr>
                             </thead>
@@ -377,6 +368,8 @@
                                 <td>{{ item.approver_name|default:"—" }}</td>
                                 <td>{{ item.created_at|date:"Y-m-d" }}</td>
                                 <td>{{ item.created_by|default:"—" }}</td>
+                                <td>{{ item.updated_at|date:"Y-m-d" }}</td>
+                                <td>{{ item.updated_by|default:"—" }}</td>
                                 {% if permissions.can_approve_contract %}
                                 <td>
                                     <form class="status-form" method="post">
@@ -397,11 +390,29 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="{% if permissions.can_approve_contract %}12{% else %}11{% endif %}" style="text-align:center;color:#999;padding:20px;">暂无数据，请新增合同调整记录</td>
+                                <td colspan="{% if permissions.can_approve_contract %}14{% else %}13{% endif %}" style="text-align:center;color:#999;padding:20px;">暂无数据，请新增合同调整记录</td>
                             </tr>
                             {% endfor %}
                             </tbody>
                         </table>
+                    </div>
+                    <!-- 分页控件 -->
+                    <div class="pagination">
+                        {% if page_obj.has_previous %}
+                            <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page=1" class="pagination-btn" title="首页">首页</a>
+                            <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}" class="pagination-btn" title="上一页">上一页</a>
+                        {% else %}
+                            <span class="pagination-disabled" title="首页">首页</span>
+                            <span class="pagination-disabled" title="上一页">上一页</span>
+                        {% endif %}
+                        <span class="pagination-current">{{ page_obj.number }} / {{ paginator.num_pages }}</span>
+                        {% if page_obj.has_next %}
+                            <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}" class="pagination-btn" title="下一页">下一页</a>
+                            <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ paginator.num_pages }}" class="pagination-btn" title="末页">末页</a>
+                        {% else %}
+                            <span class="pagination-disabled" title="下一页">下一页</span>
+                            <span class="pagination-disabled" title="末页">末页</span>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -501,17 +512,7 @@
             if (btn) btn.textContent = hidden ? '收起' : '展开';
         }
 
-        function filterTable() {
-            const fCt = (document.getElementById('f_ct').value || '').toLowerCase();
-            const fNo = (document.getElementById('f_no').value || '').toLowerCase();
-            document.querySelectorAll('#tableBody tr').forEach(row => {
-                const cells = row.querySelectorAll('td');
-                if (!cells.length) return;
-                const show = (!fCt || cells[0].textContent.toLowerCase().includes(fCt))
-                    && (!fNo || cells[1].textContent.toLowerCase().includes(fNo));
-                row.style.display = show ? '' : 'none';
-            });
-        }
+
 
         function updateTime() {
             const el = document.getElementById('systemTime');

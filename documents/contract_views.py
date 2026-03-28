@@ -536,10 +536,18 @@ def contract_counterparty_view(request):
         "province": request.GET.get("province", "").strip(),
         "party_name": request.GET.get("party_name", "").strip(),
     }
-    qs = _apply_counterparty_filters(Counterparty.objects.all(), filters, province_items).order_by("party_name")
+    qs = _apply_counterparty_filters(Counterparty.objects.all(), filters, province_items).order_by("-updated_at", "-id")
+    
+    # 标准化分页处理（完整的异常保护）
     paginator = Paginator(qs, 50)
-    page_number = request.GET.get("page") or 1
-    page_obj = paginator.get_page(page_number)
+    page_number = request.GET.get("page", 1)
+    try:
+        page_obj = paginator.page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+    
     counterparties = _decorate_counterparties(list(page_obj.object_list), province_name_map)
 
     query_params = request.GET.copy()
@@ -942,8 +950,21 @@ def contract_adjustment_view(request):
     if filters["adjustment_no"]:
         qs = qs.filter(adjustment_no__icontains=filters["adjustment_no"])
 
+    # 标准化分页处理（完整的异常保护）
+    ordered_qs = qs.order_by("-created_at", "-id")
+    paginator = Paginator(ordered_qs, 50)
+    page_number = request.GET.get("page", 1)
+    try:
+        page_obj = paginator.page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+    
     context = {
-        "adjustments": list(qs.order_by("-created_at")[:300]),
+        "page_obj": page_obj,
+        "paginator": paginator,
+        "adjustments": list(page_obj.object_list),
         "contracts": ContractMaster.objects.filter(is_deleted=False).order_by("-contract_ct_code"),
         "counterparties": Counterparty.objects.filter(status="ACTIVE").order_by("party_name"),
         "filters": filters,
