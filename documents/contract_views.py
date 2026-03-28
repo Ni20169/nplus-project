@@ -123,6 +123,11 @@ def _has_pending_approval(target_module, target_id, approval_type):
 
 
 def _submit_business_approval(request, approval_type, target_module, target_id, target_code, target_name, before_data=None, after_data=None, change_note=""):
+    # ProjectApproval.project_code/project_name are legacy fields with fixed lengths.
+    # Normalize values to avoid DB write errors when approving non-project modules.
+    safe_code = str(target_code or "")[:12]
+    safe_name = str(target_name or "")[:200]
+
     payload = {
         "target_module": target_module,
         "target_id": target_id,
@@ -133,8 +138,8 @@ def _submit_business_approval(request, approval_type, target_module, target_id, 
         payload.update(after_data)
 
     return ProjectApproval.objects.create(
-        project_code=target_code,
-        project_name=target_name,
+        project_code=safe_code,
+        project_name=safe_name,
         approval_type=approval_type,
         before_data=before_data,
         after_data=payload,
