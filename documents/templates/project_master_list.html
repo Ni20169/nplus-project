@@ -973,14 +973,11 @@
             color: #721c24;
         }
         
-        /* 分页样式 */
-        .pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding: 15px; background: #f9fafb; border-radius: 6px; }
-        .pagination-info { font-size: 14px; color: #666; }
-        .pagination-controls { display: flex; gap: 8px; align-items: center; }
-        .pagination-btn, .pagination-link { display: inline-block; padding: 6px 12px; border: 1px solid #d0d0d0; border-radius: 4px; background: #fff; color: #333; font-size: 13px; text-decoration: none; cursor: pointer; transition: all 0.2s; }
-        .pagination-btn:hover, .pagination-link:hover { background: #f0f0f0; border-color: #999; }
-        .pagination-current { display: inline-block; padding: 6px 12px; background: #4a90d9; color: #fff; border-radius: 4px; font-size: 13px; }
-        .pagination-pages { display: flex; gap: 4px; }
+        /* 分页样式（参考往来单位管理） */
+        .pagination { display: flex; justify-content: flex-end; gap: 8px; align-items: center; margin-top: 10px; font-size: 13px; }
+        .pagination a, .pagination span { padding: 6px 10px; border: 1px solid #d8dee8; border-radius: 4px; background: #fff; color: #333; text-decoration: none; }
+        .pagination .current { background: #3498db; color: #fff; border-color: #3498db; }
+        .pagination .disabled { color: #999; background: #f5f5f5; }
     </style>
 </head>
 <body data-show-update-panel="{% if show_update_panel %}true{% else %}false{% endif %}" data-show-search-form="{% if show_search_form %}true{% else %}false{% endif %}" data-show-approval-panel="{% if show_approval_panel %}true{% else %}false{% endif %}" data-is-query-result="{% if is_query_result %}true{% else %}false{% endif %}" data-can-create-project="{% if permissions.can_create_project %}true{% else %}false{% endif %}" data-can-query-project="{% if permissions.can_query_project %}true{% else %}false{% endif %}" data-can-update-project="{% if permissions.can_update_project %}true{% else %}false{% endif %}" data-can-view-project-list="{% if permissions.can_view_project_list %}true{% else %}false{% endif %}" data-can-approval-manage="{% if permissions.can_approval_manage %}true{% else %}false{% endif %}">
@@ -1478,37 +1475,23 @@
                     </div>
                     {% if search_page_obj.has_other_pages %}
                     <div class="pagination">
-                        <div class="pagination-info">
-                            第 {{ search_page_obj.number }} 页 / 共 {{ search_paginator.num_pages }} 页（共 {{ search_paginator.count }} 条记录）
-                        </div>
-                        <div class="pagination-controls">
-                            {% if search_page_obj.has_previous %}
-                                <a href="?search_page=1{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">首页</a>
-                                <a href="?search_page={{ search_page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">上一页</a>
-                            {% endif %}
-                            <div class="pagination-pages">
-                                {# 兼容 Django 模板的分页省略号逻辑 #}
-                                {% with total=search_paginator.num_pages current=search_page_obj.number %}
-                                    {% for num in search_paginator.page_range %}
-                                        {% if num <= 5 or num > total-5 or (num >= current-2 and num <= current+2) %}
-                                            {% if not forloop.first and num > 1 and prev_num and num != prev_num|add:1 %}
-                                                <span style="padding:6px 12px;">...</span>
-                                            {% endif %}
-                                            {% if num == current %}
-                                                <span class="pagination-current">{{ num }}</span>
-                                            {% else %}
-                                                <a href="?search_page={{ num }}{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-link">{{ num }}</a>
-                                            {% endif %}
-                                            {% with num as prev_num %}{% endwith %}
-                                        {% endif %}
-                                    {% endfor %}
-                                {% endwith %}
-                            </div>
-                            {% if search_page_obj.has_next %}
-                                <a href="?search_page={{ search_page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">下一页</a>
-                                <a href="?search_page={{ search_paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">末页</a>
-                            {% endif %}
-                        </div>
+                        {% if search_page_obj.has_previous %}
+                            <a href="?search_page=1{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">首页</a>
+                            <a href="?search_page={{ search_page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">上一页</a>
+                        {% else %}
+                            <span class="disabled">首页</span>
+                            <span class="disabled">上一页</span>
+                        {% endif %}
+
+                        <span class="current">第 {{ search_page_obj.number }} 页</span>
+
+                        {% if search_page_obj.has_next %}
+                            <a href="?search_page={{ search_page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">下一页</a>
+                            <a href="?search_page={{ search_paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">末页</a>
+                        {% else %}
+                            <span class="disabled">下一页</span>
+                            <span class="disabled">末页</span>
+                        {% endif %}
                     </div>
                     {% endif %}
                 </div>
