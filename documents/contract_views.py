@@ -114,6 +114,22 @@ def _to_decimal(value, default="0"):
     return Decimal(text)
 
 
+def _parse_excel_date(value):
+    if value in (None, ""):
+        return None
+    if isinstance(value, datetime):
+        return value.date()
+    text = str(value).strip()
+    if not text:
+        return None
+    for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%Y-%m-%d %H:%M:%S", "%Y/%m/%d %H:%M:%S"):
+        try:
+            return datetime.strptime(text, fmt).date()
+        except ValueError:
+            continue
+    return None
+
+
 def _serialize_counterparty(counterparty):
     data = model_to_dict(
         counterparty,
@@ -453,14 +469,20 @@ def export_contract_template(request):
     ws.title = "合同台账导入模板"
     ws.append([
         "项目主数据编码",
+        "对应执行层项目编码",
         "合同CT码",
         "合同名称",
         "统一社会信用代码",
         "合同编号",
         "来源系统",
+        "来源记录ID",
+        "来源合同编号",
         "合同方向",
         "合同分类",
         "合同年份",
+        "签订日期",
+        "生效日期",
+        "完结日期",
         "原始含税金额",
         "原始不含税金额",
         "原始税率",
@@ -483,22 +505,28 @@ def export_contract_template(request):
         ws_ref.append(["合同状态", value, label])
 
     ws.column_dimensions["A"].width = 18
-    ws.column_dimensions["B"].width = 18
-    ws.column_dimensions["C"].width = 30
-    ws.column_dimensions["D"].width = 24
-    ws.column_dimensions["E"].width = 20
-    ws.column_dimensions["F"].width = 16
+    ws.column_dimensions["B"].width = 20
+    ws.column_dimensions["C"].width = 18
+    ws.column_dimensions["D"].width = 30
+    ws.column_dimensions["E"].width = 24
+    ws.column_dimensions["F"].width = 20
     ws.column_dimensions["G"].width = 16
-    ws.column_dimensions["H"].width = 16
-    ws.column_dimensions["I"].width = 12
+    ws.column_dimensions["H"].width = 18
+    ws.column_dimensions["I"].width = 18
     ws.column_dimensions["J"].width = 16
     ws.column_dimensions["K"].width = 16
     ws.column_dimensions["L"].width = 12
-    ws.column_dimensions["M"].width = 16
-    ws.column_dimensions["N"].width = 16
-    ws.column_dimensions["O"].width = 12
-    ws.column_dimensions["P"].width = 14
-    ws.column_dimensions["Q"].width = 30
+    ws.column_dimensions["M"].width = 14
+    ws.column_dimensions["N"].width = 14
+    ws.column_dimensions["O"].width = 14
+    ws.column_dimensions["P"].width = 16
+    ws.column_dimensions["Q"].width = 16
+    ws.column_dimensions["R"].width = 12
+    ws.column_dimensions["S"].width = 16
+    ws.column_dimensions["T"].width = 16
+    ws.column_dimensions["U"].width = 12
+    ws.column_dimensions["V"].width = 14
+    ws.column_dimensions["W"].width = 30
     ws_ref.column_dimensions["A"].width = 16
     ws_ref.column_dimensions["B"].width = 20
     ws_ref.column_dimensions["C"].width = 28
@@ -1294,13 +1322,20 @@ def import_contract_ledger(request):
     headers = [str(c.value).strip() if c.value else "" for c in ws[1]]
     mapping = {
         "\u9879\u76ee\u4e3b\u6570\u636e\u7f16\u7801": "project_code",
+        "\u5bf9\u5e94\u6267\u884c\u5c42\u9879\u76ee\u7f16\u7801": "execution_project_code",
         "\u5408\u540cCT\u7801": "contract_ct_code",
         "\u5408\u540c\u540d\u79f0": "contract_name",
         "\u7edf\u4e00\u793e\u4f1a\u4fe1\u7528\u4ee3\u7801": "credit_code",
+        "\u5408\u540c\u7f16\u53f7": "contract_no",
         "\u6765\u6e90\u7cfb\u7edf": "source_system",
+        "\u6765\u6e90\u8bb0\u5f55ID": "source_record_id",
+        "\u6765\u6e90\u5408\u540c\u7f16\u53f7": "source_contract_no",
         "\u5408\u540c\u65b9\u5411": "contract_direction",
         "\u5408\u540c\u5206\u7c7b": "contract_category",
         "\u5408\u540c\u5e74\u4efd": "contract_year",
+        "\u7b7e\u8ba2\u65e5\u671f": "sign_date",
+        "\u751f\u6548\u65e5\u671f": "effective_date",
+        "\u5b8c\u7ed3\u65e5\u671f": "close_date",
         "\u539f\u59cb\u542b\u7a0e\u91d1\u989d": "original_amount_tax",
         "\u539f\u59cb\u4e0d\u542b\u7a0e\u91d1\u989d": "original_amount_notax",
         "\u539f\u59cb\u7a0e\u7387": "original_tax_rate",
@@ -1349,13 +1384,20 @@ def process_contract_import_file(file_path, mode, submitter):
     headers = [str(c.value).strip() if c.value else "" for c in ws[1]]
     mapping = {
         "\u9879\u76ee\u4e3b\u6570\u636e\u7f16\u7801": "project_code",
+        "\u5bf9\u5e94\u6267\u884c\u5c42\u9879\u76ee\u7f16\u7801": "execution_project_code",
         "\u5408\u540cCT\u7801": "contract_ct_code",
         "\u5408\u540c\u540d\u79f0": "contract_name",
         "\u7edf\u4e00\u793e\u4f1a\u4fe1\u7528\u4ee3\u7801": "credit_code",
+        "\u5408\u540c\u7f16\u53f7": "contract_no",
         "\u6765\u6e90\u7cfb\u7edf": "source_system",
+        "\u6765\u6e90\u8bb0\u5f55ID": "source_record_id",
+        "\u6765\u6e90\u5408\u540c\u7f16\u53f7": "source_contract_no",
         "\u5408\u540c\u65b9\u5411": "contract_direction",
         "\u5408\u540c\u5206\u7c7b": "contract_category",
         "\u5408\u540c\u5e74\u4efd": "contract_year",
+        "\u7b7e\u8ba2\u65e5\u671f": "sign_date",
+        "\u751f\u6548\u65e5\u671f": "effective_date",
+        "\u5b8c\u7ed3\u65e5\u671f": "close_date",
         "\u539f\u59cb\u542b\u7a0e\u91d1\u989d": "original_amount_tax",
         "\u539f\u59cb\u4e0d\u542b\u7a0e\u91d1\u989d": "original_amount_notax",
         "\u539f\u59cb\u7a0e\u7387": "original_tax_rate",
@@ -1382,6 +1424,15 @@ def process_contract_import_file(file_path, mode, submitter):
             continue
 
         project = ProjectMaster.objects.filter(project_code=row_data.get("project_code", ""), is_deleted=False).first()
+        execution_project_code = row_data.get("execution_project_code", "")
+        execution_project = None
+        if execution_project_code:
+            execution_project = ProjectMaster.objects.filter(
+                project_code=execution_project_code,
+                is_deleted=False,
+            ).first()
+        if not execution_project:
+            execution_project = project
         counterparty = Counterparty.objects.filter(credit_code=row_data.get("credit_code", "").upper()).first()
         if not project or not counterparty:
             skipped += 1
@@ -1390,17 +1441,26 @@ def process_contract_import_file(file_path, mode, submitter):
         try:
             defaults = {
                 "project": project,
+                "execution_project": execution_project,
                 "counterparty": counterparty,
                 "contract_name": row_data.get("contract_name", ""),
+                "contract_no": row_data.get("contract_no", ""),
                 "source_system": row_data.get("source_system", "MANUAL"),
+                "source_record_id": row_data.get("source_record_id", ""),
+                "source_contract_no": row_data.get("source_contract_no", ""),
                 "contract_direction": row_data.get("contract_direction", "NONE"),
                 "contract_category": row_data.get("contract_category", "OTHER"),
                 "undertaking_dept_code": "",
-                "undertaking_dept_name": dept_name_map.get(project.dept, project.dept or ""),
-                "execution_project": project,
-                "execution_project_code_snapshot": project.project_code,
-                "execution_project_name_snapshot": project.project_name,
+                "undertaking_dept_name": dept_name_map.get(
+                    (execution_project.dept if execution_project else project.dept),
+                    (execution_project.dept if execution_project else project.dept) or "",
+                ),
+                "execution_project_code_snapshot": execution_project.project_code if execution_project else "",
+                "execution_project_name_snapshot": execution_project.project_name if execution_project else "",
                 "contract_year": row_data.get("contract_year", ""),
+                "sign_date": _parse_excel_date(row_data.get("sign_date")),
+                "effective_date": _parse_excel_date(row_data.get("effective_date")),
+                "close_date": _parse_excel_date(row_data.get("close_date")),
                 "original_amount_tax": _to_decimal(row_data.get("original_amount_tax", "0")),
                 "original_amount_notax": _to_decimal(row_data.get("original_amount_notax", "0")),
                 "original_tax_rate": _to_decimal(row_data.get("original_tax_rate"), default="0") if row_data.get("original_tax_rate") else None,
