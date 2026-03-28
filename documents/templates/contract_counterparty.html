@@ -100,6 +100,7 @@
         table thead { position: sticky; top: 0; background: #fff; z-index: 10; box-shadow: 0 2px 2px rgba(0,0,0,0.1); }
         th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #eee; font-size: 13px; white-space: nowrap; }
         td { overflow: hidden; text-overflow: ellipsis; }
+        .operations-cell { overflow: visible; text-overflow: clip; white-space: nowrap; display: flex; gap: 8px; align-items: center; }
         .business-scope-cell { white-space: normal; line-height: 1.4; }
         th { background-color: #f3f6f9; font-weight: 600; }
         tr:hover { background-color: #f9fbfd; }
@@ -385,7 +386,7 @@
                                 <col style="width:140px"><!-- 备注 -->
                                 <col style="width:100px"><!-- 创建时间 -->
                                 <col style="width:80px"> <!-- 创建人 -->
-                                <col style="width:110px"><!-- 操作 -->
+                                <col style="width:150px"><!-- 操作 -->
                             </colgroup>
                             <thead>
                                 <tr>
@@ -441,7 +442,7 @@
                                 <td>{{ item.remark|default:"—" }}</td>
                                 <td>{{ item.created_at|date:"Y-m-d" }}</td>
                                 <td>{{ item.created_by|default:"—" }}</td>
-                                <td>
+                                <td class="operations-cell">
                                     <button
                                         type="button"
                                         class="btn-edit"
