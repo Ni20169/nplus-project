@@ -1066,7 +1066,13 @@
                                         <td>{{ approval.id }}</td>
                                         <td>{{ approval.after_data.target_code|default:approval.project_code|default:"-" }}</td>
                                         <td>
-                                            {{ approval.project_name|default:approval.before_data.project_name|default:"-" }}
+                                            {% if approval.project_name %}
+                                            {{ approval.project_name }}
+                                            {% elif approval.before_data and approval.before_data.project_name %}
+                                            {{ approval.before_data.project_name }}
+                                            {% else %}
+                                            -
+                                            {% endif %}
                                         </td>
                                         <td>{{ approval.get_approval_type_display }}</td>
                                         <td>{{ approval.submitter }}</td>
