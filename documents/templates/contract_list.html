@@ -243,7 +243,7 @@
                             </div>
                         </div>
                         <div class="hint" style="margin-top:10px;padding:8px;background:#e3f2fd;border-radius:4px;color:#555;">
-                            Excel 列头（顺序不限）：<strong>项目主数据编码</strong>（必填）、<strong>合同CT码</strong>（必填，格式 CT+12位数字）、<strong>合同名称</strong>（必填）、<strong>统一社会信用代码</strong>（必填）；可选字段包括：对应执行层项目编码、合同编号、来源系统、来源记录ID、来源合同编号、合同方向、合同分类、合同年份、签订日期、生效日期、完结日期、原始/当前金额与税率、合同状态、备注。
+                            Excel 列头（顺序不限）：必填字段——<strong>项目主数据编码</strong>、<strong>对应执行层项目编码</strong>、<strong>合同CT码</strong>（格式 CT+12位数字）、<strong>合同名称</strong>、<strong>统一社会信用代码</strong>、<strong>合同编号</strong>、<strong>签订日期</strong>、<strong>原始含税金额</strong>；可选字段：来源系统、合同方向、合同分类、原始不含税金额、原始税率、合同状态、备注。合同年份、当前金额由系统自动生成，无需填写。
                         </div>
                     </div>
                 </div>
@@ -305,8 +305,8 @@
                                     <input type="text" name="contract_name" placeholder="请输入合同全称" required>
                                 </div>
                                 <div class="field">
-                                    <label>合同编号</label>
-                                    <input type="text" name="contract_no" placeholder="内部/外部合同编号">
+                                    <label><span class="required-star">*</span>合同编号</label>
+                                    <input type="text" name="contract_no" placeholder="内部/外部合同编号" required>
                                 </div>
                                 <div class="field">
                                     <label>来源系统</label>
@@ -340,12 +340,8 @@
                                     <input type="text" id="undertaking_dept_name_display" placeholder="选择执行层项目后自动带出" readonly style="background-color:#f5f5f5;cursor:not-allowed;">
                                 </div>
                                 <div class="field">
-                                    <label>合同年份</label>
-                                    <input type="number" name="contract_year" placeholder="{{ 'now'|date:'Y' }}" min="2000" max="2099">
-                                </div>
-                                <div class="field">
-                                    <label>签约日期</label>
-                                    <input type="date" name="sign_date">
+                                    <label><span class="required-star">*</span>签约日期</label>
+                                    <input type="date" name="sign_date" required>
                                 </div>
                                 <div class="field">
                                     <label>含税原始金额（元）</label>

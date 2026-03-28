@@ -395,8 +395,6 @@ class ContractMaster(models.Model):
         on_delete=models.PROTECT,
         related_name="execution_contracts",
         verbose_name="对应执行层项目",
-        null=True,
-        blank=True,
     )
     counterparty = models.ForeignKey(
         Counterparty,
@@ -416,21 +414,17 @@ class ContractMaster(models.Model):
     )
 
     contract_name = models.CharField("合同名称", max_length=200)
-    contract_no = models.CharField("合同编号", max_length=100, blank=True)
+    contract_no = models.CharField("合同编号", max_length=100, unique=True)
     source_system = models.CharField("来源系统", max_length=20, choices=SOURCE_SYSTEM_CHOICES)
-    source_record_id = models.CharField("来源记录ID", max_length=100, blank=True)
-    source_contract_no = models.CharField("来源合同编号", max_length=100, blank=True)
 
     contract_direction = models.CharField("合同方向", max_length=20, choices=CONTRACT_DIRECTION_CHOICES)
     contract_category = models.CharField("合同分类", max_length=20, choices=CONTRACT_CATEGORY_CHOICES)
     undertaking_dept_code = models.CharField("承担部门编码", max_length=50, blank=True)
     undertaking_dept_name = models.CharField("承担部门名称", max_length=100, blank=True)
-    contract_year = models.CharField("合同年份", max_length=4, blank=True)
+    contract_year = models.PositiveSmallIntegerField("合同年份", null=True)
     counterparty_name_snapshot = models.CharField("签约方名称快照", max_length=200)
 
-    sign_date = models.DateField("签订日期", null=True, blank=True)
-    effective_date = models.DateField("生效日期", null=True, blank=True)
-    close_date = models.DateField("完结日期", null=True, blank=True)
+    sign_date = models.DateField("签订日期")
 
     original_amount_tax = models.DecimalField("原始含税金额", max_digits=18, decimal_places=2, default=Decimal("0.00"))
     original_amount_notax = models.DecimalField("原始不含税金额", max_digits=18, decimal_places=2, default=Decimal("0.00"))
@@ -442,6 +436,7 @@ class ContractMaster(models.Model):
 
     approved_adjustment_count = models.PositiveIntegerField("已通过调整次数", default=0)
     last_adjustment_date = models.DateField("最近一次已通过调整日期", null=True, blank=True)
+    last_adjustment_type = models.CharField("最近一次调整类型", max_length=20, blank=True)
 
     contract_status = models.CharField("合同状态", max_length=20, choices=CONTRACT_STATUS_CHOICES, default="SIGNED")
     remark = models.CharField("备注", max_length=500, blank=True)
@@ -470,7 +465,6 @@ class ContractMaster(models.Model):
             models.Index(fields=["project", "contract_category"], name="idx_contract_proj_cat"),
             models.Index(fields=["undertaking_dept_code", "contract_year"], name="idx_contract_dept_year"),
             models.Index(fields=["project", "contract_year"], name="idx_contract_proj_year"),
-            models.Index(fields=["source_system", "source_contract_no"], name="idx_contract_source_no"),
         ]
 
     def clean(self):
@@ -481,26 +475,24 @@ class ContractMaster(models.Model):
 
     def save(self, *args, **kwargs):
         self.project_code_snapshot = self.project.project_code
-        if self.execution_project_id:
-            self.execution_project_code_snapshot = self.execution_project.project_code
-            self.execution_project_name_snapshot = self.execution_project.project_name
-        else:
-            self.execution_project_code_snapshot = ""
-            self.execution_project_name_snapshot = ""
+        self.execution_project_code_snapshot = self.execution_project.project_code
+        self.execution_project_name_snapshot = self.execution_project.project_name
         self.counterparty_name_snapshot = self.counterparty.party_name
-        dept_source = self.execution_project if self.execution_project_id else self.project
-        dept_name = dept_source.dept or ""
-        if dept_source and dept_source.dept:
+        dept_name = self.execution_project.dept or ""
+        if self.execution_project.dept:
             dept_type = DictType.objects.filter(code="DEPT", is_active=True).prefetch_related("items").first()
             if dept_type:
                 dept_name = next(
-                    (item.name for item in dept_type.items.all() if item.code == dept_source.dept and item.is_active),
-                    dept_source.dept,
+                    (item.name for item in dept_type.items.all() if item.code == self.execution_project.dept and item.is_active),
+                    self.execution_project.dept,
                 )
         self.undertaking_dept_name = dept_name
         self.undertaking_dept_code = ""
-        if not self.contract_year and self.sign_date:
-            self.contract_year = str(self.sign_date.year)
+        self.contract_year = self.sign_date.year
+        if self._state.adding:
+            self.current_amount_tax = self.original_amount_tax
+            self.current_amount_notax = self.original_amount_notax
+            self.current_tax_rate = self.original_tax_rate
         super().save(*args, **kwargs)
 
     def __str__(self):

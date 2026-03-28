@@ -172,11 +172,9 @@ def _serialize_contract(contract):
             "contract_status",
             "remark",
             "sign_date",
-            "effective_date",
-            "close_date",
         ],
     )
-    for date_key in ["sign_date", "effective_date", "close_date"]:
+    for date_key in ["sign_date"]:
         if data.get(date_key):
             data[date_key] = data[date_key].strftime("%Y-%m-%d")
     data["project_id"] = data.pop("project", None)
@@ -475,20 +473,12 @@ def export_contract_template(request):
         "统一社会信用代码",
         "合同编号",
         "来源系统",
-        "来源记录ID",
-        "来源合同编号",
         "合同方向",
         "合同分类",
-        "合同年份",
         "签订日期",
-        "生效日期",
-        "完结日期",
         "原始含税金额",
         "原始不含税金额",
         "原始税率",
-        "当前含税金额",
-        "当前不含税金额",
-        "当前税率",
         "合同状态",
         "备注",
     ])
@@ -511,22 +501,14 @@ def export_contract_template(request):
     ws.column_dimensions["E"].width = 24
     ws.column_dimensions["F"].width = 20
     ws.column_dimensions["G"].width = 16
-    ws.column_dimensions["H"].width = 18
-    ws.column_dimensions["I"].width = 18
-    ws.column_dimensions["J"].width = 16
+    ws.column_dimensions["H"].width = 16
+    ws.column_dimensions["I"].width = 16
+    ws.column_dimensions["J"].width = 14
     ws.column_dimensions["K"].width = 16
-    ws.column_dimensions["L"].width = 12
-    ws.column_dimensions["M"].width = 14
+    ws.column_dimensions["L"].width = 16
+    ws.column_dimensions["M"].width = 12
     ws.column_dimensions["N"].width = 14
-    ws.column_dimensions["O"].width = 14
-    ws.column_dimensions["P"].width = 16
-    ws.column_dimensions["Q"].width = 16
-    ws.column_dimensions["R"].width = 12
-    ws.column_dimensions["S"].width = 16
-    ws.column_dimensions["T"].width = 16
-    ws.column_dimensions["U"].width = 12
-    ws.column_dimensions["V"].width = 14
-    ws.column_dimensions["W"].width = 30
+    ws.column_dimensions["O"].width = 30
     ws_ref.column_dimensions["A"].width = 16
     ws_ref.column_dimensions["B"].width = 20
     ws_ref.column_dimensions["C"].width = 28
@@ -560,6 +542,7 @@ def _apply_adjustment_to_contract(adjustment):
         contract.counterparty_name_snapshot = adjustment.after_counterparty_name
     contract.approved_adjustment_count = contract.approved_adjustment_count + 1
     contract.last_adjustment_date = adjustment.adjustment_date
+    contract.last_adjustment_type = adjustment.adjustment_type
     contract.save()
 
 
@@ -842,32 +825,17 @@ def contract_list_view(request):
                         contract_name=request.POST.get("contract_name", "").strip(),
                         contract_no=request.POST.get("contract_no", "").strip(),
                         source_system=request.POST.get("source_system", "").strip(),
-                        source_record_id=request.POST.get("source_record_id", "").strip(),
-                        source_contract_no=request.POST.get("source_contract_no", "").strip(),
                         contract_direction=request.POST.get("contract_direction", "").strip(),
                         contract_category=request.POST.get("contract_category", "").strip(),
-                        undertaking_dept_code="",
-                        undertaking_dept_name=dept_name_map.get(execution_project.dept, execution_project.dept or ""),
-                        contract_year=request.POST.get("contract_year", "").strip(),
                         sign_date=request.POST.get("sign_date") or None,
-                        effective_date=request.POST.get("effective_date") or None,
-                        close_date=request.POST.get("close_date") or None,
                         original_amount_tax=_to_decimal(request.POST.get("original_amount_tax", "0")),
                         original_amount_notax=_to_decimal(request.POST.get("original_amount_notax", "0")),
                         original_tax_rate=_to_decimal(request.POST.get("original_tax_rate"), default="0") if request.POST.get("original_tax_rate", "").strip() else None,
-                        current_amount_tax=_to_decimal(request.POST.get("current_amount_tax", "0")),
-                        current_amount_notax=_to_decimal(request.POST.get("current_amount_notax", "0")),
-                        current_tax_rate=_to_decimal(request.POST.get("current_tax_rate"), default="0") if request.POST.get("current_tax_rate", "").strip() else None,
                         contract_status=request.POST.get("contract_status", "SIGNED").strip() or "SIGNED",
                         remark=request.POST.get("remark", "").strip(),
                         created_by=request.user.username,
                         updated_by=request.user.username,
                     )
-                    if contract.current_amount_tax == Decimal("0") and contract.current_amount_notax == Decimal("0"):
-                        contract.current_amount_tax = contract.original_amount_tax
-                        contract.current_amount_notax = contract.original_amount_notax
-                        if not contract.current_tax_rate:
-                            contract.current_tax_rate = contract.original_tax_rate
                     contract.full_clean()
                     contract.save()
                 messages.success(request, "合同已新增")
@@ -953,7 +921,10 @@ def contract_list_view(request):
     if filters["undertaking_dept"]:
         qs = qs.filter(undertaking_dept_name__icontains=filters["undertaking_dept"])
     if filters["contract_year"]:
-        qs = qs.filter(contract_year__icontains=filters["contract_year"])
+        try:
+            qs = qs.filter(contract_year=int(filters["contract_year"]))
+        except (ValueError, TypeError):
+            pass
     if filters["counterparty_name"]:
         qs = qs.filter(counterparty_name_snapshot__icontains=filters["counterparty_name"])
 
@@ -1328,20 +1299,12 @@ def import_contract_ledger(request):
         "\u7edf\u4e00\u793e\u4f1a\u4fe1\u7528\u4ee3\u7801": "credit_code",
         "\u5408\u540c\u7f16\u53f7": "contract_no",
         "\u6765\u6e90\u7cfb\u7edf": "source_system",
-        "\u6765\u6e90\u8bb0\u5f55ID": "source_record_id",
-        "\u6765\u6e90\u5408\u540c\u7f16\u53f7": "source_contract_no",
         "\u5408\u540c\u65b9\u5411": "contract_direction",
         "\u5408\u540c\u5206\u7c7b": "contract_category",
-        "\u5408\u540c\u5e74\u4efd": "contract_year",
         "\u7b7e\u8ba2\u65e5\u671f": "sign_date",
-        "\u751f\u6548\u65e5\u671f": "effective_date",
-        "\u5b8c\u7ed3\u65e5\u671f": "close_date",
         "\u539f\u59cb\u542b\u7a0e\u91d1\u989d": "original_amount_tax",
         "\u539f\u59cb\u4e0d\u542b\u7a0e\u91d1\u989d": "original_amount_notax",
         "\u539f\u59cb\u7a0e\u7387": "original_tax_rate",
-        "\u5f53\u524d\u542b\u7a0e\u91d1\u989d": "current_amount_tax",
-        "\u5f53\u524d\u4e0d\u542b\u7a0e\u91d1\u989d": "current_amount_notax",
-        "\u5f53\u524d\u7a0e\u7387": "current_tax_rate",
         "\u5408\u540c\u72b6\u6001": "contract_status",
         "\u5907\u6ce8": "remark",
     }
@@ -1350,7 +1313,7 @@ def import_contract_ledger(request):
         if header in mapping:
             idx_map[mapping[header]] = idx
 
-    for field in ["project_code", "contract_ct_code", "contract_name", "credit_code", "source_system", "contract_direction", "contract_category"]:
+    for field in ["project_code", "execution_project_code", "contract_ct_code", "contract_name", "credit_code", "contract_no", "source_system", "contract_direction", "contract_category", "sign_date", "original_amount_tax"]:
         if field not in idx_map:
             messages.error(request, f"\u5408\u540c\u5bfc\u5165\u7f3a\u5c11\u5fc5\u8981\u5217\uff1a{field}")
             return redirect("contract_list")
@@ -1390,20 +1353,12 @@ def process_contract_import_file(file_path, mode, submitter):
         "\u7edf\u4e00\u793e\u4f1a\u4fe1\u7528\u4ee3\u7801": "credit_code",
         "\u5408\u540c\u7f16\u53f7": "contract_no",
         "\u6765\u6e90\u7cfb\u7edf": "source_system",
-        "\u6765\u6e90\u8bb0\u5f55ID": "source_record_id",
-        "\u6765\u6e90\u5408\u540c\u7f16\u53f7": "source_contract_no",
         "\u5408\u540c\u65b9\u5411": "contract_direction",
         "\u5408\u540c\u5206\u7c7b": "contract_category",
-        "\u5408\u540c\u5e74\u4efd": "contract_year",
         "\u7b7e\u8ba2\u65e5\u671f": "sign_date",
-        "\u751f\u6548\u65e5\u671f": "effective_date",
-        "\u5b8c\u7ed3\u65e5\u671f": "close_date",
         "\u539f\u59cb\u542b\u7a0e\u91d1\u989d": "original_amount_tax",
         "\u539f\u59cb\u4e0d\u542b\u7a0e\u91d1\u989d": "original_amount_notax",
         "\u539f\u59cb\u7a0e\u7387": "original_tax_rate",
-        "\u5f53\u524d\u542b\u7a0e\u91d1\u989d": "current_amount_tax",
-        "\u5f53\u524d\u4e0d\u542b\u7a0e\u91d1\u989d": "current_amount_notax",
-        "\u5f53\u524d\u7a0e\u7387": "current_tax_rate",
         "\u5408\u540c\u72b6\u6001": "contract_status",
         "\u5907\u6ce8": "remark",
     }
@@ -1446,27 +1401,12 @@ def process_contract_import_file(file_path, mode, submitter):
                 "contract_name": row_data.get("contract_name", ""),
                 "contract_no": row_data.get("contract_no", ""),
                 "source_system": row_data.get("source_system", "MANUAL"),
-                "source_record_id": row_data.get("source_record_id", ""),
-                "source_contract_no": row_data.get("source_contract_no", ""),
                 "contract_direction": row_data.get("contract_direction", "NONE"),
                 "contract_category": row_data.get("contract_category", "OTHER"),
-                "undertaking_dept_code": "",
-                "undertaking_dept_name": dept_name_map.get(
-                    (execution_project.dept if execution_project else project.dept),
-                    (execution_project.dept if execution_project else project.dept) or "",
-                ),
-                "execution_project_code_snapshot": execution_project.project_code if execution_project else "",
-                "execution_project_name_snapshot": execution_project.project_name if execution_project else "",
-                "contract_year": row_data.get("contract_year", ""),
-                "sign_date": _parse_excel_date(row_data.get("sign_date")),
-                "effective_date": _parse_excel_date(row_data.get("effective_date")),
-                "close_date": _parse_excel_date(row_data.get("close_date")),
+                "sign_date": sign_date,
                 "original_amount_tax": _to_decimal(row_data.get("original_amount_tax", "0")),
                 "original_amount_notax": _to_decimal(row_data.get("original_amount_notax", "0")),
                 "original_tax_rate": _to_decimal(row_data.get("original_tax_rate"), default="0") if row_data.get("original_tax_rate") else None,
-                "current_amount_tax": _to_decimal(row_data.get("current_amount_tax") or row_data.get("original_amount_tax", "0")),
-                "current_amount_notax": _to_decimal(row_data.get("current_amount_notax") or row_data.get("original_amount_notax", "0")),
-                "current_tax_rate": _to_decimal(row_data.get("current_tax_rate"), default="0") if row_data.get("current_tax_rate") else None,
                 "contract_status": row_data.get("contract_status", "SIGNED") or "SIGNED",
                 "remark": row_data.get("remark", ""),
             }
