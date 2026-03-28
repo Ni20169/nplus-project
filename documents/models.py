@@ -1,4 +1,5 @@
 from decimal import Decimal
+import uuid
 
 from django.db import models
 from django.core.validators import RegexValidator
@@ -274,7 +275,8 @@ class ProjectApproval(models.Model):
         ("rejected", "已拒绝"),
     )
 
-    project_code = models.CharField("项目编码", max_length=12)
+    approval_code = models.CharField("审批编码", max_length=24, unique=True, db_index=True, blank=True)
+    project_code = models.CharField("项目编码", max_length=12, blank=True, default="")
     project_name = models.CharField("项目名称", max_length=200, blank=True)
     approval_type = models.CharField("审批类型", max_length=10, choices=APPROVAL_TYPE_CHOICES)
     before_data = models.JSONField("修改前数据", null=True, blank=True)
@@ -293,8 +295,13 @@ class ProjectApproval(models.Model):
         verbose_name_plural = "项目审批"
         ordering = ["-submit_time"]
 
+    def save(self, *args, **kwargs):
+        if not self.approval_code:
+            self.approval_code = f"AP{uuid.uuid4().hex[:12].upper()}"
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"{self.project_code} - {self.get_approval_type_display()} - {self.get_status_display()}"
+        return f"{self.approval_code} - {self.get_approval_type_display()} - {self.get_status_display()}"
 
 
 # -------------------------

@@ -1049,7 +1049,7 @@
                                 <thead>
                                     <tr>
                                         <th>审批单号</th>
-                                        <th>项目编码</th>
+                                        <th>业务编码</th>
                                         <th>项目名称</th>
                                         <th>审批类型</th>
                                         <th>提交人</th>
@@ -1064,7 +1064,7 @@
                                     {% for approval in pending_approvals %}
                                     <tr>
                                         <td>{{ approval.id }}</td>
-                                        <td>{{ approval.project_code }}</td>
+                                        <td>{{ approval.after_data.target_code|default:approval.project_code|default:"-" }}</td>
                                         <td>
                                             {{ approval.project_name|default:approval.before_data.project_name|default:"-" }}
                                         </td>
@@ -1118,7 +1118,7 @@
                                 <thead>
                                     <tr>
                                         <th>审批单号</th>
-                                        <th>项目编码</th>
+                                        <th>业务编码</th>
                                         <th>审批类型</th>
                                         <th>提交人</th>
                                         <th>审批结果</th>
@@ -1131,7 +1131,7 @@
                                     {% for approval in processed_approvals %}
                                     <tr>
                                         <td>{{ approval.id }}</td>
-                                        <td>{{ approval.project_code }}</td>
+                                        <td>{{ approval.after_data.target_code|default:approval.project_code|default:"-" }}</td>
                                         <td>{{ approval.get_approval_type_display }}</td>
                                         <td>{{ approval.submitter }}</td>
                                         <td>
