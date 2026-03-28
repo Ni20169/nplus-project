@@ -329,7 +329,7 @@
                 </div>
 
                 <!-- 查询筛选 -->
-                <div class="panel hidden" id="filterPanel">
+                <div class="panel" id="filterPanel">
                     <h3>查询筛选 <span class="collapse-btn" onclick="togglePanelBody('filterPanel')">收起</span></h3>
                     <div class="panel-body">
                         <form method="get">
@@ -348,8 +348,8 @@
                                     </select>
                                 </div>
                                 <div class="field">
-                                    <label>所属城市</label>
-                                    <input type="text" name="city" value="{{ filters.city }}" placeholder="关键词搜索">
+                                    <label>单位名称</label>
+                                    <input type="text" name="party_name" value="{{ filters.party_name }}" placeholder="输入要查找的单位名称">
                                 </div>
                             </div>
                             <div class="form-actions">
@@ -443,19 +443,7 @@
                                 <td>{{ item.created_at|date:"Y-m-d" }}</td>
                                 <td>{{ item.created_by|default:"—" }}</td>
                                 <td class="operations-cell">
-                                    <button
-                                        type="button"
-                                        class="btn-edit"
-                                        data-id="{{ item.id }}"
-                                        data-name="{{ item.party_name|escapejs }}"
-                                        data-type="{{ item.party_type|escapejs }}"
-                                        data-status="{{ item.status|escapejs }}"
-                                        data-contact-name="{{ item.contact_name|default_if_none:''|escapejs }}"
-                                        data-contact-phone="{{ item.contact_phone|default_if_none:''|escapejs }}"
-                                        data-remark="{{ item.remark|default_if_none:''|escapejs }}"
-                                        onclick="submitCounterpartyUpdate(this)">
-                                        修改
-                                    </button>
+                                    <a href="{% url 'contract_counterparty_edit' item.id %}" class="btn-edit">修改</a>
                                     <button
                                         type="button"
                                         class="btn-delete"

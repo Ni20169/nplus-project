@@ -1349,6 +1349,14 @@ def approve_action(request, approval_id):
                             "contact_phone",
                             "status",
                             "remark",
+                            "established_date",
+                            "province_code",
+                            "city",
+                            "enterprise_type",
+                            "industry",
+                            "former_name",
+                            "registration_address",
+                            "business_scope",
                         ]
                         for key in editable_fields:
                             if key in approval_after:

@@ -138,8 +138,8 @@ def _apply_counterparty_filters(queryset, filters, province_items):
     if filters["province"]:
         queryset = queryset.filter(province_code=filters["province"])
 
-    if filters["city"]:
-        queryset = queryset.filter(city__icontains=filters["city"])
+    if filters.get("party_name"):
+        queryset = queryset.filter(party_name__icontains=filters["party_name"])
 
     return queryset
 
@@ -534,7 +534,7 @@ def contract_counterparty_view(request):
     filters = {
         "keyword": request.GET.get("keyword", "").strip(),
         "province": request.GET.get("province", "").strip(),
-        "city": request.GET.get("city", "").strip(),
+        "party_name": request.GET.get("party_name", "").strip(),
     }
     qs = _apply_counterparty_filters(Counterparty.objects.all(), filters, province_items).order_by("party_name")
     paginator = Paginator(qs, 50)
@@ -547,7 +547,7 @@ def contract_counterparty_view(request):
     export_query_string = urlencode({
         "keyword": filters["keyword"],
         "province": filters["province"],
-        "city": filters["city"],
+        "party_name": filters["party_name"],
     })
 
     context = {
@@ -565,6 +565,74 @@ def contract_counterparty_view(request):
         "total_count": qs.count(),
     }
     return render(request, "contract_counterparty.html", context)
+
+
+@login_required
+def contract_counterparty_edit(request, counterparty_id):
+    permissions = _get_permissions(request.user)
+    if not permissions.get("can_manage_counterparty"):
+        from .views import _redirect_no_permission
+        return _redirect_no_permission(request)
+
+    counterparty = get_object_or_404(Counterparty, id=counterparty_id)
+    province_items, province_name_map = _get_counterparty_province_data()
+    
+    # 添加province_name到counterparty
+    counterparty.province_name = province_name_map.get(counterparty.province_code, counterparty.province_code or "")
+    
+    if request.method == "POST":
+        form_type = request.POST.get("form_type", "").strip()
+        
+        if form_type == "update_counterparty":
+            # 检查是否有待审批的修改
+            existing = _has_pending_approval("counterparty", counterparty.id, "update")
+            if existing:
+                messages.warning(request, f"该往来单位已有待审批修改申请，审批单号：{existing.id}")
+                return redirect("contract_counterparty_edit", counterparty_id=counterparty_id)
+            
+            contact_phone = request.POST.get("contact_phone", counterparty.contact_phone).strip()[:255]
+            
+            after_data = {
+                "party_name": request.POST.get("party_name", counterparty.party_name).strip(),
+                "party_type": request.POST.get("party_type", counterparty.party_type).strip(),
+                "contact_name": request.POST.get("contact_name", counterparty.contact_name).strip(),
+                "contact_phone": contact_phone,
+                "status": request.POST.get("status", counterparty.status).strip(),
+                "remark": request.POST.get("remark", counterparty.remark).strip(),
+                "established_date": request.POST.get("established_date", "").strip(),
+                "province_code": request.POST.get("province_code", counterparty.province_code).strip(),
+                "city": request.POST.get("city", counterparty.city).strip(),
+                "enterprise_type": request.POST.get("enterprise_type", counterparty.enterprise_type).strip(),
+                "industry": request.POST.get("industry", counterparty.industry).strip(),
+                "former_name": request.POST.get("former_name", counterparty.former_name).strip(),
+                "registration_address": request.POST.get("registration_address", counterparty.registration_address).strip(),
+                "business_scope": request.POST.get("business_scope", counterparty.business_scope).strip(),
+            }
+            
+            approval = _submit_business_approval(
+                request,
+                approval_type="update",
+                target_module="counterparty",
+                target_id=counterparty.id,
+                target_code=counterparty.credit_code,
+                target_name=counterparty.party_name,
+                before_data=_serialize_counterparty(counterparty),
+                after_data=after_data,
+                change_note=request.POST.get("change_note", "").strip() or "往来单位修改申请",
+            )
+            messages.success(request, f"往来单位修改申请已提交，等待审批。审批单号：{approval.id}")
+            return redirect("contract_counterparty_list")
+    
+    # 构建party_type_display
+    party_type_lookup = {value: label for value, label in PARTY_TYPE_CHOICES}
+    counterparty.party_type_display = party_type_lookup.get(counterparty.party_type, counterparty.party_type)
+    
+    context = {
+        "counterparty": counterparty,
+        "province_items": province_items,
+        "party_type_choices": PARTY_TYPE_CHOICES,
+    }
+    return render(request, "contract_counterparty_edit.html", context)
 
 
 # ---------------------------------------------------------------------------
