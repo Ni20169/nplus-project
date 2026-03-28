@@ -351,7 +351,7 @@ class Counterparty(models.Model):
     party_type = models.CharField("单位类型", max_length=20, choices=PARTY_TYPE_CHOICES)
     credit_code = models.CharField("统一社会信用代码", max_length=18, unique=True)
     contact_name = models.CharField("联系人", max_length=50, blank=True)
-    contact_phone = models.CharField("联系电话", max_length=255, blank=True)
+    contact_phone = models.CharField("联系电话", max_length=510, blank=True)
     status = models.CharField("状态", max_length=20, default="ACTIVE")
     remark = models.CharField("备注", max_length=500, blank=True)
     established_date = models.DateField("成立日期", null=True, blank=True)
