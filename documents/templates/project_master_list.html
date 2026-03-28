@@ -808,6 +808,20 @@
             margin: 6px 4px 10px;
         }
 
+        .search-result-table .table-wrapper {
+            overflow-x: auto;
+            overflow-y: auto;
+        }
+
+        .search-result-table table {
+            min-width: 1800px;
+        }
+
+        .search-result-table th,
+        .search-result-table td {
+            white-space: nowrap;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -970,13 +984,13 @@
                             <li><a href="#" onclick="showAddForm()">新增项目</a></li>
                             {% endif %}
                             {% if permissions.can_query_project %}
-                            <li><a href="#" onclick="showSearchForm()">查询项目</a></li>
+                            <li><a href="#" onclick="showSearchForm(); return false;">查询项目</a></li>
                             {% endif %}
                             {% if permissions.can_update_project %}
                             <li><a href="#" onclick="showUpdatePanel()">信息更新</a></li>
                             {% endif %}
                             {% if permissions.can_view_project_list %}
-                            <li><a href="#" onclick="refreshList()">项目列表</a></li>
+                            <li><a href="#" onclick="refreshList(); return false;">项目列表</a></li>
                             {% endif %}
                         </ul>
                     </li>
@@ -1014,13 +1028,13 @@
                     <button class="btn-add" onclick="showAddForm()">新增项目</button>
                     {% endif %}
                     {% if permissions.can_query_project %}
-                    <button class="btn-search" onclick="showSearchForm()">查询项目</button>
+                    <button class="btn-search" type="button" onclick="showSearchForm()">查询项目</button>
                     {% endif %}
                     {% if permissions.can_update_project %}
                     <button class="btn-update" onclick="showUpdatePanel()">信息更新</button>
                     {% endif %}
                     {% if permissions.can_view_project_list %}
-                    <button class="btn-refresh" onclick="refreshList()">项目列表</button>
+                    <button class="btn-refresh" type="button" onclick="refreshList()">项目列表</button>
                     {% endif %}
                     {% if permissions.can_create_project %}
                     <a class="btn-export" href="{% url 'export_project_template' %}">导出 Excel 模板</a>
@@ -1359,13 +1373,13 @@
 
                 <!-- 查询结果表格（嵌入查询项目页签） -->
                 {% if is_query_result and search_projects is not None %}
-                <div class="data-table" id="searchResultTable">
+                <div class="data-table search-result-table" id="searchResultTable">
                     <div class="table-meta">
                         <div>当前匹配：<span id="matchCount">{{ matched_count }}</span> 条</div>
                         <div>总记录：<span id="totalCount">{{ total_records }}</span> 条</div>
                     </div>
-                    <div class="table-wrapper" style="overflow-x: auto;">
-                        <table style="min-width: 1400px;">
+                    <div class="table-wrapper">
+                        <table>
                             <thead>
                                 <tr>
                                     <th class="sticky-col col-1">项目编码</th>
@@ -1429,34 +1443,33 @@
                             </tbody>
                         </table>
 
-                        <!-- 查询结果分页控件 -->
-                        {% if search_page_obj.has_other_pages %}
-                        <div class="pagination">
-                            <div class="pagination-info">
-                                第 {{ search_page_obj.number }} 页 / 共 {{ search_paginator.num_pages }} 页（共 {{ search_paginator.count }} 条记录）
-                            </div>
-                            <div class="pagination-controls">
-                                {% if search_page_obj.has_previous %}
-                                    <a href="?search_page=1{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">首页</a>
-                                    <a href="?search_page={{ search_page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">上一页</a>
-                                {% endif %}
-                                <div class="pagination-pages">
-                                    {% for num in search_paginator.page_range %}
-                                        {% if search_page_obj.number == num %}
-                                            <span class="pagination-current">{{ num }}</span>
-                                        {% else %}
-                                            <a href="?search_page={{ num }}{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-link">{{ num }}</a>
-                                        {% endif %}
-                                    {% endfor %}
-                                </div>
-                                {% if search_page_obj.has_next %}
-                                    <a href="?search_page={{ search_page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">下一页</a>
-                                    <a href="?search_page={{ search_paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">末页</a>
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% endif %}
                     </div>
+                    {% if search_page_obj.has_other_pages %}
+                    <div class="pagination">
+                        <div class="pagination-info">
+                            第 {{ search_page_obj.number }} 页 / 共 {{ search_paginator.num_pages }} 页（共 {{ search_paginator.count }} 条记录）
+                        </div>
+                        <div class="pagination-controls">
+                            {% if search_page_obj.has_previous %}
+                                <a href="?search_page=1{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">首页</a>
+                                <a href="?search_page={{ search_page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">上一页</a>
+                            {% endif %}
+                            <div class="pagination-pages">
+                                {% for num in search_paginator.page_range %}
+                                    {% if search_page_obj.number == num %}
+                                        <span class="pagination-current">{{ num }}</span>
+                                    {% else %}
+                                        <a href="?search_page={{ num }}{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-link">{{ num }}</a>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            {% if search_page_obj.has_next %}
+                                <a href="?search_page={{ search_page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">下一页</a>
+                                <a href="?search_page={{ search_paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">末页</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
                 {% endif %}
 
@@ -2057,26 +2070,7 @@
                 alert('无权限');
                 return;
             }
-            try {
-                setDisplay('searchForm', 'block');
-                setDisplay('addForm', 'none');
-                setDisplay('updatePanel', 'none');
-                setDisplay('approvalPanel', 'none');
-                setDisplay('listFilterPanel', 'none');
-                setTableDisplay('none');
-                setSearchResultDisplay('none');
-                clearProjectSearchFilters();
-                const searchForm = document.getElementById('searchForm');
-                if (searchForm) {
-                    searchForm.classList.remove('collapsed');
-                }
-                const toggleBtn = document.getElementById('toggleSearchFields');
-                if (toggleBtn) {
-                    toggleBtn.textContent = '收起';
-                }
-            } catch (error) {
-                console.error('Error in showSearchForm:', error);
-            }
+            window.location.href = '{% url "project_master_list" %}?show_search=1';
         }
 
         function clearProjectSearchFilters() {
@@ -2199,17 +2193,7 @@
                 alert('无权限');
                 return;
             }
-            try {
-                setDisplay('addForm', 'none');
-                setDisplay('searchForm', 'none');
-                setDisplay('updatePanel', 'none');
-                setDisplay('approvalPanel', 'none');
-                setDisplay('listFilterPanel', 'none');
-                setTableDisplay('block');
-                setSearchResultDisplay('none');
-            } catch (error) {
-                console.error('Error in refreshList:', error);
-            }
+            window.location.href = '{% url "project_master_list" %}';
         }
 
         document.addEventListener('DOMContentLoaded', function() {
