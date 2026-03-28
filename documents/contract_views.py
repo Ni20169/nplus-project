@@ -481,6 +481,9 @@ def export_contract_template(request):
         "原始税率",
         "合同状态",
         "备注",
+        "调整后含税金额",
+        "调整后不含税金额",
+        "调整后税率",
     ])
 
     ws_ref = wb.create_sheet(title="字典参考")
@@ -509,6 +512,9 @@ def export_contract_template(request):
     ws.column_dimensions["M"].width = 12
     ws.column_dimensions["N"].width = 14
     ws.column_dimensions["O"].width = 30
+    ws.column_dimensions["P"].width = 16
+    ws.column_dimensions["Q"].width = 16
+    ws.column_dimensions["R"].width = 12
     ws_ref.column_dimensions["A"].width = 16
     ws_ref.column_dimensions["B"].width = 20
     ws_ref.column_dimensions["C"].width = 28
@@ -517,6 +523,135 @@ def export_contract_template(request):
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
     response["Content-Disposition"] = "attachment; filename=contract_import_template.xlsx"
+    wb.save(response)
+    return response
+
+
+@login_required
+def export_contract_list(request):
+    permissions = _get_permissions(request.user)
+    if not permissions.get("can_view_contract_ledger"):
+        from .views import _redirect_no_permission
+        return _redirect_no_permission(request)
+
+    filters = {
+        "project_code": request.GET.get("project_code", "").strip(),
+        "contract_ct_code": request.GET.get("contract_ct_code", "").strip(),
+        "contract_name": request.GET.get("contract_name", "").strip(),
+        "source_system": request.GET.get("source_system", "").strip(),
+        "contract_direction": request.GET.get("contract_direction", "").strip(),
+        "contract_category": request.GET.get("contract_category", "").strip(),
+        "contract_status": request.GET.get("contract_status", "").strip(),
+        "undertaking_dept": request.GET.get("undertaking_dept", "").strip(),
+        "contract_year": request.GET.get("contract_year", "").strip(),
+        "counterparty_name": request.GET.get("counterparty_name", "").strip(),
+    }
+    qs = ContractMaster.objects.filter(is_deleted=False).select_related("project", "execution_project", "counterparty")
+    if filters["project_code"]:
+        qs = qs.filter(project_code_snapshot__icontains=filters["project_code"])
+    if filters["contract_ct_code"]:
+        qs = qs.filter(contract_ct_code__icontains=filters["contract_ct_code"])
+    if filters["contract_name"]:
+        qs = qs.filter(contract_name__icontains=filters["contract_name"])
+    if filters["source_system"]:
+        qs = qs.filter(source_system=filters["source_system"])
+    if filters["contract_direction"]:
+        qs = qs.filter(contract_direction=filters["contract_direction"])
+    if filters["contract_category"]:
+        qs = qs.filter(contract_category=filters["contract_category"])
+    if filters["contract_status"]:
+        qs = qs.filter(contract_status=filters["contract_status"])
+    if filters["undertaking_dept"]:
+        qs = qs.filter(undertaking_dept_name__icontains=filters["undertaking_dept"])
+    if filters["contract_year"]:
+        try:
+            qs = qs.filter(contract_year=int(filters["contract_year"]))
+        except (ValueError, TypeError):
+            pass
+    if filters["counterparty_name"]:
+        qs = qs.filter(counterparty_name_snapshot__icontains=filters["counterparty_name"])
+
+    contracts = list(qs.order_by("-created_at"))
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "合同台账"
+    headers = [
+        "合同CT码",
+        "合同名称",
+        "合同编号",
+        "项目主数据编码",
+        "对应执行层项目编码",
+        "对应执行层项目名称",
+        "签约相对方",
+        "来源系统",
+        "合同方向",
+        "合同分类",
+        "签订日期",
+        "承担部门",
+        "合同年份",
+        "原始含税金额",
+        "原始不含税金额",
+        "原始税率",
+        "调整后含税金额",
+        "调整后不含税金额",
+        "调整后税率",
+        "调整次数",
+        "最近调整日期",
+        "合同状态",
+        "备注",
+        "创建时间",
+        "创建人",
+        "更新时间",
+        "更新人",
+    ]
+    ws.append(headers)
+    source_system_map = dict(SOURCE_SYSTEM_CHOICES)
+    direction_map = dict(CONTRACT_DIRECTION_CHOICES)
+    category_map = dict(CONTRACT_CATEGORY_CHOICES)
+    status_map = dict(CONTRACT_STATUS_CHOICES)
+    for c in contracts:
+        ws.append([
+            c.contract_ct_code,
+            c.contract_name,
+            c.contract_no,
+            c.project_code_snapshot,
+            c.execution_project_code_snapshot,
+            c.execution_project_name_snapshot,
+            c.counterparty_name_snapshot,
+            source_system_map.get(c.source_system, c.source_system),
+            direction_map.get(c.contract_direction, c.contract_direction),
+            category_map.get(c.contract_category, c.contract_category),
+            c.sign_date.strftime("%Y-%m-%d") if c.sign_date else "",
+            c.undertaking_dept_name,
+            c.contract_year,
+            float(c.original_amount_tax) if c.original_amount_tax is not None else "",
+            float(c.original_amount_notax) if c.original_amount_notax is not None else "",
+            float(c.original_tax_rate) if c.original_tax_rate is not None else "",
+            float(c.current_amount_tax) if c.current_amount_tax is not None else "",
+            float(c.current_amount_notax) if c.current_amount_notax is not None else "",
+            float(c.current_tax_rate) if c.current_tax_rate is not None else "",
+            c.approved_adjustment_count,
+            c.last_adjustment_date.strftime("%Y-%m-%d") if c.last_adjustment_date else "",
+            status_map.get(c.contract_status, c.contract_status),
+            c.remark,
+            c.created_at.strftime("%Y-%m-%d") if c.created_at else "",
+            c.created_by,
+            c.updated_at.strftime("%Y-%m-%d") if c.updated_at else "",
+            c.updated_by,
+        ])
+
+    col_widths = [16, 30, 20, 18, 20, 30, 20, 14, 14, 14, 12, 18, 10,
+                  16, 16, 12, 16, 16, 12, 10, 14, 12, 24, 12, 12, 12, 12]
+    for i, width in enumerate(col_widths, start=1):
+        from openpyxl.utils import get_column_letter
+        ws.column_dimensions[get_column_letter(i)].width = width
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    from urllib.parse import quote
+    response["Content-Disposition"] = f"attachment; filename*=UTF-8''{quote('合同台账导出.xlsx')}"
     wb.save(response)
     return response
 
@@ -1307,13 +1442,16 @@ def import_contract_ledger(request):
         "\u539f\u59cb\u7a0e\u7387": "original_tax_rate",
         "\u5408\u540c\u72b6\u6001": "contract_status",
         "\u5907\u6ce8": "remark",
+        "\u8c03\u6574\u540e\u542b\u7a0e\u91d1\u989d": "current_amount_tax",
+        "\u8c03\u6574\u540e\u4e0d\u542b\u7a0e\u91d1\u989d": "current_amount_notax",
+        "\u8c03\u6574\u540e\u7a0e\u7387": "current_tax_rate",
     }
     idx_map = {}
     for idx, header in enumerate(headers):
         if header in mapping:
             idx_map[mapping[header]] = idx
 
-    for field in ["project_code", "execution_project_code", "contract_ct_code", "contract_name", "credit_code", "contract_no", "source_system", "contract_direction", "contract_category", "sign_date", "original_amount_tax"]:
+    for field in ["project_code", "execution_project_code", "contract_ct_code", "contract_name", "credit_code", "contract_no", "source_system", "contract_direction", "contract_category", "sign_date", "original_amount_tax", "current_amount_tax"]:
         if field not in idx_map:
             messages.error(request, f"\u5408\u540c\u5bfc\u5165\u7f3a\u5c11\u5fc5\u8981\u5217\uff1a{field}")
             return redirect("contract_list")
@@ -1361,6 +1499,9 @@ def process_contract_import_file(file_path, mode, submitter):
         "\u539f\u59cb\u7a0e\u7387": "original_tax_rate",
         "\u5408\u540c\u72b6\u6001": "contract_status",
         "\u5907\u6ce8": "remark",
+        "\u8c03\u6574\u540e\u542b\u7a0e\u91d1\u989d": "current_amount_tax",
+        "\u8c03\u6574\u540e\u4e0d\u542b\u7a0e\u91d1\u989d": "current_amount_notax",
+        "\u8c03\u6574\u540e\u7a0e\u7387": "current_tax_rate",
     }
     idx_map = {}
     for idx, header in enumerate(headers):
@@ -1394,6 +1535,9 @@ def process_contract_import_file(file_path, mode, submitter):
             continue
 
         try:
+            current_amount_tax_val = _to_decimal(row_data["current_amount_tax"]) if row_data.get("current_amount_tax") else None
+            current_amount_notax_val = _to_decimal(row_data["current_amount_notax"]) if row_data.get("current_amount_notax") else None
+            current_tax_rate_val = _to_decimal(row_data["current_tax_rate"]) if row_data.get("current_tax_rate") else None
             defaults = {
                 "project": project,
                 "execution_project": execution_project,
@@ -1403,14 +1547,14 @@ def process_contract_import_file(file_path, mode, submitter):
                 "source_system": row_data.get("source_system", "MANUAL"),
                 "contract_direction": row_data.get("contract_direction", "NONE"),
                 "contract_category": row_data.get("contract_category", "OTHER"),
-                "sign_date": sign_date,
+                "sign_date": datetime.strptime(row_data.get("sign_date", ""), "%Y-%m-%d").date(),
                 "original_amount_tax": _to_decimal(row_data.get("original_amount_tax", "0")),
                 "original_amount_notax": _to_decimal(row_data.get("original_amount_notax", "0")),
                 "original_tax_rate": _to_decimal(row_data.get("original_tax_rate"), default="0") if row_data.get("original_tax_rate") else None,
                 "contract_status": row_data.get("contract_status", "SIGNED") or "SIGNED",
                 "remark": row_data.get("remark", ""),
             }
-        except InvalidOperation:
+        except (InvalidOperation, ValueError):
             skipped += 1
             continue
 
@@ -1424,12 +1568,26 @@ def process_contract_import_file(file_path, mode, submitter):
             obj.updated_by = submitter
             obj.full_clean()
             obj.save()
+            if current_amount_tax_val is not None:
+                current_upd = {"current_amount_tax": current_amount_tax_val}
+                if current_amount_notax_val is not None:
+                    current_upd["current_amount_notax"] = current_amount_notax_val
+                if current_tax_rate_val is not None:
+                    current_upd["current_tax_rate"] = current_tax_rate_val
+                ContractMaster.objects.filter(pk=obj.pk).update(**current_upd)
             updated += 1
             continue
 
         new_contract = ContractMaster(contract_ct_code=ct_code, created_by=submitter, updated_by=submitter, **defaults)
         new_contract.full_clean()
         new_contract.save()
+        if current_amount_tax_val is not None:
+            current_upd = {"current_amount_tax": current_amount_tax_val}
+            if current_amount_notax_val is not None:
+                current_upd["current_amount_notax"] = current_amount_notax_val
+            if current_tax_rate_val is not None:
+                current_upd["current_tax_rate"] = current_tax_rate_val
+            ContractMaster.objects.filter(pk=new_contract.pk).update(**current_upd)
         created += 1
 
     os.unlink(file_path)

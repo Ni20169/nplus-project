@@ -32,6 +32,7 @@ urlpatterns = [
     path("documents/contracts/template/counterparty/", contract_views.export_counterparty_template, name="export_counterparty_template"),
     path("documents/contracts/export/counterparty/", contract_views.export_counterparty_list, name="export_counterparty_list"),
     path("documents/contracts/template/contract/", contract_views.export_contract_template, name="export_contract_template"),
+    path("documents/contracts/export/contract/", contract_views.export_contract_list, name="export_contract_list"),
     path("documents/contracts/import/counterparty/", contract_views.import_counterparty_ledger, name="import_counterparty_ledger"),
     path("documents/contracts/import/contract/", contract_views.import_contract_ledger, name="import_contract_ledger"),
     path("logout/", views.logout_view, name="logout"),

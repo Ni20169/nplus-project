@@ -201,7 +201,19 @@
                     <button class="btn-add" onclick="showPanel('addForm')">新增合同</button>
                     <button class="btn-search" onclick="showPanel('filterPanel')">查询筛选</button>
                     <button class="btn-import" onclick="showPanel('importPanel')">导入台账</button>
+                    <a id="exportContractBtn" href="{% url 'export_contract_list' %}" class="btn-import" style="text-decoration:none;">导出台账</a>
                 </div>
+                <script>
+                (function(){
+                    var btn = document.getElementById('exportContractBtn');
+                    if (!btn) return;
+                    // 导出时携带当前查询参数
+                    var params = new URLSearchParams(window.location.search);
+                    params.delete('page');
+                    var qs = params.toString();
+                    if (qs) btn.href = btn.href.split('?')[0] + '?' + qs;
+                })();
+                </script>
 
                 {% if messages %}
                 <div class="message-stack">
