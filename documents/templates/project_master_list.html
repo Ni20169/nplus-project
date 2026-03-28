@@ -811,6 +811,7 @@
         .search-result-table .table-wrapper {
             overflow-x: auto;
             overflow-y: auto;
+            max-height: 56vh;
         }
 
         .search-result-table table {
@@ -820,6 +821,12 @@
         .search-result-table th,
         .search-result-table td {
             white-space: nowrap;
+        }
+
+        .project-list-table .table-wrapper {
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 56vh;
         }
 
         table {
@@ -1815,7 +1822,7 @@
                 <div class="search-form" id="listFilterPanel" style="display: none !important;">
                 </div>
 
-                <div class="data-table" id="dataTable">
+                <div class="data-table project-list-table" id="dataTable">
                     <div class="table-meta">
                         <div>项目列表（全量）：共 {{ total_records }} 条</div>
                         {% if permissions.can_view_project_list %}
@@ -1889,36 +1896,35 @@
                             </tbody>
                         </table>
                         
-                        <!-- 分页控件 -->
-                        {% if list_page_obj.has_other_pages %}
-                        <div class="pagination">
-                            <div class="pagination-info">
-                                第 {{ list_page_obj.number }} 页 / 共 {{ list_paginator.num_pages }} 页（共 {{ list_paginator.count }} 条记录）
-                            </div>
-                            <div class="pagination-controls">
-                                {% if list_page_obj.has_previous %}
-                                    <a href="?list_page=1" class="pagination-btn">首页</a>
-                                    <a href="?list_page={{ list_page_obj.previous_page_number }}" class="pagination-btn">上一页</a>
-                                {% endif %}
-                                
-                                <div class="pagination-pages">
-                                    {% for num in list_paginator.page_range %}
-                                        {% if list_page_obj.number == num %}
-                                            <span class="pagination-current">{{ num }}</span>
-                                        {% else %}
-                                            <a href="?list_page={{ num }}" class="pagination-link">{{ num }}</a>
-                                        {% endif %}
-                                    {% endfor %}
-                                </div>
-                                
-                                {% if list_page_obj.has_next %}
-                                    <a href="?list_page={{ list_page_obj.next_page_number }}" class="pagination-btn">下一页</a>
-                                    <a href="?list_page={{ list_paginator.num_pages }}" class="pagination-btn">末页</a>
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% endif %}
                     </div>
+                    {% if list_page_obj.has_other_pages %}
+                    <div class="pagination">
+                        <div class="pagination-info">
+                            第 {{ list_page_obj.number }} 页 / 共 {{ list_paginator.num_pages }} 页（共 {{ list_paginator.count }} 条记录）
+                        </div>
+                        <div class="pagination-controls">
+                            {% if list_page_obj.has_previous %}
+                                <a href="?list_page=1" class="pagination-btn">首页</a>
+                                <a href="?list_page={{ list_page_obj.previous_page_number }}" class="pagination-btn">上一页</a>
+                            {% endif %}
+
+                            <div class="pagination-pages">
+                                {% for num in list_paginator.page_range %}
+                                    {% if list_page_obj.number == num %}
+                                        <span class="pagination-current">{{ num }}</span>
+                                    {% else %}
+                                        <a href="?list_page={{ num }}" class="pagination-link">{{ num }}</a>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+
+                            {% if list_page_obj.has_next %}
+                                <a href="?list_page={{ list_page_obj.next_page_number }}" class="pagination-btn">下一页</a>
+                                <a href="?list_page={{ list_paginator.num_pages }}" class="pagination-btn">末页</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
