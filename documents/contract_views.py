@@ -8,7 +8,7 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db import transaction
 from django.db.models import Q, Sum, Count, CharField
 from django.db.models.functions import Cast
@@ -797,9 +797,22 @@ def contract_list_view(request):
     projects = list(ProjectMaster.objects.filter(is_deleted=False).order_by("-project_code"))
     for project in projects:
         project.dept_name = dept_name_map.get(project.dept, project.dept or "")
+    
+    # 执行分页（稳定排序 + 完整的页码保护）
+    ordered_qs = qs.order_by("-created_at", "-id")  # 二级排序确保稳定性
+    paginator = Paginator(ordered_qs, 50)  # 每页50条
+    page_number = request.GET.get("page", 1)
+    try:
+        page_obj = paginator.page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
 
     context = {
-        "contracts": list(qs.order_by("-created_at")[:300]),
+        "contracts": list(page_obj.object_list),
+        "page_obj": page_obj,
+        "paginator": paginator,
         "projects": projects,
         "execution_projects": execution_projects,
         "counterparties": Counterparty.objects.filter(status="ACTIVE").order_by("party_name"),

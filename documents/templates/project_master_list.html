@@ -926,6 +926,15 @@
             background: #f8d7da;
             color: #721c24;
         }
+        
+        /* 分页样式 */
+        .pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding: 15px; background: #f9fafb; border-radius: 6px; }
+        .pagination-info { font-size: 14px; color: #666; }
+        .pagination-controls { display: flex; gap: 8px; align-items: center; }
+        .pagination-btn, .pagination-link { display: inline-block; padding: 6px 12px; border: 1px solid #d0d0d0; border-radius: 4px; background: #fff; color: #333; font-size: 13px; text-decoration: none; cursor: pointer; transition: all 0.2s; }
+        .pagination-btn:hover, .pagination-link:hover { background: #f0f0f0; border-color: #999; }
+        .pagination-current { display: inline-block; padding: 6px 12px; background: #4a90d9; color: #fff; border-radius: 4px; font-size: 13px; }
+        .pagination-pages { display: flex; gap: 4px; }
     </style>
 </head>
 <body data-show-update-panel="{% if show_update_panel %}true{% else %}false{% endif %}" data-show-search-form="{% if show_search_form %}true{% else %}false{% endif %}" data-show-approval-panel="{% if show_approval_panel %}true{% else %}false{% endif %}" data-is-query-result="{% if is_query_result %}true{% else %}false{% endif %}" data-can-create-project="{% if permissions.can_create_project %}true{% else %}false{% endif %}" data-can-query-project="{% if permissions.can_query_project %}true{% else %}false{% endif %}" data-can-update-project="{% if permissions.can_update_project %}true{% else %}false{% endif %}" data-can-view-project-list="{% if permissions.can_view_project_list %}true{% else %}false{% endif %}" data-can-approval-manage="{% if permissions.can_approval_manage %}true{% else %}false{% endif %}">
@@ -1717,37 +1726,12 @@
                                     <th data-sort="10">创建人</th>
                                     <th data-sort="11">项目类型</th>
                                     <th data-sort="12">创建时间</th>
-                                    <th data-sort="13">备注</th>
+                                    <th data-sort="13">修改时间</th>
+                                    <th data-sort="14">修改人</th>
+                                    <th data-sort="15">备注</th>
                                         {% if show_action_column %}
                                     <th>操作</th>
                                         {% endif %}
-                                </tr>
-                                <tr class="filter-row">
-                                    <th class="sticky-col col-1"><input type="text" data-filter="0" placeholder="筛选"></th>
-                                    <th class="sticky-col col-2"><input type="text" data-filter="1" placeholder="筛选"></th>
-                                    <th class="sticky-col col-3"><input type="text" data-filter="2" placeholder="筛选"></th>
-                                    <th><input type="text" data-filter="3" placeholder="筛选"></th>
-                                    <th><input type="text" data-filter="4" placeholder="筛选"></th>
-                                    <th><input type="text" data-filter="5" placeholder="筛选"></th>
-                                    <th><input type="text" data-filter="6" placeholder="筛选"></th>
-                                    <th><input type="text" data-filter="7" placeholder="筛选"></th>
-                                    <th>
-                                        <select data-filter="8">
-                                            <option value="">全部</option>
-                                            <option value="是">是</option>
-                                            <option value="否">否</option>
-                                        </select>
-                                    </th>
-                                    <th><input type="text" data-filter="9" placeholder="筛选"></th>
-                                    <th><input type="text" data-filter="10" placeholder="筛选"></th>
-                                    <th><input type="text" data-filter="11" placeholder="筛选"></th>
-                                    <th><input type="month" data-filter="12" placeholder="选择年月"></th>
-                                    <th><input type="text" data-filter="13" placeholder="筛选"></th>
-                                    {% if show_action_column %}
-                                    <th>
-                                        <button type="button" class="btn-reset-filter" id="resetTableFilter">清空</button>
-                                    </th>
-                                    {% endif %}
                                 </tr>
                             </thead>
                             <tbody>
@@ -1763,10 +1747,12 @@
                                     <td>{{ project.data_status_name }}</td>
                                     <td>{{ project.is_execution_level|yesno:"是,否" }}</td>
                                     <td>{{ project.project_year }}</td>
-                                    <td>{{ project.created_by }}</td>
+                                    <td>{{ project.created_by|default:"—" }}</td>
                                     <td>{{ project.project_type_name }}</td>
-                                    <td>{{ project.created_at }}</td>
-                                    <td>{{ project.remark }}</td>
+                                    <td>{{ project.created_at|date:"Y-m-d" }}</td>
+                                    <td>{{ project.updated_at|date:"Y-m-d" }}</td>
+                                    <td>{{ project.updated_by|default:"—" }}</td>
+                                    <td>{{ project.remark|default:"—" }}</td>
                                     {% if show_action_column %}
                                     <td>
                                         <div style="display: flex; gap: 16px; justify-content: center;">
@@ -1782,11 +1768,41 @@
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="{% if show_action_column %}15{% else %}14{% endif %}">暂无数据</td>
+                                    <td colspan="{% if show_action_column %}18{% else %}17{% endif %}">暂无数据</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
+                        
+                        <!-- 分页控件 -->
+                        {% if page_obj.has_other_pages %}
+                        <div class="pagination">
+                            <div class="pagination-info">
+                                第 {{ page_obj.number }} 页 / 共 {{ paginator.num_pages }} 页 （共 {{ paginator.count }} 条记录）
+                            </div>
+                            <div class="pagination-controls">
+                                {% if page_obj.has_previous %}
+                                    <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">首页</a>
+                                    <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">上一页</a>
+                                {% endif %}
+                                
+                                <div class="pagination-pages">
+                                    {% for num in paginator.page_range %}
+                                        {% if page_obj.number == num %}
+                                            <span class="pagination-current">{{ num }}</span>
+                                        {% else %}
+                                            <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-link">{{ num }}</a>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                
+                                {% if page_obj.has_next %}
+                                    <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">下一页</a>
+                                    <a href="?page={{ paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">末页</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -2316,68 +2332,6 @@
             if (table) {
                 const tbody = table.querySelector('tbody');
                 const headers = table.querySelectorAll('th[data-sort]');
-                const filterInputs = table.querySelectorAll('[data-filter]');
-                const resetBtn = document.getElementById('resetTableFilter');
-                let sortIndex = null;
-                let sortAsc = true;
-
-                const applyFilters = () => {
-                    const filters = Array.from(filterInputs).map((input) => input.value.trim().toLowerCase());
-                    let visibleCount = 0;
-                    Array.from(tbody.querySelectorAll('tr')).forEach((row) => {
-                        const cells = Array.from(row.children);
-                        const match = filters.every((value, idx) => {
-                            if (!value) return true;
-                            const cell = cells[idx];
-                            if (!cell) return true;
-                            return cell.textContent.toLowerCase().includes(value);
-                        });
-                        row.style.display = match ? '' : 'none';
-                        if (match) visibleCount += 1;
-                    });
-                    const matchCount = document.getElementById('matchCount');
-                    if (matchCount) {
-                        matchCount.textContent = String(visibleCount);
-                    }
-                };
-
-                filterInputs.forEach((input) => {
-                    input.addEventListener('input', applyFilters);
-                    input.addEventListener('change', applyFilters);
-                });
-
-                if (resetBtn) {
-                    resetBtn.addEventListener('click', () => {
-                        filterInputs.forEach((input) => {
-                            input.value = '';
-                        });
-                        applyFilters();
-                    });
-                }
-
-                headers.forEach((th) => {
-                    th.style.cursor = 'pointer';
-                    th.addEventListener('click', () => {
-                        const index = Number(th.getAttribute('data-sort'));
-                        sortAsc = sortIndex === index ? !sortAsc : true;
-                        sortIndex = index;
-                        const rows = Array.from(tbody.querySelectorAll('tr'));
-                        rows.sort((a, b) => {
-                            const aText = a.children[index]?.textContent.trim() || '';
-                            const bText = b.children[index]?.textContent.trim() || '';
-                            if (!aText && !bText) return 0;
-                            if (!aText) return sortAsc ? 1 : -1;
-                            if (!bText) return sortAsc ? -1 : 1;
-                            if (aText === bText) return 0;
-                            return sortAsc ? aText.localeCompare(bText, 'zh-Hans-CN') : bText.localeCompare(aText, 'zh-Hans-CN');
-                        });
-                        rows.forEach((row) => tbody.appendChild(row));
-                    });
-                });
-
-                if (typeof applyFilters === 'function') {
-                    applyFilters();
-                }
 
                 // 查询表单：把多选控件勾选值回显到显示文本，并在提交时写入隐藏字段
                 const queryForm = document.querySelector('#searchForm form');

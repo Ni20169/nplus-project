@@ -11,6 +11,7 @@ from django.contrib.auth import authenticate, login, logout, update_session_auth
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -672,7 +673,18 @@ def project_master_list(request):
             "created_by": "",
         }
 
-    projects = list(qs.order_by("-project_code"))
+    # 执行分页（稳定排序 + 完整的页码保护）
+    ordered_qs = qs.order_by("-updated_at", "-id")  # 二级排序确保稳定性
+    paginator = Paginator(ordered_qs, 50)  # 每页50条
+    page_number = request.GET.get("page", 1)
+    try:
+        page_obj = paginator.page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+    
+    projects = list(page_obj.object_list)
     name_map = _dict_name_map(dicts)
     for project in projects:
         project.province_name = name_map.get("PROVINCE", {}).get(
@@ -837,6 +849,8 @@ def project_master_list(request):
         "project_master_list.html",
         {
             "projects": projects,
+            "page_obj": page_obj,
+            "paginator": paginator,
             "dicts": dicts,
             "latest_errors": latest_errors,
             "search": search,

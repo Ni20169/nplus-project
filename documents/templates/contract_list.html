@@ -118,6 +118,14 @@
         .tag-exec { padding: 3px 8px; border-radius: 10px; font-size: 11px; display: inline-block; }
         .tag-exec-yes { background: #d4edda; color: #155724; }
         .tag-exec-no { background: #f8d7da; color: #721c24; }
+        /* 分页样式 */
+        .pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding: 15px; background: #f9fafb; border-radius: 6px; }
+        .pagination-info { font-size: 14px; color: #666; }
+        .pagination-controls { display: flex; gap: 8px; align-items: center; }
+        .pagination-btn, .pagination-link { display: inline-block; padding: 6px 12px; border: 1px solid #d0d0d0; border-radius: 4px; background: #fff; color: #333; font-size: 13px; text-decoration: none; cursor: pointer; transition: all 0.2s; }
+        .pagination-btn:hover, .pagination-link:hover { background: #f0f0f0; border-color: #999; }
+        .pagination-current { display: inline-block; padding: 6px 12px; background: #4a90d9; color: #fff; border-radius: 4px; font-size: 13px; }
+        .pagination-pages { display: flex; gap: 4px; }
     </style>
 </head>
 <body>
@@ -469,25 +477,9 @@
                                     <th>年份</th>
                                     <th>创建时间</th>
                                     <th>创建人</th>
+                                    <th>修改时间</th>
+                                    <th>修改人</th>
                                     <th>操作</th>
-                                </tr>
-                                <tr class="filter-row">
-                                    <th><input type="text" id="f_ct" placeholder="筛选CT码" oninput="filterTable()"></th>
-                                    <th><input type="text" id="f_name" placeholder="筛选名称" oninput="filterTable()"></th>
-                                    <th><input type="text" id="f_proj" placeholder="筛选项目" oninput="filterTable()"></th>
-                                    <th><input type="text" id="f_exec_proj" placeholder="筛选执行层项目" oninput="filterTable()"></th>
-                                    <th></th>
-                                    <th><input type="text" id="f_party" placeholder="筛选签约对方" oninput="filterTable()"></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th><input type="text" id="f_dept" placeholder="筛选部门" oninput="filterTable()"></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody id="tableBody">
@@ -530,6 +522,8 @@
                                 <td>{{ item.contract_year|default:"—" }}</td>
                                 <td>{{ item.created_at|date:"Y-m-d" }}</td>
                                 <td>{{ item.created_by|default:"—" }}</td>
+                                <td>{{ item.updated_at|date:"Y-m-d" }}</td>
+                                <td>{{ item.updated_by|default:"—" }}</td>
                                 <td>
                                     <button type="button" class="btn-edit" onclick="submitContractUpdate({{ item.id }}, '{{ item.contract_name|escapejs }}', '{{ item.contract_status|escapejs }}', '{{ item.remark|default:''|escapejs }}')">修改</button>
                                     <button type="button" class="btn-delete" onclick="submitContractDelete({{ item.id }}, '{{ item.contract_name|escapejs }}')">删除</button>
@@ -540,6 +534,36 @@
                             {% endfor %}
                             </tbody>
                         </table>
+                        
+                        <!-- 分页控件 -->
+                        {% if page_obj.has_other_pages %}
+                        <div class="pagination">
+                            <div class="pagination-info">
+                                第 {{ page_obj.number }} 页 / 共 {{ paginator.num_pages }} 页 （共 {{ total_count }} 条记录）
+                            </div>
+                            <div class="pagination-controls">
+                                {% if page_obj.has_previous %}
+                                    <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">首页</a>
+                                    <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">上一页</a>
+                                {% endif %}
+                                
+                                <div class="pagination-pages">
+                                    {% for num in paginator.page_range %}
+                                        {% if page_obj.number == num %}
+                                            <span class="pagination-current">{{ num }}</span>
+                                        {% else %}
+                                            <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-link">{{ num }}</a>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                
+                                {% if page_obj.has_next %}
+                                    <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">下一页</a>
+                                    <a href="?page={{ paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">末页</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -637,26 +661,6 @@
             const hidden = body.style.display === 'none';
             body.style.display = hidden ? '' : 'none';
             if (btn) btn.textContent = hidden ? '收起' : '展开';
-        }
-
-        function filterTable() {
-            const fCt = (document.getElementById('f_ct').value || '').toLowerCase();
-            const fName = (document.getElementById('f_name').value || '').toLowerCase();
-            const fProj = (document.getElementById('f_proj').value || '').toLowerCase();
-            const fExecProj = (document.getElementById('f_exec_proj').value || '').toLowerCase();
-            const fParty = (document.getElementById('f_party').value || '').toLowerCase();
-            const fDept = (document.getElementById('f_dept').value || '').toLowerCase();
-            document.querySelectorAll('#tableBody tr').forEach(row => {
-                const cells = row.querySelectorAll('td');
-                if (!cells.length) return;
-                const show = (!fCt || cells[0].textContent.toLowerCase().includes(fCt))
-                    && (!fName || cells[1].textContent.toLowerCase().includes(fName))
-                    && (!fProj || cells[2].textContent.toLowerCase().includes(fProj))
-                    && (!fExecProj || cells[3].textContent.toLowerCase().includes(fExecProj))
-                    && (!fParty || cells[5].textContent.toLowerCase().includes(fParty))
-                    && (!fDept || cells[11].textContent.toLowerCase().includes(fDept));
-                row.style.display = show ? '' : 'none';
-            });
         }
 
         function updateTime() {
