@@ -220,7 +220,7 @@ class ProjectMasterLog(models.Model):
     action = models.CharField("动作", max_length=10, choices=ACTION_CHOICES)
     before_data = models.JSONField("修改前", null=True, blank=True)
     after_data = models.JSONField("修改后", null=True, blank=True)
-    change_note = models.CharField("修改说明", max_length=200, blank=True)
+    change_note = models.TextField("修改说明", blank=True)
     operator = models.CharField("操作人", max_length=50)
     source = models.CharField("来源", max_length=50, blank=True)
     created_at = models.DateTimeField("记录时间", auto_now_add=True)
@@ -287,7 +287,7 @@ class ProjectApproval(models.Model):
     status = models.CharField("审批状态", max_length=10, choices=STATUS_CHOICES, default="pending")
     submit_time = models.DateTimeField("提交时间", auto_now_add=True)
     approve_time = models.DateTimeField("审批时间", null=True, blank=True)
-    approve_note = models.CharField("审批意见", max_length=200, blank=True)
+    approve_note = models.TextField("审批意见", blank=True)
     import_file_path = models.CharField("导入文件路径", max_length=500, blank=True)
 
     class Meta:
@@ -351,7 +351,7 @@ class Counterparty(models.Model):
     party_type = models.CharField("单位类型", max_length=20, choices=PARTY_TYPE_CHOICES)
     credit_code = models.CharField("统一社会信用代码", max_length=18, unique=True)
     contact_name = models.CharField("联系人", max_length=50, blank=True)
-    contact_phone = models.CharField("联系电话", max_length=30, blank=True)
+    contact_phone = models.CharField("联系电话", max_length=255, blank=True)
     status = models.CharField("状态", max_length=20, default="ACTIVE")
     remark = models.CharField("备注", max_length=500, blank=True)
     established_date = models.DateField("成立日期", null=True, blank=True)

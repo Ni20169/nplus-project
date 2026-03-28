@@ -320,6 +320,7 @@ def contract_counterparty_view(request):
 
         if form_type == "create_counterparty":
             credit_code = request.POST.get("credit_code", "").strip().upper()
+            contact_phone = request.POST.get("contact_phone", "").strip()
             if len(credit_code) != 18:
                 messages.error(request, "统一社会信用代码必须为18位")
                 return redirect("contract_counterparty_list")
@@ -342,7 +343,7 @@ def contract_counterparty_view(request):
                         party_type=request.POST.get("party_type", "").strip(),
                         credit_code=credit_code,
                         contact_name=request.POST.get("contact_name", "").strip(),
-                        contact_phone=request.POST.get("contact_phone", "").strip(),
+                        contact_phone=contact_phone,
                         status=request.POST.get("status", "ACTIVE").strip() or "ACTIVE",
                         remark=request.POST.get("remark", "").strip(),
                         established_date=established_date,
@@ -369,11 +370,13 @@ def contract_counterparty_view(request):
                 messages.warning(request, f"该往来单位已有待审批修改申请，审批单号：{existing.id}")
                 return redirect("contract_counterparty_list")
 
+            contact_phone = request.POST.get("contact_phone", target.contact_phone).strip()
+
             after_data = {
                 "party_name": request.POST.get("party_name", target.party_name).strip(),
                 "party_type": request.POST.get("party_type", target.party_type).strip(),
                 "contact_name": request.POST.get("contact_name", target.contact_name).strip(),
-                "contact_phone": request.POST.get("contact_phone", target.contact_phone).strip(),
+                "contact_phone": contact_phone,
                 "status": request.POST.get("status", target.status).strip(),
                 "remark": request.POST.get("remark", target.remark).strip(),
             }
