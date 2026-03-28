@@ -1343,7 +1343,10 @@ def approve_action(request, approval_id):
                         ]
                         for key in editable_fields:
                             if key in approval_after:
-                                setattr(counterparty, key, approval_after[key])
+                                value = approval_after[key]
+                                if key == "contact_phone":
+                                    value = str(value)[:255]
+                                setattr(counterparty, key, value)
                         counterparty.updated_by = approval.submitter
                         counterparty.full_clean()
                         counterparty.save()
