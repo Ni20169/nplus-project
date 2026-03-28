@@ -173,7 +173,7 @@ class ProjectMaster(models.Model):
         unique=True,
         validators=[RegexValidator(PJ_CODE_REGEX, "项目编号必须为PJ开头的12位编码")],
     )
-    project_name = models.CharField("项目名称", max_length=100, unique=True)
+    project_name = models.CharField("项目名称", max_length=100)
     org_name = models.CharField("项目机构名称", max_length=50)
     parent_pj_code = models.CharField("上级PJ编码", max_length=12, blank=True, null=True)
     province_code = models.CharField("所在省", max_length=6)
