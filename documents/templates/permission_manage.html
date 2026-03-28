@@ -56,6 +56,7 @@
         .perm-col-hidden { display: none; }
         .perm-col-highlight { background-color: #e8f4fd !important; }
         th.perm-col-highlight { background-color: #d0eaf9 !important; }
+        th[data-perm].perm-col-hidden, td[data-perm].perm-col-hidden { display: none; }
         .btn-save { border: none; background: #2b8a3e; color: #fff; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; }
         .btn-save:hover { background: #237235; }
         @media (max-width: 900px) { .sidebar { display: none; } .perm-nav { width: 130px; } }
@@ -242,11 +243,20 @@
                 });
             });
         }
+        function initializePermTable() {
+            const allBtn = document.querySelector('.perm-tab.active');
+            if (allBtn) selectPermTab(allBtn, 'all');
+        }
         function updateTime() {
             const el = document.getElementById('systemTime');
             if (el) el.textContent = new Date().toLocaleString('zh-CN', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' });
         }
         updateTime(); setInterval(updateTime, 1000);
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializePermTable);
+        } else {
+            initializePermTable();
+        }
     </script>
 </body>
 </html>
