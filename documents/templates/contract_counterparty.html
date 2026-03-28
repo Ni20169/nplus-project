@@ -59,6 +59,14 @@
         .btn-import { background-color: #F25A4A; }
         .btn-template { background-color: #00BDBD; border-color: #00BDBD; color: #fff; }
         .btn-cancel { background-color: #95a5a6; color: #fff; border: none; cursor: pointer; }
+        .btn-edit, .btn-delete { padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; color: #fff; white-space: nowrap; font-size: 13px; text-decoration: none; display: inline-block; }
+        .btn-edit { background-color: #3498db; }
+        .btn-delete { background-color: #e74c3c; }
+        table td.col-1, table th.col-1 { position: sticky; left: 0; z-index: 2; background: #fff; min-width: 150px; }
+        table td.col-2, table th.col-2 { position: sticky; left: 150px; z-index: 2; background: #fff; min-width: 90px; }
+        table td.col-3, table th.col-3 { position: sticky; left: 240px; z-index: 2; background: #fff; min-width: 180px; }
+        table thead th.col-1, table thead th.col-2, table thead th.col-3 { z-index: 12; background: #f3f6f9; }
+        table tr:hover td.col-1, table tr:hover td.col-2, table tr:hover td.col-3 { background: #f9fbfd; }
         .message-stack { margin: 8px 0 12px; display: grid; gap: 6px; flex-shrink: 0; }
         .message { padding: 8px 12px; border-radius: 4px; font-size: 13px; border: 1px solid transparent; }
         .message.success { background: #eaf9f0; border-color: #c8e6c9; color: #2e7d32; }
@@ -355,9 +363,9 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th>单位名称</th>
-                                    <th>单位类型</th>
-                                    <th>统一社会信用代码</th>
+                                    <th class="col-1">单位名称</th>
+                                    <th class="col-2">单位类型</th>
+                                    <th class="col-3">统一社会信用代码</th>
                                     <th>联系人</th>
                                     <th>联系电话</th>
                                     <th>状态</th>
@@ -367,9 +375,9 @@
                                     <th>操作</th>
                                 </tr>
                                 <tr class="filter-row">
-                                    <th><input type="text" id="f_name" placeholder="筛选名称" oninput="filterTable()"></th>
-                                    <th><input type="text" id="f_type" placeholder="筛选类型" oninput="filterTable()"></th>
-                                    <th><input type="text" id="f_code" placeholder="筛选代码" oninput="filterTable()"></th>
+                                    <th class="col-1"><input type="text" id="f_name" placeholder="筛选名称" oninput="filterTable()"></th>
+                                    <th class="col-2"><input type="text" id="f_type" placeholder="筛选类型" oninput="filterTable()"></th>
+                                    <th class="col-3"><input type="text" id="f_code" placeholder="筛选代码" oninput="filterTable()"></th>
                                     <th></th>
                                     <th></th>
                                     <th><input type="text" id="f_status" placeholder="筛选状态" oninput="filterTable()"></th>
@@ -382,9 +390,9 @@
                             <tbody id="tableBody">
                             {% for item in counterparties %}
                             <tr>
-                                <td>{{ item.party_name }}</td>
-                                <td>{{ item.get_party_type_display }}</td>
-                                <td>{{ item.credit_code }}</td>
+                                <td class="col-1">{{ item.party_name }}</td>
+                                <td class="col-2">{{ item.get_party_type_display }}</td>
+                                <td class="col-3">{{ item.credit_code }}</td>
                                 <td>{{ item.contact_name|default:"—" }}</td>
                                 <td>{{ item.contact_phone|default:"—" }}</td>
                                 <td>
@@ -400,8 +408,7 @@
                                 <td>
                                     <button
                                         type="button"
-                                        class="btn-import"
-                                        style="padding:4px 8px;min-width:auto;"
+                                        class="btn-edit"
                                         data-id="{{ item.id }}"
                                         data-name="{{ item.party_name|escapejs }}"
                                         data-type="{{ item.party_type|escapejs }}"
@@ -414,8 +421,7 @@
                                     </button>
                                     <button
                                         type="button"
-                                        class="btn-cancel"
-                                        style="padding:4px 8px;min-width:auto;"
+                                        class="btn-delete"
                                         data-id="{{ item.id }}"
                                         data-name="{{ item.party_name|escapejs }}"
                                         onclick="submitCounterpartyDelete(this)">

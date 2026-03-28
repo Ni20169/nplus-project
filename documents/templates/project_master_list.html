@@ -1000,7 +1000,7 @@
                     </div>
                 </div>
 
-                <div class="action-buttons">
+                <div class="action-buttons" id="actionButtons" style="{% if show_approval_panel %}display:none;{% endif %}">
                     {% if permissions.can_create_project %}
                     <button class="btn-add" onclick="showAddForm()">新增项目</button>
                     {% endif %}
@@ -1884,6 +1884,7 @@
             }
             console.log('showApprovalPanel called');
             setDisplay('approvalPanel', 'block');
+            setDisplay('actionButtons', 'none');
             setDisplay('addForm', 'none');
             setDisplay('searchForm', 'none');
             setDisplay('updatePanel', 'none');
@@ -1893,6 +1894,7 @@
 
         function hideApprovalPanel() {
             setDisplay('approvalPanel', 'none');
+            setDisplay('actionButtons', 'flex');
         }
 
         function submitDeleteApproval(projectCode, projectName) {
@@ -2081,6 +2083,8 @@
             const isQueryResult = document.body.dataset.isQueryResult === 'true';
             if (showApprovalPanelMode) {
                 if (approvalPanel) approvalPanel.style.display = 'block';
+                const actionBtns = document.getElementById('actionButtons');
+                if (actionBtns) actionBtns.style.display = 'none';
                 if (updatePanel) updatePanel.style.display = 'none';
                 if (dataTable) dataTable.style.display = 'none';
             } else if (showUpdatePanel) {

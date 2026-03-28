@@ -59,6 +59,9 @@
         .btn-import { background-color: #F25A4A; }
         .btn-template { background-color: #00BDBD; border-color: #00BDBD; color: #fff; }
         .btn-cancel { background-color: #95a5a6; color: #fff; border: none; cursor: pointer; }
+        .btn-edit, .btn-delete { padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; color: #fff; white-space: nowrap; font-size: 13px; }
+        .btn-edit { background-color: #3498db; }
+        .btn-delete { background-color: #e74c3c; }
         .message-stack { margin: 8px 0 12px; display: grid; gap: 6px; flex-shrink: 0; }
         .message { padding: 8px 12px; border-radius: 4px; font-size: 13px; border: 1px solid transparent; }
         .message.success { background: #eaf9f0; border-color: #c8e6c9; color: #2e7d32; }
@@ -522,8 +525,8 @@
                                 <td>{{ item.created_at|date:"Y-m-d" }}</td>
                                 <td>{{ item.created_by|default:"—" }}</td>
                                 <td>
-                                    <button type="button" class="btn-import" style="padding:4px 8px;min-width:auto;" onclick="submitContractUpdate({{ item.id }}, '{{ item.contract_name|escapejs }}', '{{ item.contract_status|escapejs }}', '{{ item.remark|default:''|escapejs }}')">修改提审</button>
-                                    <button type="button" class="btn-cancel" style="padding:4px 8px;min-width:auto;" onclick="submitContractDelete({{ item.id }}, '{{ item.contract_name|escapejs }}')">删除提审</button>
+                                    <button type="button" class="btn-edit" onclick="submitContractUpdate({{ item.id }}, '{{ item.contract_name|escapejs }}', '{{ item.contract_status|escapejs }}', '{{ item.remark|default:''|escapejs }}')">修改提审</button>
+                                    <button type="button" class="btn-delete" onclick="submitContractDelete({{ item.id }}, '{{ item.contract_name|escapejs }}')">删除提审</button>
                                 </td>
                             </tr>
                             {% empty %}
