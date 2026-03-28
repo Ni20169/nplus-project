@@ -11,7 +11,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db import transaction
 from django.db.models import Q, Sum, Count, CharField
-from django.db.models.functions import Cast
+from django.db.models.functions import Cast, Lower
 from django.forms.models import model_to_dict
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -536,7 +536,7 @@ def contract_counterparty_view(request):
         "province": request.GET.get("province", "").strip(),
         "party_name": request.GET.get("party_name", "").strip(),
     }
-    qs = _apply_counterparty_filters(Counterparty.objects.all(), filters, province_items).order_by("-updated_at", "-id")
+    qs = _apply_counterparty_filters(Counterparty.objects.all(), filters, province_items).order_by(Lower("party_name"), "id")
     
     # 标准化分页处理（完整的异常保护）
     paginator = Paginator(qs, 50)
