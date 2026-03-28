@@ -1487,13 +1487,22 @@
                                 <a href="?search_page={{ search_page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">上一页</a>
                             {% endif %}
                             <div class="pagination-pages">
-                                {% for num in search_paginator.page_range %}
-                                    {% if search_page_obj.number == num %}
-                                        <span class="pagination-current">{{ num }}</span>
-                                    {% else %}
-                                        <a href="?search_page={{ num }}{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-link">{{ num }}</a>
-                                    {% endif %}
-                                {% endfor %}
+                                {# 分页页码区：前5后5，当前页前后2页，其他用... #}
+                                {% with total=search_paginator.num_pages current=search_page_obj.number %}
+                                    {% for num in search_paginator.page_range %}
+                                        {% if num <= 5 or num > total-5 or (num >= current-2 and num <= current+2) %}
+                                            {% if num == current %}
+                                                <span class="pagination-current">{{ num }}</span>
+                                            {% else %}
+                                                <a href="?search_page={{ num }}{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-link">{{ num }}</a>
+                                            {% endif %}
+                                            {% set last_shown = num %}
+                                        {% elif last_shown != 'ellipsis' %}
+                                            <span style="padding:6px 12px;">...</span>
+                                            {% set last_shown = 'ellipsis' %}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endwith %}
                             </div>
                             {% if search_page_obj.has_next %}
                                 <a href="?search_page={{ search_page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">下一页</a>
