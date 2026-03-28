@@ -57,6 +57,7 @@
         .btn-add { background-color: #2ecc71; border-color: #2ecc71; color: #fff; font-weight: 600; }
         .btn-search { background-color: #3498db; border-color: #3498db; color: #fff; font-weight: 600; }
         .btn-import { background-color: #F25A4A; }
+        .btn-export { background-color: #8e44ad; border-color: #8e44ad; color: #fff; }
         .btn-template { background-color: #00BDBD; border-color: #00BDBD; color: #fff; }
         .btn-cancel { background-color: #95a5a6; color: #fff; border: none; cursor: pointer; }
         .btn-edit, .btn-delete { padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; color: #fff; white-space: nowrap; font-size: 13px; text-decoration: none; display: inline-block; }
@@ -95,16 +96,21 @@
         .data-table { background-color: rgba(255,255,255,0.9); border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.06); padding: 8px; flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
         .table-meta { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #666; margin: 4px 4px 8px; flex-shrink: 0; }
         .table-wrapper { flex: 1; overflow: auto; scrollbar-gutter: stable both-edges; }
-        table { width: 100%; border-collapse: collapse; min-width: 1400px; table-layout: fixed; }
+        table { width: 100%; border-collapse: collapse; min-width: 2200px; table-layout: fixed; }
         table thead { position: sticky; top: 0; background: #fff; z-index: 10; box-shadow: 0 2px 2px rgba(0,0,0,0.1); }
         th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #eee; font-size: 13px; white-space: nowrap; }
         td { overflow: hidden; text-overflow: ellipsis; }
+        .business-scope-cell { white-space: normal; line-height: 1.4; }
         th { background-color: #f3f6f9; font-weight: 600; }
         tr:hover { background-color: #f9fbfd; }
         .filter-row input { width: 100%; padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
         .filter-row th { background: #f9fafb; padding: 4px 6px; }
         .tag-active { background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
         .tag-inactive { background: #f8d7da; color: #721c24; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+        .pagination { display: flex; justify-content: flex-end; gap: 8px; align-items: center; margin-top: 10px; font-size: 13px; }
+        .pagination a, .pagination span { padding: 6px 10px; border: 1px solid #d8dee8; border-radius: 4px; background: #fff; color: #333; text-decoration: none; }
+        .pagination .current { background: #3498db; color: #fff; border-color: #3498db; }
+        .pagination .disabled { color: #999; background: #f5f5f5; }
         @media (max-width: 1200px) { .form-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 900px) { .form-grid { grid-template-columns: repeat(2, 1fr); } .sidebar { display: none; } }
     </style>
@@ -146,9 +152,15 @@
                     <li>
                         <a class="menu-level-2 open" data-submenu-target="menu-contract-sub" href="#" onclick="toggleSubMenu('menu-contract-sub', this); return false;">合同管理<span class="caret">▼</span></a>
                         <ul class="menu-list show menu-level-3" id="menu-contract-sub">
+                            {% if permissions.can_view_contract_ledger %}
                             <li><a href="{% url 'contract_list' %}">合同台账</a></li>
+                            {% endif %}
+                            {% if permissions.can_edit_contract_adjustment %}
                             <li><a href="{% url 'contract_adjustment_list' %}">合同调整</a></li>
+                            {% endif %}
+                            {% if permissions.can_manage_counterparty %}
                             <li><a href="{% url 'contract_counterparty_list' %}" class="active">往来单位管理</a></li>
+                            {% endif %}
                         </ul>
                     </li>
                 </ul>
@@ -176,6 +188,7 @@
                     <button class="btn-add" onclick="showPanel('addForm')">新增往来单位</button>
                     <button class="btn-search" onclick="showPanel('filterPanel')">查询筛选</button>
                     <button class="btn-import" onclick="showPanel('importPanel')">导入台账</button>
+                    <a class="btn-export" href="{% url 'export_counterparty_list' %}{% if export_query_string %}?{{ export_query_string }}{% endif %}">导出列表</a>
                 </div>
 
                 {% if messages %}
@@ -321,29 +334,21 @@
                         <form method="get">
                             <div class="form-grid">
                                 <div class="field">
-                                    <label>单位名称</label>
-                                    <input type="text" name="party_name" value="{{ filters.party_name }}" placeholder="关键词搜索">
+                                    <label>关键词</label>
+                                    <input type="text" name="keyword" value="{{ filters.keyword }}" placeholder="单位名称/联系人/电话/地址/曾用名/经营范围">
                                 </div>
                                 <div class="field">
-                                    <label>单位类型</label>
-                                    <select name="party_type">
-                                        <option value="">全部类型</option>
-                                        {% for value, label in party_type_choices %}
-                                            <option value="{{ value }}" {% if filters.party_type == value %}selected{% endif %}>{{ label }}</option>
+                                    <label>所属省份</label>
+                                    <select name="province">
+                                        <option value="">全部省份</option>
+                                        {% for item in province_items %}
+                                            <option value="{{ item.code }}" {% if filters.province == item.code %}selected{% endif %}>{{ item.name }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
                                 <div class="field">
-                                    <label>统一社会信用代码</label>
-                                    <input type="text" name="credit_code" value="{{ filters.credit_code }}" placeholder="关键词搜索">
-                                </div>
-                                <div class="field">
-                                    <label>状态</label>
-                                    <select name="status">
-                                        <option value="">全部状态</option>
-                                        <option value="ACTIVE" {% if filters.status == "ACTIVE" %}selected{% endif %}>启用</option>
-                                        <option value="INACTIVE" {% if filters.status == "INACTIVE" %}selected{% endif %}>停用</option>
-                                    </select>
+                                    <label>所属城市</label>
+                                    <input type="text" name="city" value="{{ filters.city }}" placeholder="关键词搜索">
                                 </div>
                             </div>
                             <div class="form-actions">
@@ -357,7 +362,7 @@
                 <!-- 数据列表 -->
                 <div class="data-table" id="dataTable">
                     <div class="table-meta">
-                        <span>共 <strong>{{ total_count }}</strong> 条记录{% if total_count > 500 %}，当前显示前 500 条{% endif %}</span>
+                        <span>共 <strong>{{ total_count }}</strong> 条记录，当前第 <strong>{{ page_obj.number }}</strong> / <strong>{{ paginator.num_pages }}</strong> 页</span>
                         <span>往来单位台账</span>
                     </div>
                     <div class="table-wrapper">
@@ -370,8 +375,13 @@
                                 <col style="width:130px"><!-- 联系电话 -->
                                 <col style="width:70px"> <!-- 状态 -->
                                 <col style="width:100px"><!-- 成立日期 -->
-                                <col style="width:80px"> <!-- 所属省份 -->
+                                <col style="width:110px"><!-- 所属省份 -->
                                 <col style="width:90px"> <!-- 所属城市 -->
+                                <col style="width:120px"><!-- 企业类型 -->
+                                <col style="width:120px"><!-- 所属行业 -->
+                                <col style="width:120px"><!-- 曾用名 -->
+                                <col style="width:180px"><!-- 注册地址 -->
+                                <col style="width:220px"><!-- 经营范围 -->
                                 <col style="width:140px"><!-- 备注 -->
                                 <col style="width:100px"><!-- 创建时间 -->
                                 <col style="width:80px"> <!-- 创建人 -->
@@ -388,32 +398,22 @@
                                     <th>成立日期</th>
                                     <th>所属省份</th>
                                     <th>所属城市</th>
+                                    <th>企业类型</th>
+                                    <th>所属行业</th>
+                                    <th>曾用名</th>
+                                    <th>注册地址</th>
+                                    <th>经营范围</th>
                                     <th>备注</th>
                                     <th>创建时间</th>
                                     <th>创建人</th>
                                     <th>操作</th>
-                                </tr>
-                                <tr class="filter-row">
-                                    <th class="col-1"><input type="text" id="f_name" placeholder="筛选名称" oninput="filterTable()"></th>
-                                    <th class="col-2"><input type="text" id="f_type" placeholder="筛选类型" oninput="filterTable()"></th>
-                                    <th class="col-3"><input type="text" id="f_code" placeholder="筛选代码" oninput="filterTable()"></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th><input type="text" id="f_status" placeholder="筛选状态" oninput="filterTable()"></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody id="tableBody">
                             {% for item in counterparties %}
                             <tr>
                                 <td class="col-1">{{ item.party_name }}</td>
-                                <td class="col-2">{{ item.get_party_type_display }}</td>
+                                <td class="col-2">{{ item.party_type_name }}</td>
                                 <td class="col-3">{{ item.credit_code }}</td>
                                 <td>{{ item.contact_name|default:"—" }}</td>
                                 <td>{{ item.contact_phone|default:"—" }}</td>
@@ -424,9 +424,20 @@
                                         <span class="tag-inactive">停用</span>
                                     {% endif %}
                                 </td>
-                                <td>{{ item.established_date|default:"—" }}</td>
-                                <td>{{ item.province_code|default:"—" }}</td>
+                                <td>{{ item.established_date|date:"Y-m-d"|default:"—" }}</td>
+                                <td>{{ item.province_name|default:"—" }}</td>
                                 <td>{{ item.city|default:"—" }}</td>
+                                <td>{{ item.enterprise_type|default:"—" }}</td>
+                                <td>{{ item.industry|default:"—" }}</td>
+                                <td>{{ item.former_name|default:"—" }}</td>
+                                <td title="{{ item.registration_address|default:'' }}">{{ item.registration_address|default:"—" }}</td>
+                                <td class="business-scope-cell" title="{{ item.business_scope|default:'' }}">
+                                    {% if item.business_scope %}
+                                        {{ item.business_scope_short }}{% if item.business_scope_truncated %}...{% endif %}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
                                 <td>{{ item.remark|default:"—" }}</td>
                                 <td>{{ item.created_at|date:"Y-m-d" }}</td>
                                 <td>{{ item.created_by|default:"—" }}</td>
@@ -455,11 +466,32 @@
                                 </td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="13" style="text-align:center;color:#999;padding:20px;">暂无数据，请新增或导入往来单位</td></tr>
+                            <tr><td colspan="18" style="text-align:center;color:#999;padding:20px;">暂无数据，请新增或导入往来单位</td></tr>
                             {% endfor %}
                             </tbody>
                         </table>
                     </div>
+                    {% if is_paginated %}
+                    <div class="pagination">
+                        {% if page_obj.has_previous %}
+                        <a href="?{% if current_query %}{{ current_query }}&{% endif %}page=1">首页</a>
+                        <a href="?{% if current_query %}{{ current_query }}&{% endif %}page={{ page_obj.previous_page_number }}">上一页</a>
+                        {% else %}
+                        <span class="disabled">首页</span>
+                        <span class="disabled">上一页</span>
+                        {% endif %}
+
+                        <span class="current">第 {{ page_obj.number }} 页</span>
+
+                        {% if page_obj.has_next %}
+                        <a href="?{% if current_query %}{{ current_query }}&{% endif %}page={{ page_obj.next_page_number }}">下一页</a>
+                        <a href="?{% if current_query %}{{ current_query }}&{% endif %}page={{ paginator.num_pages }}">末页</a>
+                        {% else %}
+                        <span class="disabled">下一页</span>
+                        <span class="disabled">末页</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -557,23 +589,6 @@
             const hidden = body.style.display === 'none';
             body.style.display = hidden ? '' : 'none';
             if (btn) btn.textContent = hidden ? '收起' : '展开';
-        }
-
-        // 列筛选
-        function filterTable() {
-            const fName = (document.getElementById('f_name').value || '').toLowerCase();
-            const fType = (document.getElementById('f_type').value || '').toLowerCase();
-            const fCode = (document.getElementById('f_code').value || '').toLowerCase();
-            const fStatus = (document.getElementById('f_status').value || '').toLowerCase();
-            document.querySelectorAll('#tableBody tr').forEach(row => {
-                const cells = row.querySelectorAll('td');
-                if (!cells.length) return;
-                const show = (!fName || cells[0].textContent.toLowerCase().includes(fName))
-                    && (!fType || cells[1].textContent.toLowerCase().includes(fType))
-                    && (!fCode || cells[2].textContent.toLowerCase().includes(fCode))
-                    && (!fStatus || cells[5].textContent.toLowerCase().includes(fStatus));
-                row.style.display = show ? '' : 'none';
-            });
         }
 
         // 系统时间

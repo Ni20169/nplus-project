@@ -4,11 +4,14 @@ import tempfile
 import uuid
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
+from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Q, Sum, Count
+from django.db.models import Q, Sum, Count, CharField
+from django.db.models.functions import Cast
 from django.forms.models import model_to_dict
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -111,6 +114,44 @@ def _serialize_contract(contract):
     data["execution_project_id"] = data.pop("execution_project", None)
     data["counterparty_id"] = data.pop("counterparty", None)
     return data
+
+
+def _get_counterparty_province_data():
+    province_dict = DictType.objects.filter(code="PROVINCE", is_active=True).prefetch_related("items").first()
+    province_items = list(province_dict.items.filter(is_active=True).order_by("sort_order", "code")) if province_dict else []
+    province_name_map = {item.code: item.name for item in province_items}
+    return province_items, province_name_map
+
+
+def _apply_counterparty_filters(queryset, filters, province_items):
+    keyword = filters["keyword"]
+    if keyword:
+        queryset = queryset.filter(
+            Q(party_name__icontains=keyword)
+            | Q(contact_name__icontains=keyword)
+            | Q(contact_phone__icontains=keyword)
+            | Q(registration_address__icontains=keyword)
+            | Q(former_name__icontains=keyword)
+            | Q(business_scope__icontains=keyword)
+        )
+
+    if filters["province"]:
+        queryset = queryset.filter(province_code=filters["province"])
+
+    if filters["city"]:
+        queryset = queryset.filter(city__icontains=filters["city"])
+
+    return queryset
+
+
+def _decorate_counterparties(counterparties, province_name_map):
+    party_type_lookup = {value: label for value, label in PARTY_TYPE_CHOICES}
+    for item in counterparties:
+        item.province_name = province_name_map.get(item.province_code, item.province_code or "—")
+        item.party_type_name = party_type_lookup.get(item.party_type, item.party_type)
+        item.business_scope_short = (item.business_scope or "")[:20]
+        item.business_scope_truncated = bool(item.business_scope and len(item.business_scope) > 20)
+    return counterparties
 
 
 def _has_pending_approval(target_module, target_id, approval_type):
@@ -216,6 +257,79 @@ def export_counterparty_template(request):
 
 
 @login_required
+def export_counterparty_list(request):
+    permissions = _get_permissions(request.user)
+    if not permissions.get("can_manage_counterparty"):
+        from .views import _redirect_no_permission
+        return _redirect_no_permission(request)
+
+    from .views import _ensure_export_approved
+
+    if _ensure_export_approved(request, "counterparty_list", "往来单位列表导出") is None:
+        return redirect("contract_counterparty_list")
+
+    filters = {
+        "keyword": request.GET.get("keyword", "").strip(),
+        "province": request.GET.get("province", "").strip(),
+        "city": request.GET.get("city", "").strip(),
+    }
+    province_items, province_name_map = _get_counterparty_province_data()
+    qs = _apply_counterparty_filters(Counterparty.objects.all(), filters, province_items).order_by("party_name")
+    counterparties = _decorate_counterparties(list(qs), province_name_map)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "往来单位列表"
+    headers = [
+        "单位名称",
+        "单位类型",
+        "统一社会信用代码",
+        "联系人",
+        "联系电话",
+        "状态",
+        "成立日期",
+        "所属省份",
+        "所属城市",
+        "企业类型",
+        "所属行业",
+        "曾用名",
+        "注册地址",
+        "经营范围",
+        "备注",
+        "创建时间",
+        "创建人",
+    ]
+    ws.append(headers)
+    for item in counterparties:
+        ws.append([
+            item.party_name,
+            item.party_type_name,
+            item.credit_code,
+            item.contact_name,
+            item.contact_phone,
+            "启用" if item.status == "ACTIVE" else "停用",
+            item.established_date.strftime("%Y-%m-%d") if item.established_date else "",
+            item.province_name if item.province_name != "—" else "",
+            item.city,
+            item.enterprise_type,
+            item.industry,
+            item.former_name,
+            item.registration_address,
+            item.business_scope,
+            item.remark,
+            item.created_at.strftime("%Y-%m-%d") if item.created_at else "",
+            item.created_by,
+        ])
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = "attachment; filename=counterparty_list.xlsx"
+    wb.save(response)
+    return response
+
+
+@login_required
 def export_contract_template(request):
     wb = Workbook()
     ws = wb.active
@@ -311,9 +425,11 @@ def _apply_adjustment_to_contract(adjustment):
 @login_required
 def contract_counterparty_view(request):
     permissions = _get_permissions(request.user)
+    if not permissions.get("can_manage_counterparty"):
+        from .views import _redirect_no_permission
+        return _redirect_no_permission(request)
 
-    province_dict = DictType.objects.filter(code="PROVINCE", is_active=True).first()
-    province_items = province_dict.items.filter(is_active=True).order_by("sort_order", "code") if province_dict else []
+    province_items, province_name_map = _get_counterparty_province_data()
 
     if request.method == "POST":
         form_type = request.POST.get("form_type", "").strip()
@@ -416,27 +532,35 @@ def contract_counterparty_view(request):
             return redirect("contract_counterparty_list")
 
     filters = {
-        "party_name": request.GET.get("party_name", "").strip(),
-        "party_type": request.GET.get("party_type", "").strip(),
-        "credit_code": request.GET.get("credit_code", "").strip(),
-        "status": request.GET.get("status", "").strip(),
+        "keyword": request.GET.get("keyword", "").strip(),
+        "province": request.GET.get("province", "").strip(),
+        "city": request.GET.get("city", "").strip(),
     }
-    qs = Counterparty.objects.all()
-    if filters["party_name"]:
-        qs = qs.filter(party_name__icontains=filters["party_name"])
-    if filters["party_type"]:
-        qs = qs.filter(party_type=filters["party_type"])
-    if filters["credit_code"]:
-        qs = qs.filter(credit_code__icontains=filters["credit_code"])
-    if filters["status"]:
-        qs = qs.filter(status=filters["status"])
+    qs = _apply_counterparty_filters(Counterparty.objects.all(), filters, province_items).order_by("party_name")
+    paginator = Paginator(qs, 50)
+    page_number = request.GET.get("page") or 1
+    page_obj = paginator.get_page(page_number)
+    counterparties = _decorate_counterparties(list(page_obj.object_list), province_name_map)
+
+    query_params = request.GET.copy()
+    query_params.pop("page", None)
+    export_query_string = urlencode({
+        "keyword": filters["keyword"],
+        "province": filters["province"],
+        "city": filters["city"],
+    })
 
     context = {
-        "counterparties": list(qs.order_by("party_name")[:500]),
+        "counterparties": counterparties,
+        "page_obj": page_obj,
+        "paginator": paginator,
+        "is_paginated": page_obj.has_other_pages(),
+        "current_query": query_params.urlencode(),
+        "export_query_string": export_query_string,
         "filters": filters,
         "permissions": permissions,
         "party_type_choices": PARTY_TYPE_CHOICES,
-        "province_items": list(province_items),
+        "province_items": province_items,
         "active_menu": "contract_counterparty",
         "total_count": qs.count(),
     }
@@ -450,6 +574,9 @@ def contract_counterparty_view(request):
 @login_required
 def contract_list_view(request):
     permissions = _get_permissions(request.user)
+    if not permissions.get("can_view_contract_ledger"):
+        from .views import _redirect_no_permission
+        return _redirect_no_permission(request)
     dept_name_map = _get_dept_name_map()
     execution_projects = list(
         ProjectMaster.objects.filter(is_deleted=False, is_execution_level=True).order_by("-project_code")
@@ -627,6 +754,9 @@ def contract_list_view(request):
 @login_required
 def contract_adjustment_view(request):
     permissions = _get_permissions(request.user)
+    if not permissions.get("can_edit_contract_adjustment"):
+        from .views import _redirect_no_permission
+        return _redirect_no_permission(request)
 
     if request.method == "POST":
         form_type = request.POST.get("form_type", "").strip()

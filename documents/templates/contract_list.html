@@ -157,9 +157,15 @@
                     <li>
                         <a class="menu-level-2 open" data-submenu-target="menu-contract-sub" href="#" onclick="toggleSubMenu('menu-contract-sub', this); return false;">合同管理<span class="caret">▼</span></a>
                         <ul class="menu-list show menu-level-3" id="menu-contract-sub">
+                            {% if permissions.can_view_contract_ledger %}
                             <li><a href="{% url 'contract_list' %}" class="active">合同台账</a></li>
+                            {% endif %}
+                            {% if permissions.can_edit_contract_adjustment %}
                             <li><a href="{% url 'contract_adjustment_list' %}">合同调整</a></li>
+                            {% endif %}
+                            {% if permissions.can_manage_counterparty %}
                             <li><a href="{% url 'contract_counterparty_list' %}">往来单位管理</a></li>
+                            {% endif %}
                         </ul>
                     </li>
                 </ul>

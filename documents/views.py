@@ -42,7 +42,9 @@ PERMISSION_FIELDS = [
     ("can_update_project", "信息更新"),
     ("can_view_project_list", "项目列表"),
     ("can_approval_manage", "审批管理"),
-    ("can_contract_manage", "合同管理"),
+    ("can_view_contract_ledger", "合同台账"),
+    ("can_edit_contract_adjustment", "合同调整"),
+    ("can_manage_counterparty", "往来单位管理"),
 ]
 
 
@@ -88,6 +90,12 @@ def _ensure_export_approved(request, export_type, export_label):
             "list_data_status": request.GET.get("list_data_status", "").strip(),
             "list_project_year": request.GET.get("list_project_year", "").strip(),
             "list_created_by": request.GET.get("list_created_by", "").strip(),
+        }
+    elif export_type == "counterparty_list":
+        params = {
+            "keyword": request.GET.get("keyword", "").strip(),
+            "province": request.GET.get("province", "").strip(),
+            "city": request.GET.get("city", "").strip(),
         }
     else:
         params = {}

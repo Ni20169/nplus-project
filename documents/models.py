@@ -243,7 +243,9 @@ class UserProfile(models.Model):
     can_update_project = models.BooleanField("可用-信息更新", default=False)
     can_view_project_list = models.BooleanField("可用-项目列表", default=False)
     can_approval_manage = models.BooleanField("可用-审批管理", default=False)
-    can_contract_manage = models.BooleanField("可用-合同管理", default=False)
+    can_view_contract_ledger = models.BooleanField("可用-合同台账", default=False)
+    can_edit_contract_adjustment = models.BooleanField("可用-合同调整", default=False)
+    can_manage_counterparty = models.BooleanField("可用-往来单位管理", default=False)
 
     class Meta:
         verbose_name = "用户扩展信息"
