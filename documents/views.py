@@ -550,12 +550,23 @@ def project_master_list(request):
         show_update_panel = True
 
     total_records = ProjectMaster.objects.filter(is_deleted=False).count()
-    qs = ProjectMaster.objects.filter(is_deleted=False)
-    if not permissions["can_view_project_list"] and not (has_query_request and permissions["can_query_project"]):
-        qs = ProjectMaster.objects.none()
-    
+
+    def _enrich(project_list):
+        for p in project_list:
+            p.province_name = dict_map.get("PROVINCE", {}).get(p.province_code, p.province_code)
+            p.city_name = dict_map.get("CITY", {}).get(p.city_code, p.city_code)
+            p.business_unit_name = dict_map.get("BUSINESS_UNIT", {}).get(p.business_unit, p.business_unit)
+            p.dept_name = dict_map.get("DEPT", {}).get(p.dept, p.dept)
+            p.org_mode_name = dict_map.get("ORG_MODE", {}).get(p.org_mode, p.org_mode)
+            p.data_status_name = dict_map.get("DATA_STATUS", {}).get(p.data_status, p.data_status)
+            p.project_type_name = dict_map.get("PROJECT_TYPE", {}).get(p.project_type, p.project_type)
+
+    # ── 项目列表（始终显示全量数据，与查询结果解耦）
+    list_base_qs = ProjectMaster.objects.filter(is_deleted=False)
+    if not permissions["can_view_project_list"]:
+        list_base_qs = ProjectMaster.objects.none()
+
     if is_list_filter:
-        # 项目列表独立筛选
         list_filter = {
             "project_code": request.GET.get("list_project_code", "").strip(),
             "project_name": request.GET.get("list_project_name", "").strip(),
@@ -567,44 +578,72 @@ def project_master_list(request):
             "project_year": request.GET.get("list_project_year", "").strip(),
             "created_by": request.GET.get("list_created_by", "").strip(),
         }
-        
         if list_filter["project_code"]:
-            qs = qs.filter(project_code__icontains=list_filter["project_code"])
+            list_base_qs = list_base_qs.filter(project_code__icontains=list_filter["project_code"])
         if list_filter["project_name"]:
-            qs = qs.filter(project_name__icontains=list_filter["project_name"])
+            list_base_qs = list_base_qs.filter(project_name__icontains=list_filter["project_name"])
         if list_filter["org_name"]:
-            qs = qs.filter(org_name__icontains=list_filter["org_name"])
+            list_base_qs = list_base_qs.filter(org_name__icontains=list_filter["org_name"])
         if list_filter["province_code"]:
-            qs = qs.filter(province_code=list_filter["province_code"])
+            list_base_qs = list_base_qs.filter(province_code=list_filter["province_code"])
         if list_filter["business_unit"]:
-            qs = qs.filter(business_unit=list_filter["business_unit"])
+            list_base_qs = list_base_qs.filter(business_unit=list_filter["business_unit"])
         if list_filter["dept"]:
-            qs = qs.filter(dept=list_filter["dept"])
+            list_base_qs = list_base_qs.filter(dept=list_filter["dept"])
         if list_filter["data_status"]:
-            qs = qs.filter(data_status=list_filter["data_status"])
+            list_base_qs = list_base_qs.filter(data_status=list_filter["data_status"])
         if list_filter["project_year"]:
-            qs = qs.filter(project_year__icontains=list_filter["project_year"])
+            list_base_qs = list_base_qs.filter(project_year__icontains=list_filter["project_year"])
         if list_filter["created_by"]:
-            qs = qs.filter(created_by__icontains=list_filter["created_by"])
-        
-        search = {
+            list_base_qs = list_base_qs.filter(created_by__icontains=list_filter["created_by"])
+    else:
+        list_filter = {
             "project_code": "",
             "project_name": "",
             "org_name": "",
-            "parent_pj_code": "",
             "province_code": "",
             "business_unit": "",
             "dept": "",
-            "project_type": "",
-            "org_mode": "",
             "data_status": "",
-            "is_execution_level": "",
             "project_year": "",
             "created_by": "",
-            "remark": "",
         }
-    else:
-        # 查询项目筛选
+
+    list_ordered_qs = list_base_qs.order_by("-updated_at", "-id")
+    list_paginator = Paginator(list_ordered_qs, 50)
+    list_page_number = request.GET.get("list_page", 1)
+    try:
+        list_page_obj = list_paginator.page(list_page_number)
+    except PageNotAnInteger:
+        list_page_obj = list_paginator.page(1)
+    except EmptyPage:
+        list_page_obj = list_paginator.page(list_paginator.num_pages)
+    list_projects = list(list_page_obj.object_list)
+    _enrich(list_projects)
+
+    # ── 查询项目（仅在有搜索参数时执行）
+    search = {
+        "project_code": "",
+        "project_name": "",
+        "org_name": "",
+        "parent_pj_code": "",
+        "province_code": "",
+        "business_unit": "",
+        "dept": "",
+        "project_type": "",
+        "org_mode": "",
+        "data_status": "",
+        "is_execution_level": "",
+        "project_year": "",
+        "created_by": "",
+        "remark": "",
+    }
+    search_projects = []
+    search_page_obj = None
+    search_paginator = None
+    matched_count = 0
+
+    if not is_list_filter:
         province_code_values = [v.strip() for v in request.GET.getlist("province_code") if v.strip()]
         business_unit_values = [v.strip() for v in request.GET.getlist("business_unit") if v.strip()]
         dept_values = [v.strip() for v in request.GET.getlist("dept") if v.strip()]
@@ -612,7 +651,6 @@ def project_master_list(request):
         org_mode_values = [v.strip() for v in request.GET.getlist("org_mode") if v.strip()]
         data_status_values = [v.strip() for v in request.GET.getlist("data_status") if v.strip()]
         execution_level_values = [v.strip() for v in request.GET.getlist("is_execution_level") if v.strip()]
-
         search = {
             "project_code": request.GET.get("project_code", "").strip(),
             "project_name": request.GET.get("project_name", "").strip(),
@@ -630,77 +668,69 @@ def project_master_list(request):
             "remark": request.GET.get("remark", "").strip(),
         }
 
+    has_search_params = any([
+        search["project_code"],
+        search["project_name"],
+        search["org_name"],
+        search["parent_pj_code"],
+        search["province_code"],
+        search["business_unit"],
+        search["dept"],
+        search["project_type"],
+        search["org_mode"],
+        search["data_status"],
+        search["is_execution_level"],
+        search["project_year"],
+        search["created_by"],
+        search["remark"],
+    ])
+    is_query_result = (not is_list_filter) and has_search_params
+
+    if is_query_result and permissions["can_query_project"]:
+        search_qs = ProjectMaster.objects.filter(is_deleted=False)
         if search["project_code"]:
-            qs = qs.filter(project_code__icontains=search["project_code"])
+            search_qs = search_qs.filter(project_code__icontains=search["project_code"])
         if search["project_name"]:
-            qs = qs.filter(project_name__icontains=search["project_name"])
+            search_qs = search_qs.filter(project_name__icontains=search["project_name"])
         if search["org_name"]:
-            qs = qs.filter(org_name__icontains=search["org_name"])
+            search_qs = search_qs.filter(org_name__icontains=search["org_name"])
         if search["parent_pj_code"]:
-            qs = qs.filter(parent_pj_code__icontains=search["parent_pj_code"])
+            search_qs = search_qs.filter(parent_pj_code__icontains=search["parent_pj_code"])
         if search["province_code"]:
-            qs = qs.filter(province_code__in=search["province_code"])
+            search_qs = search_qs.filter(province_code__in=search["province_code"])
         if search["business_unit"]:
-            qs = qs.filter(business_unit__in=search["business_unit"])
+            search_qs = search_qs.filter(business_unit__in=search["business_unit"])
         if search["dept"]:
-            qs = qs.filter(dept__in=search["dept"])
+            search_qs = search_qs.filter(dept__in=search["dept"])
         if search["project_type"]:
-            qs = qs.filter(project_type__in=search["project_type"])
+            search_qs = search_qs.filter(project_type__in=search["project_type"])
         if search["org_mode"]:
-            qs = qs.filter(org_mode__in=search["org_mode"])
+            search_qs = search_qs.filter(org_mode__in=search["org_mode"])
         if search["data_status"]:
-            qs = qs.filter(data_status__in=search["data_status"])
+            search_qs = search_qs.filter(data_status__in=search["data_status"])
         selected_execution_levels = set(search["is_execution_level"])
         if selected_execution_levels == {"true"}:
-            qs = qs.filter(is_execution_level=True)
+            search_qs = search_qs.filter(is_execution_level=True)
         if selected_execution_levels == {"false"}:
-            qs = qs.filter(is_execution_level=False)
+            search_qs = search_qs.filter(is_execution_level=False)
         if search["project_year"]:
-            qs = qs.filter(project_year__icontains=search["project_year"])
+            search_qs = search_qs.filter(project_year__icontains=search["project_year"])
         if search["created_by"]:
-            qs = qs.filter(created_by__icontains=search["created_by"])
+            search_qs = search_qs.filter(created_by__icontains=search["created_by"])
         if search["remark"]:
-            qs = qs.filter(remark__icontains=search["remark"])
-        
-        list_filter = {
-            "project_code": "",
-            "project_name": "",
-            "org_name": "",
-            "province_code": "",
-            "business_unit": "",
-            "dept": "",
-            "data_status": "",
-            "project_year": "",
-            "created_by": "",
-        }
-
-    # 执行分页（稳定排序 + 完整的页码保护）
-    ordered_qs = qs.order_by("-updated_at", "-id")  # 二级排序确保稳定性
-    paginator = Paginator(ordered_qs, 50)  # 每页50条
-    page_number = request.GET.get("page", 1)
-    try:
-        page_obj = paginator.page(page_number)
-    except PageNotAnInteger:
-        page_obj = paginator.page(1)
-    except EmptyPage:
-        page_obj = paginator.page(paginator.num_pages)
-    
-    projects = list(page_obj.object_list)
-    name_map = _dict_name_map(dicts)
-    for project in projects:
-        project.province_name = name_map.get("PROVINCE", {}).get(
-            project.province_code, project.province_code
-        )
-        project.city_name = name_map.get("CITY", {}).get(project.city_code, project.city_code)
-        project.business_unit_name = name_map.get("BUSINESS_UNIT", {}).get(
-            project.business_unit, project.business_unit
-        )
-        project.dept_name = name_map.get("DEPT", {}).get(project.dept, project.dept)
-        project.org_mode_name = name_map.get("ORG_MODE", {}).get(project.org_mode, project.org_mode)
-        project.data_status_name = name_map.get("DATA_STATUS", {}).get(project.data_status, project.data_status)
-        project.project_type_name = name_map.get("PROJECT_TYPE", {}).get(
-            project.project_type, project.project_type
-        )
+            search_qs = search_qs.filter(remark__icontains=search["remark"])
+        search_ordered_qs = search_qs.order_by("-updated_at", "-id")
+        search_paginator = Paginator(search_ordered_qs, 50)
+        search_page_number = request.GET.get("search_page", 1)
+        try:
+            search_page_obj = search_paginator.page(search_page_number)
+        except PageNotAnInteger:
+            search_page_obj = search_paginator.page(1)
+        except EmptyPage:
+            search_page_obj = search_paginator.page(search_paginator.num_pages)
+        search_projects = list(search_page_obj.object_list)
+        _enrich(search_projects)
+        matched_count = search_paginator.count
 
     latest_errors = []
     latest_batch = ImportBatch.objects.order_by("-imported_at").first()
@@ -741,7 +771,7 @@ def project_master_list(request):
         dict_code = update_dict_key_map.get(field_key)
         if dict_code:
             code = str(raw_value)
-            name = name_map.get(dict_code, {}).get(code)
+            name = dict_map.get(dict_code, {}).get(code)
             return f"{code} - {name}" if name else code
 
         return str(raw_value)
@@ -801,23 +831,6 @@ def project_master_list(request):
         show_update_panel = True
 
     # 检查是否有查询参数，如果有则显示查询表单
-    has_search_params = any([
-        search["project_code"],
-        search["project_name"],
-        search["org_name"],
-        search["parent_pj_code"],
-        search["province_code"],
-        search["business_unit"],
-        search["dept"],
-        search["project_type"],
-        search["org_mode"],
-        search["data_status"],
-        search["is_execution_level"],
-        search["project_year"],
-        search["created_by"],
-        search["remark"],
-    ])
-    is_query_result = (not is_list_filter) and has_search_params
     show_action_column = (
         permissions["can_update_project"] or permissions["can_approval_manage"]
     )
@@ -849,9 +862,12 @@ def project_master_list(request):
         request,
         "project_master_list.html",
         {
-            "projects": projects,
-            "page_obj": page_obj,
-            "paginator": paginator,
+            "list_projects": list_projects,
+            "list_page_obj": list_page_obj,
+            "list_paginator": list_paginator,
+            "search_projects": search_projects,
+            "search_page_obj": search_page_obj,
+            "search_paginator": search_paginator,
             "dicts": dicts,
             "latest_errors": latest_errors,
             "search": search,
@@ -867,7 +883,7 @@ def project_master_list(request):
             "show_approval_panel": show_approval_panel,
             "is_query_result": is_query_result,
             "show_action_column": show_action_column,
-            "matched_count": paginator.count,
+            "matched_count": matched_count,
             "total_records": total_records,
             "show_add_form": show_add_form,
             "update_now": timezone.localtime().strftime("%Y-%m-%d %H:%M"),

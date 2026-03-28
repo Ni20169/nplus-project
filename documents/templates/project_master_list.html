@@ -1358,6 +1358,110 @@
                 </div>
 
                 {% if permissions.can_create_project %}
+                <!-- 查询结果表格（嵌入查询项目页签） -->
+                {% if is_query_result and search_projects is not None %}
+                <div class="data-table" id="searchResultTable">
+                    <div class="table-meta">
+                        <div>当前匹配：<span id="matchCount">{{ matched_count }}</span> 条</div>
+                        <div>总记录：<span id="totalCount">{{ total_records }}</span> 条</div>
+                    </div>
+                    <div class="table-wrapper" style="overflow-x: auto;">
+                        <table style="min-width: 1400px;">
+                            <thead>
+                                <tr>
+                                    <th class="sticky-col col-1">项目编码</th>
+                                    <th class="sticky-col col-2">项目名称</th>
+                                    <th class="sticky-col col-3">机构名称</th>
+                                    <th>所在省</th>
+                                    <th>业务板块</th>
+                                    <th>承担部门</th>
+                                    <th>组织模式</th>
+                                    <th>数据状态</th>
+                                    <th>是否执行层</th>
+                                    <th>项目年份</th>
+                                    <th>创建人</th>
+                                    <th>项目类型</th>
+                                    <th>创建时间</th>
+                                    <th>修改时间</th>
+                                    <th>修改人</th>
+                                    <th>备注</th>
+                                    {% if show_action_column %}
+                                    <th>操作</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for project in search_projects %}
+                                <tr>
+                                    <td class="sticky-col col-1">{{ project.project_code }}</td>
+                                    <td class="sticky-col col-2">{{ project.project_name }}</td>
+                                    <td class="sticky-col col-3">{{ project.org_name }}</td>
+                                    <td>{{ project.province_name }}</td>
+                                    <td>{{ project.business_unit_name }}</td>
+                                    <td>{{ project.dept_name }}</td>
+                                    <td>{{ project.org_mode_name }}</td>
+                                    <td>{{ project.data_status_name }}</td>
+                                    <td>{{ project.is_execution_level|yesno:"是,否" }}</td>
+                                    <td>{{ project.project_year }}</td>
+                                    <td>{{ project.created_by|default:"—" }}</td>
+                                    <td>{{ project.project_type_name }}</td>
+                                    <td>{{ project.created_at|date:"Y-m-d" }}</td>
+                                    <td>{{ project.updated_at|date:"Y-m-d" }}</td>
+                                    <td>{{ project.updated_by|default:"—" }}</td>
+                                    <td>{{ project.remark|default:"—" }}</td>
+                                    {% if show_action_column %}
+                                    <td>
+                                        <div style="display: flex; gap: 16px; justify-content: center;">
+                                            {% if permissions.can_update_project %}
+                                            <a class="btn-edit" href="{% url 'project_master_edit' project.project_code %}">修改</a>
+                                            {% endif %}
+                                            {% if permissions.can_approval_manage %}
+                                            <button class="btn-delete" type="button" onclick="submitDeleteApproval('{{ project.project_code }}', '{{ project.project_name }}')">删除</button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="{% if show_action_column %}17{% else %}16{% endif %}">未找到匹配的项目</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+
+                        <!-- 查询结果分页控件 -->
+                        {% if search_page_obj.has_other_pages %}
+                        <div class="pagination">
+                            <div class="pagination-info">
+                                第 {{ search_page_obj.number }} 页 / 共 {{ search_paginator.num_pages }} 页（共 {{ search_paginator.count }} 条记录）
+                            </div>
+                            <div class="pagination-controls">
+                                {% if search_page_obj.has_previous %}
+                                    <a href="?search_page=1{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">首页</a>
+                                    <a href="?search_page={{ search_page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">上一页</a>
+                                {% endif %}
+                                <div class="pagination-pages">
+                                    {% for num in search_paginator.page_range %}
+                                        {% if search_page_obj.number == num %}
+                                            <span class="pagination-current">{{ num }}</span>
+                                        {% else %}
+                                            <a href="?search_page={{ num }}{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-link">{{ num }}</a>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                {% if search_page_obj.has_next %}
+                                    <a href="?search_page={{ search_page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">下一页</a>
+                                    <a href="?search_page={{ search_paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'search_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">末页</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if permissions.can_create_project %}
                 <div class="search-form add-form{% if not show_add_form %} hidden{% endif %}" id="addForm">
                     <h3>新增项目</h3>
                     <form method="post">
@@ -1701,8 +1805,7 @@
 
                 <div class="data-table" id="dataTable">
                     <div class="table-meta">
-                        <div>当前匹配：<span id="matchCount">{{ matched_count }}</span> 条</div>
-                        <div>总记录：<span id="totalCount">{{ total_records }}</span> 条</div>
+                        <div>项目列表（全量）：共 {{ total_records }} 条</div>
                         {% if permissions.can_view_project_list %}
                         <div>
                             <a class="btn-export" href="{% url 'export_project_list' %}?{{ list_export_params }}">导出项目列表（Excel）</a>
@@ -1735,7 +1838,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for project in projects %}
+                                {% for project in list_projects %}
                                 <tr>
                                     <td class="sticky-col col-1">{{ project.project_code }}</td>
                                     <td class="sticky-col col-2">{{ project.project_name }}</td>
@@ -1775,30 +1878,30 @@
                         </table>
                         
                         <!-- 分页控件 -->
-                        {% if page_obj.has_other_pages %}
+                        {% if list_page_obj.has_other_pages %}
                         <div class="pagination">
                             <div class="pagination-info">
-                                第 {{ page_obj.number }} 页 / 共 {{ paginator.num_pages }} 页 （共 {{ paginator.count }} 条记录）
+                                第 {{ list_page_obj.number }} 页 / 共 {{ list_paginator.num_pages }} 页（共 {{ list_paginator.count }} 条记录）
                             </div>
                             <div class="pagination-controls">
-                                {% if page_obj.has_previous %}
-                                    <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">首页</a>
-                                    <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">上一页</a>
+                                {% if list_page_obj.has_previous %}
+                                    <a href="?list_page=1" class="pagination-btn">首页</a>
+                                    <a href="?list_page={{ list_page_obj.previous_page_number }}" class="pagination-btn">上一页</a>
                                 {% endif %}
                                 
                                 <div class="pagination-pages">
-                                    {% for num in paginator.page_range %}
-                                        {% if page_obj.number == num %}
+                                    {% for num in list_paginator.page_range %}
+                                        {% if list_page_obj.number == num %}
                                             <span class="pagination-current">{{ num }}</span>
                                         {% else %}
-                                            <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-link">{{ num }}</a>
+                                            <a href="?list_page={{ num }}" class="pagination-link">{{ num }}</a>
                                         {% endif %}
                                     {% endfor %}
                                 </div>
                                 
-                                {% if page_obj.has_next %}
-                                    <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">下一页</a>
-                                    <a href="?page={{ paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">末页</a>
+                                {% if list_page_obj.has_next %}
+                                    <a href="?list_page={{ list_page_obj.next_page_number }}" class="pagination-btn">下一页</a>
+                                    <a href="?list_page={{ list_paginator.num_pages }}" class="pagination-btn">末页</a>
                                 {% endif %}
                             </div>
                         </div>
@@ -1962,7 +2065,6 @@
                 setDisplay('updatePanel', 'none');
                 setDisplay('approvalPanel', 'none');
                 setDisplay('listFilterPanel', 'none');
-                // 查询页签默认只展示查询条件，不展示项目列表
                 setTableDisplay('none');
                 clearProjectSearchFilters();
                 const searchForm = document.getElementById('searchForm');
@@ -1976,6 +2078,32 @@
                 console.log('showSearchForm completed successfully');
             } catch (error) {
                 console.error('Error in showSearchForm:', error);
+                    function showSearchForm() {
+                        if (!canQueryProject) {
+                            alert('无权限');
+                            return;
+                        }
+                        try {
+                            setDisplay('searchForm', 'block');
+                            setDisplay('addForm', 'none');
+                            setDisplay('updatePanel', 'none');
+                            setDisplay('approvalPanel', 'none');
+                            setDisplay('listFilterPanel', 'none');
+                            // 查询页签不展示项目列表
+                            setTableDisplay('none');
+                            clearProjectSearchFilters();
+                            const searchForm = document.getElementById('searchForm');
+                            if (searchForm) {
+                                searchForm.classList.remove('collapsed');
+                            }
+                            const toggleBtn = document.getElementById('toggleSearchFields');
+                            if (toggleBtn) {
+                                toggleBtn.textContent = '收起';
+                            }
+                        } catch (error) {
+                            console.error('Error in showSearchForm:', error);
+                        }
+                    }
             }
         }
 
@@ -2111,6 +2239,23 @@
                 console.log('refreshList completed successfully');
             } catch (error) {
                 console.error('Error in refreshList:', error);
+                    function refreshList() {
+                        if (!canViewProjectList) {
+                            alert('无权限');
+                            return;
+                        }
+                        try {
+                            setDisplay('addForm', 'none');
+                            setDisplay('searchForm', 'none');
+                            setDisplay('updatePanel', 'none');
+                            setDisplay('approvalPanel', 'none');
+                            setDisplay('listFilterPanel', 'none');
+                            // 项目列表始终显示全量数据，与查询结果无关
+                            setTableDisplay('block');
+                        } catch (error) {
+                            console.error('Error in refreshList:', error);
+                        }
+                    }
             }
         }
 
@@ -2144,6 +2289,38 @@
                 if (updatePanel) updatePanel.style.display = 'none';
                 if (dataTable) {
                     dataTable.style.display = (!canViewProjectList && !isQueryResult) ? 'none' : 'block';
+                            const searchResultTable = document.getElementById('searchResultTable');
+                            if (showApprovalPanelMode) {
+                                if (approvalPanel) approvalPanel.style.display = 'block';
+                                const actionBtns = document.getElementById('actionButtons');
+                                if (actionBtns) actionBtns.style.display = 'none';
+                                if (updatePanel) updatePanel.style.display = 'none';
+                                if (dataTable) dataTable.style.display = 'none';
+                            } else if (showUpdatePanel) {
+                                if (approvalPanel) approvalPanel.style.display = 'none';
+                                if (updatePanel) updatePanel.style.display = 'block';
+                                if (dataTable) dataTable.style.display = 'none';
+                            } else if (isQueryResult) {
+                                // 查询结果：显示查询表单 + 结果表格，隐藏项目列表
+                                if (approvalPanel) approvalPanel.style.display = 'none';
+                                if (updatePanel) updatePanel.style.display = 'none';
+                                if (dataTable) dataTable.style.display = 'none';
+                                const sf = document.getElementById('searchForm');
+                                if (sf) sf.style.display = 'block';
+                                if (searchResultTable) searchResultTable.style.display = 'block';
+                            } else if (showSearchFormMode) {
+                                // 查询页签（未提交查询）只显示查询条件
+                                if (approvalPanel) approvalPanel.style.display = 'none';
+                                if (updatePanel) updatePanel.style.display = 'none';
+                                if (dataTable) dataTable.style.display = 'none';
+                            } else {
+                                // 默认显示项目列表
+                                if (approvalPanel) approvalPanel.style.display = 'none';
+                                if (updatePanel) updatePanel.style.display = 'none';
+                                if (dataTable) {
+                                    dataTable.style.display = canViewProjectList ? 'block' : 'none';
+                                }
+                            }
                 }
             }
 
