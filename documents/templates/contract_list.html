@@ -525,8 +525,8 @@
                                 <td>{{ item.created_at|date:"Y-m-d" }}</td>
                                 <td>{{ item.created_by|default:"—" }}</td>
                                 <td>
-                                    <button type="button" class="btn-edit" onclick="submitContractUpdate({{ item.id }}, '{{ item.contract_name|escapejs }}', '{{ item.contract_status|escapejs }}', '{{ item.remark|default:''|escapejs }}')">修改提审</button>
-                                    <button type="button" class="btn-delete" onclick="submitContractDelete({{ item.id }}, '{{ item.contract_name|escapejs }}')">删除提审</button>
+                                    <button type="button" class="btn-edit" onclick="submitContractUpdate({{ item.id }}, '{{ item.contract_name|escapejs }}', '{{ item.contract_status|escapejs }}', '{{ item.remark|default:''|escapejs }}')">修改</button>
+                                    <button type="button" class="btn-delete" onclick="submitContractDelete({{ item.id }}, '{{ item.contract_name|escapejs }}')">删除</button>
                                 </td>
                             </tr>
                             {% empty %}
