@@ -1972,12 +1972,18 @@
             }
         }
 
+        function setSearchResultDisplay(value) {
+            const table = document.getElementById('searchResultTable');
+            if (table) {
+                table.style.display = value;
+            }
+        }
+
         function showAddForm() {
             if (!canCreateProject) {
                 alert('无权限');
                 return;
             }
-            console.log('showAddForm called');
             try {
                 setDisplay('addForm', 'block');
                 setDisplay('searchForm', 'none');
@@ -1985,7 +1991,7 @@
                 setDisplay('approvalPanel', 'none');
                 setDisplay('listFilterPanel', 'none');
                 setTableDisplay('none');
-                console.log('showAddForm completed successfully');
+                setSearchResultDisplay('none');
             } catch (error) {
                 console.error('Error in showAddForm:', error);
             }
@@ -2000,14 +2006,14 @@
                 alert('无权限');
                 return;
             }
-            console.log('showApprovalPanel called');
             setDisplay('approvalPanel', 'block');
             setDisplay('actionButtons', 'none');
             setDisplay('addForm', 'none');
             setDisplay('searchForm', 'none');
             setDisplay('updatePanel', 'none');
             setDisplay('listFilterPanel', 'none');
-            setTableDisplay('block');
+            setTableDisplay('none');
+            setSearchResultDisplay('none');
         }
 
         function hideApprovalPanel() {
@@ -2051,13 +2057,6 @@
                 alert('无权限');
                 return;
             }
-            console.log('showSearchForm called');
-            console.log('searchForm element:', document.getElementById('searchForm'));
-            console.log('addForm element:', document.getElementById('addForm'));
-            console.log('updatePanel element:', document.getElementById('updatePanel'));
-            console.log('approvalPanel element:', document.getElementById('approvalPanel'));
-            console.log('data-table element:', document.querySelector('.data-table'));
-            
             try {
                 setDisplay('searchForm', 'block');
                 setDisplay('addForm', 'none');
@@ -2065,6 +2064,7 @@
                 setDisplay('approvalPanel', 'none');
                 setDisplay('listFilterPanel', 'none');
                 setTableDisplay('none');
+                setSearchResultDisplay('none');
                 clearProjectSearchFilters();
                 const searchForm = document.getElementById('searchForm');
                 if (searchForm) {
@@ -2074,35 +2074,8 @@
                 if (toggleBtn) {
                     toggleBtn.textContent = '收起';
                 }
-                console.log('showSearchForm completed successfully');
             } catch (error) {
                 console.error('Error in showSearchForm:', error);
-                    function showSearchForm() {
-                        if (!canQueryProject) {
-                            alert('无权限');
-                            return;
-                        }
-                        try {
-                            setDisplay('searchForm', 'block');
-                            setDisplay('addForm', 'none');
-                            setDisplay('updatePanel', 'none');
-                            setDisplay('approvalPanel', 'none');
-                            setDisplay('listFilterPanel', 'none');
-                            // 查询页签不展示项目列表
-                            setTableDisplay('none');
-                            clearProjectSearchFilters();
-                            const searchForm = document.getElementById('searchForm');
-                            if (searchForm) {
-                                searchForm.classList.remove('collapsed');
-                            }
-                            const toggleBtn = document.getElementById('toggleSearchFields');
-                            if (toggleBtn) {
-                                toggleBtn.textContent = '收起';
-                            }
-                        } catch (error) {
-                            console.error('Error in showSearchForm:', error);
-                        }
-                    }
             }
         }
 
@@ -2137,7 +2110,6 @@
                 alert('无权限');
                 return;
             }
-            console.log('showUpdatePanel called');
             try {
                 setDisplay('updatePanel', 'block');
                 setDisplay('addForm', 'none');
@@ -2145,6 +2117,7 @@
                 setDisplay('approvalPanel', 'none');
                 setDisplay('listFilterPanel', 'none');
                 setTableDisplay('none');
+                setSearchResultDisplay('none');
                 const updatePanel = document.getElementById('updatePanel');
                 if (updatePanel) {
                     updatePanel.classList.remove('collapsed');
@@ -2153,7 +2126,6 @@
                 if (toggleBtn) {
                     toggleBtn.textContent = '收起';
                 }
-                console.log('showUpdatePanel completed successfully');
             } catch (error) {
                 console.error('Error in showUpdatePanel:', error);
             }
@@ -2227,7 +2199,6 @@
                 alert('无权限');
                 return;
             }
-            console.log('refreshList called');
             try {
                 setDisplay('addForm', 'none');
                 setDisplay('searchForm', 'none');
@@ -2235,26 +2206,9 @@
                 setDisplay('approvalPanel', 'none');
                 setDisplay('listFilterPanel', 'none');
                 setTableDisplay('block');
-                console.log('refreshList completed successfully');
+                setSearchResultDisplay('none');
             } catch (error) {
                 console.error('Error in refreshList:', error);
-                    function refreshList() {
-                        if (!canViewProjectList) {
-                            alert('无权限');
-                            return;
-                        }
-                        try {
-                            setDisplay('addForm', 'none');
-                            setDisplay('searchForm', 'none');
-                            setDisplay('updatePanel', 'none');
-                            setDisplay('approvalPanel', 'none');
-                            setDisplay('listFilterPanel', 'none');
-                            // 项目列表始终显示全量数据，与查询结果无关
-                            setTableDisplay('block');
-                        } catch (error) {
-                            console.error('Error in refreshList:', error);
-                        }
-                    }
             }
         }
 
@@ -2263,6 +2217,7 @@
             const updatePanel = document.getElementById('updatePanel');
             const approvalPanel = document.getElementById('approvalPanel');
             const dataTable = document.getElementById('dataTable');
+            const searchResultTable = document.getElementById('searchResultTable');
             // 从HTML数据属性获取初始化状态
             const showUpdatePanel = document.body.dataset.showUpdatePanel === 'true';
             const showSearchFormMode = document.body.dataset.showSearchForm === 'true';
@@ -2274,53 +2229,31 @@
                 if (actionBtns) actionBtns.style.display = 'none';
                 if (updatePanel) updatePanel.style.display = 'none';
                 if (dataTable) dataTable.style.display = 'none';
+                if (searchResultTable) searchResultTable.style.display = 'none';
             } else if (showUpdatePanel) {
                 if (approvalPanel) approvalPanel.style.display = 'none';
                 if (updatePanel) updatePanel.style.display = 'block';
                 if (dataTable) dataTable.style.display = 'none';
+                if (searchResultTable) searchResultTable.style.display = 'none';
             } else if (showSearchFormMode && !isQueryResult) {
                 // 查询页签（未提交查询）只显示查询条件，不显示列表
                 if (approvalPanel) approvalPanel.style.display = 'none';
                 if (updatePanel) updatePanel.style.display = 'none';
                 if (dataTable) dataTable.style.display = 'none';
+                if (searchResultTable) searchResultTable.style.display = 'none';
+            } else if (isQueryResult) {
+                if (approvalPanel) approvalPanel.style.display = 'none';
+                if (updatePanel) updatePanel.style.display = 'none';
+                if (dataTable) dataTable.style.display = 'none';
+                if (searchResultTable) searchResultTable.style.display = 'block';
+                setDisplay('searchForm', 'block');
             } else {
                 if (approvalPanel) approvalPanel.style.display = 'none';
                 if (updatePanel) updatePanel.style.display = 'none';
                 if (dataTable) {
-                    dataTable.style.display = (!canViewProjectList && !isQueryResult) ? 'none' : 'block';
-                            const searchResultTable = document.getElementById('searchResultTable');
-                            if (showApprovalPanelMode) {
-                                if (approvalPanel) approvalPanel.style.display = 'block';
-                                const actionBtns = document.getElementById('actionButtons');
-                                if (actionBtns) actionBtns.style.display = 'none';
-                                if (updatePanel) updatePanel.style.display = 'none';
-                                if (dataTable) dataTable.style.display = 'none';
-                            } else if (showUpdatePanel) {
-                                if (approvalPanel) approvalPanel.style.display = 'none';
-                                if (updatePanel) updatePanel.style.display = 'block';
-                                if (dataTable) dataTable.style.display = 'none';
-                            } else if (isQueryResult) {
-                                // 查询结果：显示查询表单 + 结果表格，隐藏项目列表
-                                if (approvalPanel) approvalPanel.style.display = 'none';
-                                if (updatePanel) updatePanel.style.display = 'none';
-                                if (dataTable) dataTable.style.display = 'none';
-                                const sf = document.getElementById('searchForm');
-                                if (sf) sf.style.display = 'block';
-                                if (searchResultTable) searchResultTable.style.display = 'block';
-                            } else if (showSearchFormMode) {
-                                // 查询页签（未提交查询）只显示查询条件
-                                if (approvalPanel) approvalPanel.style.display = 'none';
-                                if (updatePanel) updatePanel.style.display = 'none';
-                                if (dataTable) dataTable.style.display = 'none';
-                            } else {
-                                // 默认显示项目列表
-                                if (approvalPanel) approvalPanel.style.display = 'none';
-                                if (updatePanel) updatePanel.style.display = 'none';
-                                if (dataTable) {
-                                    dataTable.style.display = canViewProjectList ? 'block' : 'none';
-                                }
-                            }
+                    dataTable.style.display = canViewProjectList ? 'block' : 'none';
                 }
+                if (searchResultTable) searchResultTable.style.display = 'none';
             }
 
             // 更新系统时间
