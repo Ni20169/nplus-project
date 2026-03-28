@@ -1925,15 +1925,7 @@
                                 <a href="?list_page={{ list_page_obj.previous_page_number }}" class="pagination-btn">上一页</a>
                             {% endif %}
 
-                            <div class="pagination-pages">
-                                {% for num in list_paginator.page_range %}
-                                    {% if list_page_obj.number == num %}
-                                        <span class="pagination-current">{{ num }}</span>
-                                    {% else %}
-                                        <a href="?list_page={{ num }}" class="pagination-link">{{ num }}</a>
-                                    {% endif %}
-                                {% endfor %}
-                            </div>
+                            <span class="current">第 {{ list_page_obj.number }} 页</span>
 
                             {% if list_page_obj.has_next %}
                                 <a href="?list_page={{ list_page_obj.next_page_number }}" class="pagination-btn">下一页</a>
