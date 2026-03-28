@@ -549,6 +549,7 @@ def project_master_list(request):
             messages.error(request, f"更新失败：{exc}")
         show_update_panel = True
 
+    total_records = ProjectMaster.objects.filter(is_deleted=False).count()
     qs = ProjectMaster.objects.filter(is_deleted=False)
     if not permissions["can_view_project_list"] and not (has_query_request and permissions["can_query_project"]):
         qs = ProjectMaster.objects.none()
@@ -817,7 +818,7 @@ def project_master_list(request):
         search["remark"],
     ])
     is_query_result = (not is_list_filter) and has_search_params
-    show_action_column = (not is_query_result) and (
+    show_action_column = (
         permissions["can_update_project"] or permissions["can_approval_manage"]
     )
 
@@ -866,6 +867,8 @@ def project_master_list(request):
             "show_approval_panel": show_approval_panel,
             "is_query_result": is_query_result,
             "show_action_column": show_action_column,
+            "matched_count": paginator.count,
+            "total_records": total_records,
             "show_add_form": show_add_form,
             "update_now": timezone.localtime().strftime("%Y-%m-%d %H:%M"),
             "all_projects": all_projects,

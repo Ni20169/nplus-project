@@ -1701,8 +1701,8 @@
 
                 <div class="data-table" id="dataTable">
                     <div class="table-meta">
-                        <div>当前匹配：<span id="matchCount">0</span> 条</div>
-                        <div>总记录：<span id="totalCount">{{ projects|length }}</span> 条</div>
+                        <div>当前匹配：<span id="matchCount">{{ matched_count }}</span> 条</div>
+                        <div>总记录：<span id="totalCount">{{ total_records }}</span> 条</div>
                         {% if permissions.can_view_project_list %}
                         <div>
                             <a class="btn-export" href="{% url 'export_project_list' %}?{{ list_export_params }}">导出项目列表（Excel）</a>
@@ -1964,6 +1964,7 @@
                 setDisplay('listFilterPanel', 'none');
                 // 查询页签默认只展示查询条件，不展示项目列表
                 setTableDisplay('none');
+                clearProjectSearchFilters();
                 const searchForm = document.getElementById('searchForm');
                 if (searchForm) {
                     searchForm.classList.remove('collapsed');
@@ -1976,6 +1977,32 @@
             } catch (error) {
                 console.error('Error in showSearchForm:', error);
             }
+        }
+
+        function clearProjectSearchFilters() {
+            const form = document.querySelector('#searchForm form');
+            if (!form) {
+                return;
+            }
+
+            form.querySelectorAll('input[type="text"]').forEach((input) => {
+                input.value = '';
+            });
+
+            form.querySelectorAll('select').forEach((select) => {
+                select.selectedIndex = 0;
+            });
+
+            form.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+                checkbox.checked = false;
+            });
+
+            form.querySelectorAll('.multi-select').forEach((multiSelect) => {
+                const display = multiSelect.querySelector('.multi-select-display');
+                if (display) {
+                    display.textContent = display.getAttribute('data-default') || '';
+                }
+            });
         }
 
         function showUpdatePanel() {
