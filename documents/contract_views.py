@@ -2,6 +2,7 @@ import os
 import re
 import tempfile
 import uuid
+from functools import lru_cache
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from urllib.parse import urlencode
@@ -11,12 +12,18 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db import transaction
 from django.db.models import Q, Sum, Count, CharField
-from django.db.models.functions import Cast, Lower
+from django.db.models.functions import Cast
 from django.forms.models import model_to_dict
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from openpyxl import Workbook, load_workbook
+
+try:
+    from pypinyin import Style, lazy_pinyin
+except ImportError:  # pragma: no cover - fallback for environments without pypinyin
+    Style = None
+    lazy_pinyin = None
 
 from .models import (
     ADJUSTMENT_TYPE_CHOICES,
@@ -36,6 +43,41 @@ from .models import (
 )
 
 CT_CODE_PATTERN = re.compile(r"^CT\d{12}$")
+
+
+@lru_cache(maxsize=4096)
+def _name_pinyin_tokens(name):
+    text = (name or "").strip()
+    if not text:
+        return "", ""
+    if lazy_pinyin is None:
+        normalized = text.lower()
+        return (normalized[:1], normalized)
+    tokens = lazy_pinyin(
+        text,
+        style=Style.NORMAL,
+        errors=lambda chunk: list(chunk),
+    )
+    normalized = "".join(tokens).lower()
+    return (normalized[:1], normalized)
+
+
+def _party_name_sort_key(name, record_id):
+    text = (name or "").strip()
+    if not text:
+        return (1, "", "", record_id)
+    first_letter, full_name = _name_pinyin_tokens(text)
+    return (0, first_letter, full_name, text.lower(), record_id)
+
+
+def _contract_counterparty_name(contract):
+    snapshot_name = (getattr(contract, "counterparty_name_snapshot", "") or "").strip()
+    if snapshot_name:
+        return snapshot_name
+    counterparty = getattr(contract, "counterparty", None)
+    if counterparty:
+        return (counterparty.party_name or "").strip()
+    return ""
 
 
 def _get_permissions(user):
@@ -274,8 +316,10 @@ def export_counterparty_list(request):
         "city": request.GET.get("city", "").strip(),
     }
     province_items, province_name_map = _get_counterparty_province_data()
-    qs = _apply_counterparty_filters(Counterparty.objects.all(), filters, province_items).order_by("party_name")
-    counterparties = _decorate_counterparties(list(qs), province_name_map)
+    qs = _apply_counterparty_filters(Counterparty.objects.all(), filters, province_items)
+    counterparties = list(qs)
+    counterparties.sort(key=lambda item: _party_name_sort_key(item.party_name, item.id))
+    counterparties = _decorate_counterparties(counterparties, province_name_map)
 
     wb = Workbook()
     ws = wb.active
@@ -536,10 +580,12 @@ def contract_counterparty_view(request):
         "province": request.GET.get("province", "").strip(),
         "party_name": request.GET.get("party_name", "").strip(),
     }
-    qs = _apply_counterparty_filters(Counterparty.objects.all(), filters, province_items).order_by(Lower("party_name"), "id")
+    qs = _apply_counterparty_filters(Counterparty.objects.all(), filters, province_items)
+    sorted_counterparties = list(qs)
+    sorted_counterparties.sort(key=lambda item: _party_name_sort_key(item.party_name, item.id))
     
     # 标准化分页处理（完整的异常保护）
-    paginator = Paginator(qs, 50)
+    paginator = Paginator(sorted_counterparties, 50)
     page_number = request.GET.get("page", 1)
     try:
         page_obj = paginator.page(page_number)
@@ -570,7 +616,7 @@ def contract_counterparty_view(request):
         "party_type_choices": PARTY_TYPE_CHOICES,
         "province_items": province_items,
         "active_menu": "contract_counterparty",
-        "total_count": qs.count(),
+        "total_count": len(sorted_counterparties),
     }
     return render(request, "contract_counterparty.html", context)
 
@@ -806,9 +852,13 @@ def contract_list_view(request):
     for project in projects:
         project.dept_name = dept_name_map.get(project.dept, project.dept or "")
     
-    # 执行分页（稳定排序 + 完整的页码保护）
-    ordered_qs = qs.order_by("-created_at", "-id")  # 二级排序确保稳定性
-    paginator = Paginator(ordered_qs, 50)  # 每页50条
+    sorted_contracts = list(qs)
+    sorted_contracts.sort(
+        key=lambda item: _party_name_sort_key(_contract_counterparty_name(item), item.id)
+    )
+
+    # 执行分页（排序先于分页，确保页内稳定）
+    paginator = Paginator(sorted_contracts, 50)  # 每页50条
     page_number = request.GET.get("page", 1)
     try:
         page_obj = paginator.page(page_number)
@@ -831,7 +881,7 @@ def contract_list_view(request):
         "contract_category_choices": CONTRACT_CATEGORY_CHOICES,
         "contract_status_choices": CONTRACT_STATUS_CHOICES,
         "active_menu": "contract_list",
-        "total_count": qs.count(),
+        "total_count": len(sorted_contracts),
     }
     return render(request, "contract_list.html", context)
 

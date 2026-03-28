@@ -4,3 +4,4 @@ gunicorn==21.2.0
 python-dotenv==1.0.1
 whitenoise==6.7.0
 openpyxl==3.1.5
+pypinyin==0.54.0
