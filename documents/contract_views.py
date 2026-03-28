@@ -3,12 +3,15 @@ import re
 import tempfile
 import uuid
 from functools import lru_cache
+from types import SimpleNamespace
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from urllib.parse import urlencode
 
+from django.contrib.postgres.search import SearchQuery, SearchVector
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db import transaction
 from django.db.models import Q, Sum, Count, CharField
@@ -86,14 +89,22 @@ def _get_permissions(user):
 
 
 def _get_dept_name_map():
+    cache_key = "documents:dept_name_map:v1"
+    cached_map = cache.get(cache_key)
+    if cached_map is not None:
+        return cached_map
+
     dept_type = DictType.objects.filter(code="DEPT", is_active=True).prefetch_related("items").first()
     if not dept_type:
-        return {}
-    return {
-        item.code: item.name
-        for item in dept_type.items.all()
-        if item.is_active
-    }
+        dept_name_map = {}
+    else:
+        dept_name_map = {
+            item.code: item.name
+            for item in dept_type.items.all()
+            if item.is_active
+        }
+    cache.set(cache_key, dept_name_map, 600)
+    return dept_name_map
 
 
 def _to_decimal(value, default="0"):
@@ -159,22 +170,48 @@ def _serialize_contract(contract):
 
 
 def _get_counterparty_province_data():
-    province_dict = DictType.objects.filter(code="PROVINCE", is_active=True).prefetch_related("items").first()
-    province_items = list(province_dict.items.filter(is_active=True).order_by("sort_order", "code")) if province_dict else []
-    province_name_map = {item.code: item.name for item in province_items}
+    cache_key = "documents:counterparty_province_data:v1"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        raw_items, province_name_map = cached
+        province_items = [
+            SimpleNamespace(code=code, name=name, sort_order=sort_order)
+            for code, name, sort_order in raw_items
+        ]
+        return province_items, province_name_map
+
+    province_dict = DictType.objects.filter(code="PROVINCE", is_active=True).first()
+    if province_dict:
+        raw_items = list(
+            province_dict.items.filter(is_active=True)
+            .order_by("sort_order", "code")
+            .values_list("code", "name", "sort_order")
+        )
+    else:
+        raw_items = []
+    province_items = [
+        SimpleNamespace(code=code, name=name, sort_order=sort_order)
+        for code, name, sort_order in raw_items
+    ]
+    province_name_map = {code: name for code, name, _ in raw_items}
+    cache.set(cache_key, (raw_items, province_name_map), 600)
     return province_items, province_name_map
 
 
 def _apply_counterparty_filters(queryset, filters, province_items):
     keyword = filters["keyword"]
     if keyword:
+        full_text_query = SearchQuery(keyword, search_type="plain", config="simple")
+        queryset = queryset.annotate(
+            search_vector=SearchVector("business_scope", "remark", config="simple")
+        )
         queryset = queryset.filter(
             Q(party_name__icontains=keyword)
             | Q(contact_name__icontains=keyword)
             | Q(contact_phone__icontains=keyword)
             | Q(registration_address__icontains=keyword)
             | Q(former_name__icontains=keyword)
-            | Q(business_scope__icontains=keyword)
+            | Q(search_vector=full_text_query)
         )
 
     if filters["province"]:
