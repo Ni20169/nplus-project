@@ -812,6 +812,8 @@
             overflow-x: auto;
             overflow-y: auto;
             max-height: 56vh;
+            flex: 0 1 auto;
+            min-height: 280px;
         }
 
         .search-result-table table {
@@ -827,6 +829,18 @@
             overflow-x: auto;
             overflow-y: auto;
             max-height: 56vh;
+            flex: 0 1 auto;
+            min-height: 280px;
+        }
+
+        /* 查询页签同时展示表单和结果时，避免分页与横向滚动条被裁切 */
+        .search-result-table {
+            overflow: visible;
+            min-height: 0;
+        }
+
+        .search-result-table .pagination {
+            margin-top: 10px;
         }
 
         table {
