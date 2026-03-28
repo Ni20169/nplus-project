@@ -42,6 +42,7 @@ PERMISSION_FIELDS = [
     ("can_update_project", "信息更新"),
     ("can_view_project_list", "项目列表"),
     ("can_approval_manage", "审批管理"),
+    ("can_contract_manage", "合同管理"),
 ]
 
 

@@ -62,13 +62,9 @@
         .btn-edit, .btn-delete { padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; color: #fff; white-space: nowrap; font-size: 13px; text-decoration: none; display: inline-block; }
         .btn-edit { background-color: #3498db; }
         .btn-delete { background-color: #e74c3c; }
-        table td.col-1, table th.col-1 { position: sticky; left: 0; z-index: 2; background: #fff; min-width: 120px; }
-        table td.col-2, table th.col-2 { position: sticky; left: 120px; z-index: 2; background: #fff; min-width: 90px; }
-        table td.col-3, table th.col-3 { position: sticky; left: 210px; z-index: 2; background: #fff; min-width: 150px; }
-        table td:nth-child(4), table th:nth-child(4) { min-width: 100px; }
-        table td:nth-child(5), table th:nth-child(5) { min-width: 120px; }
-        table td:nth-child(6), table th:nth-child(6) { min-width: 80px; }
-        table td:nth-child(7), table th:nth-child(7) { min-width: 140px; }
+        table td.col-1, table th.col-1 { position: sticky; left: 0; z-index: 2; background: #fff; }
+        table td.col-2, table th.col-2 { position: sticky; left: 150px; z-index: 2; background: #fff; }
+        table td.col-3, table th.col-3 { position: sticky; left: 240px; z-index: 2; background: #fff; }
         table thead th.col-1, table thead th.col-2, table thead th.col-3 { z-index: 12; background: #f3f6f9; }
         table tr:hover td.col-1, table tr:hover td.col-2, table tr:hover td.col-3 { background: #f9fbfd; }
         .message-stack { margin: 8px 0 12px; display: grid; gap: 6px; flex-shrink: 0; }
@@ -99,9 +95,10 @@
         .data-table { background-color: rgba(255,255,255,0.9); border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.06); padding: 8px; flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
         .table-meta { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #666; margin: 4px 4px 8px; flex-shrink: 0; }
         .table-wrapper { flex: 1; overflow: auto; scrollbar-gutter: stable both-edges; }
-        table { width: 100%; border-collapse: collapse; min-width: 900px; table-layout: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 1400px; table-layout: fixed; }
         table thead { position: sticky; top: 0; background: #fff; z-index: 10; box-shadow: 0 2px 2px rgba(0,0,0,0.1); }
         th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #eee; font-size: 13px; white-space: nowrap; }
+        td { overflow: hidden; text-overflow: ellipsis; }
         th { background-color: #f3f6f9; font-weight: 600; }
         tr:hover { background-color: #f9fbfd; }
         .filter-row input { width: 100%; padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
@@ -365,6 +362,21 @@
                     </div>
                     <div class="table-wrapper">
                         <table>
+                            <colgroup>
+                                <col style="width:150px"><!-- 单位名称 -->
+                                <col style="width:90px"> <!-- 单位类型 -->
+                                <col style="width:160px"><!-- 信用代码 -->
+                                <col style="width:90px"> <!-- 联系人 -->
+                                <col style="width:130px"><!-- 联系电话 -->
+                                <col style="width:70px"> <!-- 状态 -->
+                                <col style="width:100px"><!-- 成立日期 -->
+                                <col style="width:80px"> <!-- 所属省份 -->
+                                <col style="width:90px"> <!-- 所属城市 -->
+                                <col style="width:140px"><!-- 备注 -->
+                                <col style="width:100px"><!-- 创建时间 -->
+                                <col style="width:80px"> <!-- 创建人 -->
+                                <col style="width:110px"><!-- 操作 -->
+                            </colgroup>
                             <thead>
                                 <tr>
                                     <th class="col-1">单位名称</th>
@@ -373,6 +385,9 @@
                                     <th>联系人</th>
                                     <th>联系电话</th>
                                     <th>状态</th>
+                                    <th>成立日期</th>
+                                    <th>所属省份</th>
+                                    <th>所属城市</th>
                                     <th>备注</th>
                                     <th>创建时间</th>
                                     <th>创建人</th>
@@ -385,6 +400,9 @@
                                     <th></th>
                                     <th></th>
                                     <th><input type="text" id="f_status" placeholder="筛选状态" oninput="filterTable()"></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
                                     <th></th>
                                     <th></th>
                                     <th></th>
@@ -406,6 +424,9 @@
                                         <span class="tag-inactive">停用</span>
                                     {% endif %}
                                 </td>
+                                <td>{{ item.established_date|default:"—" }}</td>
+                                <td>{{ item.province_code|default:"—" }}</td>
+                                <td>{{ item.city|default:"—" }}</td>
                                 <td>{{ item.remark|default:"—" }}</td>
                                 <td>{{ item.created_at|date:"Y-m-d" }}</td>
                                 <td>{{ item.created_by|default:"—" }}</td>
@@ -434,7 +455,7 @@
                                 </td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="10" style="text-align:center;color:#999;padding:20px;">暂无数据，请新增或导入往来单位</td></tr>
+                            <tr><td colspan="13" style="text-align:center;color:#999;padding:20px;">暂无数据，请新增或导入往来单位</td></tr>
                             {% endfor %}
                             </tbody>
                         </table>

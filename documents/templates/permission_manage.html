@@ -44,12 +44,12 @@
         .perm-nav { width: 180px; flex-shrink: 0; background: #f7f9fc; border-right: 1px solid #e8ecf0; padding: 16px 0; display: flex; flex-direction: column; gap: 2px; }
         .perm-nav-label { font-size: 11px; font-weight: 700; color: #f39c12; letter-spacing: 0.5px; padding: 8px 16px 4px; text-transform: uppercase; }
         .perm-nav-label:not(:first-child) { margin-top: 12px; }
-        .perm-tab { display: block; padding: 7px 16px; font-size: 13px; color: #444; cursor: pointer; border: none; background: none; text-align: left; transition: background 0.15s, color 0.15s; }
+        .perm-tab { display: block; padding: 7px 16px; font-size: 14px; color: #444; cursor: pointer; border: none; background: none; text-align: left; transition: background 0.15s, color 0.15s; }
         .perm-tab:hover { background: #eef3ff; color: #2563eb; }
         .perm-tab.active { background: #3498db; color: #fff; font-weight: 600; }
         .perm-body { flex: 1; padding: 16px; overflow: auto; }
         .hint { margin-bottom: 12px; padding: 10px 12px; background: #eef6ff; border-left: 4px solid #3182ce; border-radius: 4px; font-size: 13px; }
-        th, td { border-bottom: 1px solid #eee; padding: 8px 10px; text-align: left; vertical-align: middle; font-size: 13px; }
+        th, td { border-bottom: 1px solid #eee; padding: 8px 12px; text-align: left; vertical-align: middle; font-size: 14px; }
         th { background: #f3f6f9; font-weight: 600; }
         tr:hover td { background: #f9fbfd; }
         .perm-cell { text-align: center; }
@@ -134,9 +134,17 @@
                         <button class="perm-tab" onclick="selectPermTab(this, 'can_update_project')">信息更新</button>
                         <button class="perm-tab" onclick="selectPermTab(this, 'can_view_project_list')">项目列表</button>
                         <button class="perm-tab" onclick="selectPermTab(this, 'can_approval_manage')">审批管理</button>
+                        <div class="perm-nav-label">合同管理</div>
+                        <button class="perm-tab" onclick="selectPermTab(this, 'can_contract_manage')">合同管理</button>
                     </div>
                     <div class="perm-body">
                         <div class="hint">默认策略：普通用户默认仅勾选"查询项目"，其余功能需授权。点击左侧页签可聚焦查看某一权限。</div>
+                        {% for row in user_permission_rows %}
+                        <form id="perm-form-{{ row.user.id }}" method="post" style="display:none">
+                            {% csrf_token %}
+                            <input type="hidden" name="user_id" value="{{ row.user.id }}">
+                        </form>
+                        {% endfor %}
                         <table id="permTable">
                             <thead>
                                 <tr>
@@ -148,28 +156,26 @@
                                     <th class="perm-cell" data-perm="can_update_project">信息更新</th>
                                     <th class="perm-cell" data-perm="can_view_project_list">项目列表</th>
                                     <th class="perm-cell" data-perm="can_approval_manage">审批管理</th>
+                                    <th class="perm-cell" data-perm="can_contract_manage">合同管理</th>
                                     <th>操作</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for row in user_permission_rows %}
                                 <tr>
-                                    <form method="post">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="user_id" value="{{ row.user.id }}">
-                                        <td>{{ row.user.username }}</td>
-                                        <td>{{ row.profile.department|default:"" }}</td>
-                                        <td class="perm-cell" data-perm="can_user_manage"><input type="checkbox" name="can_user_manage" {% if row.profile.can_user_manage %}checked{% endif %}></td>
-                                        <td class="perm-cell" data-perm="can_create_project"><input type="checkbox" name="can_create_project" {% if row.profile.can_create_project %}checked{% endif %}></td>
-                                        <td class="perm-cell" data-perm="can_query_project"><input type="checkbox" name="can_query_project" {% if row.profile.can_query_project %}checked{% endif %}></td>
-                                        <td class="perm-cell" data-perm="can_update_project"><input type="checkbox" name="can_update_project" {% if row.profile.can_update_project %}checked{% endif %}></td>
-                                        <td class="perm-cell" data-perm="can_view_project_list"><input type="checkbox" name="can_view_project_list" {% if row.profile.can_view_project_list %}checked{% endif %}></td>
-                                        <td class="perm-cell" data-perm="can_approval_manage"><input type="checkbox" name="can_approval_manage" {% if row.profile.can_approval_manage %}checked{% endif %}></td>
-                                        <td><button type="submit" class="btn-save">保存</button></td>
-                                    </form>
+                                    <td>{{ row.user.username }}</td>
+                                    <td>{{ row.profile.department|default:"" }}</td>
+                                    <td class="perm-cell" data-perm="can_user_manage"><input type="checkbox" name="can_user_manage" form="perm-form-{{ row.user.id }}" {% if row.profile.can_user_manage %}checked{% endif %}></td>
+                                    <td class="perm-cell" data-perm="can_create_project"><input type="checkbox" name="can_create_project" form="perm-form-{{ row.user.id }}" {% if row.profile.can_create_project %}checked{% endif %}></td>
+                                    <td class="perm-cell" data-perm="can_query_project"><input type="checkbox" name="can_query_project" form="perm-form-{{ row.user.id }}" {% if row.profile.can_query_project %}checked{% endif %}></td>
+                                    <td class="perm-cell" data-perm="can_update_project"><input type="checkbox" name="can_update_project" form="perm-form-{{ row.user.id }}" {% if row.profile.can_update_project %}checked{% endif %}></td>
+                                    <td class="perm-cell" data-perm="can_view_project_list"><input type="checkbox" name="can_view_project_list" form="perm-form-{{ row.user.id }}" {% if row.profile.can_view_project_list %}checked{% endif %}></td>
+                                    <td class="perm-cell" data-perm="can_approval_manage"><input type="checkbox" name="can_approval_manage" form="perm-form-{{ row.user.id }}" {% if row.profile.can_approval_manage %}checked{% endif %}></td>
+                                    <td class="perm-cell" data-perm="can_contract_manage"><input type="checkbox" name="can_contract_manage" form="perm-form-{{ row.user.id }}" {% if row.profile.can_contract_manage %}checked{% endif %}></td>
+                                    <td><button type="submit" form="perm-form-{{ row.user.id }}" class="btn-save">保存</button></td>
                                 </tr>
                                 {% empty %}
-                                <tr><td colspan="9" style="text-align:center;color:#999;padding:20px;">暂无用户</td></tr>
+                                <tr><td colspan="10" style="text-align:center;color:#999;padding:20px;">暂无用户</td></tr>
                                 {% endfor %}
                             </tbody>
                         </table>
@@ -228,7 +234,7 @@
             document.addEventListener('mousemove', e => { if (!dragging) return; sidebar.style.width = Math.min(360, Math.max(160, startW + e.clientX - startX)) + 'px'; });
             document.addEventListener('mouseup', () => { dragging = false; });
         })();
-        const ALL_PERMS = ['can_user_manage','can_create_project','can_query_project','can_update_project','can_view_project_list','can_approval_manage'];
+        const ALL_PERMS = ['can_user_manage','can_create_project','can_query_project','can_update_project','can_view_project_list','can_approval_manage','can_contract_manage'];
         function selectPermTab(btn, perm) {
             document.querySelectorAll('.perm-tab').forEach(t => t.classList.remove('active'));
             btn.classList.add('active');
@@ -244,8 +250,8 @@
             });
         }
         function initializePermTable() {
-            const allBtn = document.querySelector('.perm-tab.active');
-            if (allBtn) selectPermTab(allBtn, 'all');
+            const table = document.getElementById('permTable');
+            if (table) table.querySelectorAll('[data-perm]').forEach(el => el.classList.remove('perm-col-hidden', 'perm-col-highlight'));
         }
         function updateTime() {
             const el = document.getElementById('systemTime');
