@@ -720,7 +720,7 @@ def project_master_list(request):
         if search["remark"]:
             search_qs = search_qs.filter(remark__icontains=search["remark"])
         search_ordered_qs = search_qs.order_by("-updated_at", "-id")
-        search_paginator = Paginator(search_ordered_qs, 50)
+        search_paginator = Paginator(search_ordered_qs, 20)
         search_page_number = request.GET.get("search_page", 1)
         try:
             search_page_obj = search_paginator.page(search_page_number)
