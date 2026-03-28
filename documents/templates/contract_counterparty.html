@@ -117,6 +117,9 @@
                     <li><a href="{% url 'permission_manage' %}">权限管理</a></li>
                     {% endif %}
                     {% endif %}
+                    {% if permissions.can_approval_manage %}
+                    <li><a href="{% url 'project_master_list' %}?show_approval=1">审批管理</a></li>
+                    {% endif %}
                 </ul>
             </div>
             <div class="menu-section">
@@ -129,7 +132,6 @@
                             <li><a href="{% url 'project_master_list' %}?show_search=1">查询项目</a></li>
                             <li><a href="{% url 'project_master_list' %}?show_update=1">信息更新</a></li>
                             <li><a href="{% url 'project_master_list' %}">项目列表</a></li>
-                            <li><a href="{% url 'project_master_list' %}?show_approval=1">审批管理</a></li>
                         </ul>
                     </li>
                     <li>
@@ -362,6 +364,7 @@
                                     <th>备注</th>
                                     <th>创建时间</th>
                                     <th>创建人</th>
+                                    <th>操作</th>
                                 </tr>
                                 <tr class="filter-row">
                                     <th><input type="text" id="f_name" placeholder="筛选名称" oninput="filterTable()"></th>
@@ -370,6 +373,7 @@
                                     <th></th>
                                     <th></th>
                                     <th><input type="text" id="f_status" placeholder="筛选状态" oninput="filterTable()"></th>
+                                    <th></th>
                                     <th></th>
                                     <th></th>
                                     <th></th>
@@ -393,9 +397,34 @@
                                 <td>{{ item.remark|default:"—" }}</td>
                                 <td>{{ item.created_at|date:"Y-m-d" }}</td>
                                 <td>{{ item.created_by|default:"—" }}</td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="btn-import"
+                                        style="padding:4px 8px;min-width:auto;"
+                                        data-id="{{ item.id }}"
+                                        data-name="{{ item.party_name|escapejs }}"
+                                        data-type="{{ item.party_type|escapejs }}"
+                                        data-status="{{ item.status|escapejs }}"
+                                        data-contact-name="{{ item.contact_name|default_if_none:''|escapejs }}"
+                                        data-contact-phone="{{ item.contact_phone|default_if_none:''|escapejs }}"
+                                        data-remark="{{ item.remark|default_if_none:''|escapejs }}"
+                                        onclick="submitCounterpartyUpdate(this)">
+                                        修改提审
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn-cancel"
+                                        style="padding:4px 8px;min-width:auto;"
+                                        data-id="{{ item.id }}"
+                                        data-name="{{ item.party_name|escapejs }}"
+                                        onclick="submitCounterpartyDelete(this)">
+                                        删除提审
+                                    </button>
+                                </td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="9" style="text-align:center;color:#999;padding:20px;">暂无数据，请新增或导入往来单位</td></tr>
+                            <tr><td colspan="10" style="text-align:center;color:#999;padding:20px;">暂无数据，请新增或导入往来单位</td></tr>
                             {% endfor %}
                             </tbody>
                         </table>
@@ -525,6 +554,69 @@
             });
         }
         updateTime(); setInterval(updateTime, 1000);
+
+        function submitCounterpartyUpdate(buttonEl) {
+            const counterpartyId = buttonEl.dataset.id;
+            const name = buttonEl.dataset.name || '';
+            const type = buttonEl.dataset.type || 'OTHER_VENDOR';
+            const status = buttonEl.dataset.status || 'ACTIVE';
+            const contactName = buttonEl.dataset.contactName || '';
+            const contactPhone = buttonEl.dataset.contactPhone || '';
+            const remark = buttonEl.dataset.remark || '';
+            const newName = prompt('请输入新的单位名称：', name || '');
+            if (newName === null) return;
+            const newType = prompt('请输入新的单位类型编码（OWNER/SUPPLIER/SUBCONTRACTOR/SUPPLY_SUB/OTHER_VENDOR）：', type || 'OTHER_VENDOR');
+            if (newType === null) return;
+            const newStatus = prompt('请输入新的状态编码（ACTIVE/INACTIVE）：', status || 'ACTIVE');
+            if (newStatus === null) return;
+            const newContactName = prompt('请输入联系人：', contactName || '');
+            if (newContactName === null) return;
+            const newContactPhone = prompt('请输入联系电话：', contactPhone || '');
+            if (newContactPhone === null) return;
+            const newRemark = prompt('请输入备注：', remark || '');
+            if (newRemark === null) return;
+            const changeNote = prompt('请输入本次修改说明：', '往来单位信息修改');
+            if (changeNote === null) return;
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{% url "contract_counterparty_list" %}';
+            form.style.display = 'none';
+            form.innerHTML = `
+                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                <input type="hidden" name="form_type" value="update_counterparty">
+                <input type="hidden" name="counterparty_id" value="${counterpartyId}">
+                <input type="hidden" name="party_name" value="${newName}">
+                <input type="hidden" name="party_type" value="${newType}">
+                <input type="hidden" name="status" value="${newStatus}">
+                <input type="hidden" name="contact_name" value="${newContactName}">
+                <input type="hidden" name="contact_phone" value="${newContactPhone}">
+                <input type="hidden" name="remark" value="${newRemark}">
+                <input type="hidden" name="change_note" value="${changeNote}">
+            `;
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        function submitCounterpartyDelete(buttonEl) {
+            const counterpartyId = buttonEl.dataset.id;
+            const name = buttonEl.dataset.name || '';
+            const changeNote = prompt(`确定提交删除审批？\n单位：${name}\n\n请输入删除说明：`, '往来单位删除申请');
+            if (changeNote === null) return;
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{% url "contract_counterparty_list" %}';
+            form.style.display = 'none';
+            form.innerHTML = `
+                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                <input type="hidden" name="form_type" value="delete_counterparty">
+                <input type="hidden" name="counterparty_id" value="${counterpartyId}">
+                <input type="hidden" name="change_note" value="${changeNote}">
+            `;
+            document.body.appendChild(form);
+            form.submit();
+        }
     </script>
 </body>
 </html>

@@ -48,6 +48,13 @@ body, html {
     border-radius:6px;
     border:none;
 }
+.login-container select {
+  width:100%;
+  padding:12px;
+  margin:8px 0;
+  border-radius:6px;
+  border:none;
+}
 .login-container button {
     width:100%;
     padding:12px;
@@ -81,8 +88,14 @@ body, html {
         {% csrf_token %}
         <input type="text" name="username" placeholder="用户名" required>
         <input type="password" name="password" placeholder="密码" required>
-        <label><input type="checkbox" name="remember"> 记住登录状态</label>
-        <div class="hint">不会保存密码，仅延长登录有效期</div>
+        <label for="remember_period">免登录时长</label>
+        <select name="remember_period" id="remember_period">
+          <option value="">仅当前会话</option>
+          <option value="7d">一周内免登录</option>
+          <option value="30d">一个月内免登录</option>
+          <option value="180d">半年内免登录</option>
+        </select>
+        <div class="hint">不会保存明文密码，仅设置登录会话有效期</div>
         <button type="submit">立即登录</button>
     </form>
 </div>

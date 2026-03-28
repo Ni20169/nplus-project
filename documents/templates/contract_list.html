@@ -134,6 +134,9 @@
                     <li><a href="{% url 'permission_manage' %}">权限管理</a></li>
                     {% endif %}
                     {% endif %}
+                    {% if permissions.can_approval_manage %}
+                    <li><a href="{% url 'project_master_list' %}?show_approval=1">审批管理</a></li>
+                    {% endif %}
                 </ul>
             </div>
             <div class="menu-section">
@@ -146,7 +149,6 @@
                             <li><a href="{% url 'project_master_list' %}?show_search=1">查询项目</a></li>
                             <li><a href="{% url 'project_master_list' %}?show_update=1">信息更新</a></li>
                             <li><a href="{% url 'project_master_list' %}">项目列表</a></li>
-                            <li><a href="{% url 'project_master_list' %}?show_approval=1">审批管理</a></li>
                         </ul>
                     </li>
                     <li>
@@ -252,6 +254,19 @@
                                     <div id="project-exec-badge" style="margin-top:4px;display:none;"></div>
                                 </div>
                                 <div class="field">
+                                    <label><span class="required-star">*</span>对应执行层项目</label>
+                                    <div class="ss-wrap">
+                                        <input type="text" class="ss-input" id="ss-exec-project-input" placeholder="输入关键词筛选执行层项目…" autocomplete="off">
+                                        <input type="hidden" name="execution_project_id" id="execution_project_id_val">
+                                        <div class="ss-dropdown" id="ss-exec-project-dropdown">
+                                            <div class="ss-item ss-placeholder" data-value="">（请选择执行层项目）</div>
+                                            {% for project in execution_projects %}
+                                            <div class="ss-item" data-value="{{ project.id }}">{{ project.project_code }} — {{ project.project_name }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field">
                                     <label>签约对方</label>
                                     <div class="ss-wrap">
                                         <input type="text" class="ss-input" id="ss-cp-input" placeholder="输入关键词筛选签约对方…" autocomplete="off">
@@ -305,7 +320,7 @@
                                 </div>
                                 <div class="field">
                                     <label>我方承担部门</label>
-                                    <input type="text" id="undertaking_dept_name_display" placeholder="选择项目后自动带出" readonly style="background-color:#f5f5f5;cursor:not-allowed;">
+                                    <input type="text" id="undertaking_dept_name_display" placeholder="选择执行层项目后自动带出" readonly style="background-color:#f5f5f5;cursor:not-allowed;">
                                 </div>
                                 <div class="field">
                                     <label>合同年份</label>
@@ -433,6 +448,7 @@
                                     <th>CT码</th>
                                     <th>合同名称</th>
                                     <th>项目编码</th>
+                                    <th>对应执行层项目</th>
                                     <th>执行层</th>
                                     <th>签约对方</th>
                                     <th>来源系统</th>
@@ -444,11 +460,13 @@
                                     <th>年份</th>
                                     <th>创建时间</th>
                                     <th>创建人</th>
+                                    <th>操作</th>
                                 </tr>
                                 <tr class="filter-row">
                                     <th><input type="text" id="f_ct" placeholder="筛选CT码" oninput="filterTable()"></th>
                                     <th><input type="text" id="f_name" placeholder="筛选名称" oninput="filterTable()"></th>
                                     <th><input type="text" id="f_proj" placeholder="筛选项目" oninput="filterTable()"></th>
+                                    <th><input type="text" id="f_exec_proj" placeholder="筛选执行层项目" oninput="filterTable()"></th>
                                     <th></th>
                                     <th><input type="text" id="f_party" placeholder="筛选签约对方" oninput="filterTable()"></th>
                                     <th></th>
@@ -460,6 +478,7 @@
                                     <th></th>
                                     <th></th>
                                     <th></th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody id="tableBody">
@@ -468,6 +487,7 @@
                                 <td>{{ item.contract_ct_code }}</td>
                                 <td>{{ item.contract_name }}</td>
                                 <td>{{ item.project.project_code|default:"—" }}</td>
+                                <td>{{ item.execution_project_code_snapshot|default:"—" }}</td>
                                 <td>
                                     {% if item.project.is_execution_level %}
                                         <span class="tag tag-exec tag-exec-yes">执行层</span>
@@ -501,9 +521,13 @@
                                 <td>{{ item.contract_year|default:"—" }}</td>
                                 <td>{{ item.created_at|date:"Y-m-d" }}</td>
                                 <td>{{ item.created_by|default:"—" }}</td>
+                                <td>
+                                    <button type="button" class="btn-import" style="padding:4px 8px;min-width:auto;" onclick="submitContractUpdate({{ item.id }}, '{{ item.contract_name|escapejs }}', '{{ item.contract_status|escapejs }}', '{{ item.remark|default:''|escapejs }}')">修改提审</button>
+                                    <button type="button" class="btn-cancel" style="padding:4px 8px;min-width:auto;" onclick="submitContractDelete({{ item.id }}, '{{ item.contract_name|escapejs }}')">删除提审</button>
+                                </td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="14" style="text-align:center;color:#999;padding:20px;">暂无数据，请新增或导入合同台账</td></tr>
+                            <tr><td colspan="16" style="text-align:center;color:#999;padding:20px;">暂无数据，请新增或导入合同台账</td></tr>
                             {% endfor %}
                             </tbody>
                         </table>
@@ -610,6 +634,7 @@
             const fCt = (document.getElementById('f_ct').value || '').toLowerCase();
             const fName = (document.getElementById('f_name').value || '').toLowerCase();
             const fProj = (document.getElementById('f_proj').value || '').toLowerCase();
+            const fExecProj = (document.getElementById('f_exec_proj').value || '').toLowerCase();
             const fParty = (document.getElementById('f_party').value || '').toLowerCase();
             const fDept = (document.getElementById('f_dept').value || '').toLowerCase();
             document.querySelectorAll('#tableBody tr').forEach(row => {
@@ -618,8 +643,9 @@
                 const show = (!fCt || cells[0].textContent.toLowerCase().includes(fCt))
                     && (!fName || cells[1].textContent.toLowerCase().includes(fName))
                     && (!fProj || cells[2].textContent.toLowerCase().includes(fProj))
-                    && (!fParty || cells[4].textContent.toLowerCase().includes(fParty))
-                    && (!fDept || cells[10].textContent.toLowerCase().includes(fDept));
+                    && (!fExecProj || cells[3].textContent.toLowerCase().includes(fExecProj))
+                    && (!fParty || cells[5].textContent.toLowerCase().includes(fParty))
+                    && (!fDept || cells[11].textContent.toLowerCase().includes(fDept));
                 row.style.display = show ? '' : 'none';
             });
         }
@@ -636,6 +662,10 @@
         /* ---- 项目元数据（用于执行层自动带出） ---- */
         const projectMeta = {
             {% for project in projects %}"{{ project.id }}": {"is_execution_level": {{ project.is_execution_level|yesno:'true,false' }}, "dept": "{{ project.dept_name|escapejs }}"}{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        };
+        const executionProjectMeta = {
+            {% for project in execution_projects %}"{{ project.id }}": {"dept": "{{ project.dept_name|escapejs }}"}{% if not forloop.last %},{% endif %}
             {% endfor %}
         };
 
@@ -694,18 +724,27 @@
             document.getElementById('project_id_val'),
             function(val) {
                 const badge = document.getElementById('project-exec-badge');
-                const deptInput = document.getElementById('undertaking_dept_name_display');
                 const meta = projectMeta[val];
                 if (meta) {
                     badge.style.display = 'inline-block';
                     badge.innerHTML = meta.is_execution_level
                         ? '<span class="tag-exec tag-exec-yes">✓ 执行层项目</span>'
                         : '<span class="tag-exec tag-exec-no">✗ 非执行层</span>';
-                    if (deptInput) deptInput.value = meta.dept || '';
                 } else {
                     badge.style.display = 'none';
-                    if (deptInput) deptInput.value = '';
                 }
+            }
+        );
+
+        /* 对应执行层项目下拉 */
+        initSS(
+            document.getElementById('ss-exec-project-input'),
+            document.getElementById('ss-exec-project-dropdown'),
+            document.getElementById('execution_project_id_val'),
+            function(val) {
+                const deptInput = document.getElementById('undertaking_dept_name_display');
+                const meta = executionProjectMeta[val];
+                if (deptInput) deptInput.value = meta ? (meta.dept || '') : '';
             }
         );
 
@@ -726,9 +765,60 @@
                     e.preventDefault();
                     alert('请选择项目');
                     document.getElementById('ss-project-input').focus();
+                    return;
+                }
+                if (!document.getElementById('execution_project_id_val').value) {
+                    e.preventDefault();
+                    alert('请选择对应执行层项目');
+                    document.getElementById('ss-exec-project-input').focus();
                 }
             }
         });
+
+        function submitContractUpdate(contractId, contractName, currentStatus, currentRemark) {
+            const newName = prompt('请输入新的合同名称：', contractName || '');
+            if (newName === null) return;
+            const newStatus = prompt('请输入新的合同状态编码（DRAFT/SIGNED/ACTIVE/CLOSED/TERMINATED）：', currentStatus || 'SIGNED');
+            if (newStatus === null) return;
+            const newRemark = prompt('请输入备注：', currentRemark || '');
+            if (newRemark === null) return;
+            const changeNote = prompt('请输入本次修改说明：', '合同信息修改');
+            if (changeNote === null) return;
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{% url "contract_list" %}';
+            form.style.display = 'none';
+            form.innerHTML = `
+                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                <input type="hidden" name="form_type" value="update_contract">
+                <input type="hidden" name="contract_id" value="${contractId}">
+                <input type="hidden" name="contract_name" value="${newName}">
+                <input type="hidden" name="contract_status" value="${newStatus}">
+                <input type="hidden" name="remark" value="${newRemark}">
+                <input type="hidden" name="change_note" value="${changeNote}">
+            `;
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        function submitContractDelete(contractId, contractName) {
+            const changeNote = prompt(`确定提交删除审批？\n合同：${contractName}\n\n请输入删除说明：`, '合同删除申请');
+            if (changeNote === null) return;
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{% url "contract_list" %}';
+            form.style.display = 'none';
+            form.innerHTML = `
+                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                <input type="hidden" name="form_type" value="delete_contract">
+                <input type="hidden" name="contract_id" value="${contractId}">
+                <input type="hidden" name="change_note" value="${changeNote}">
+            `;
+            document.body.appendChild(form);
+            form.submit();
+        }
     </script>
 </body>
 </html>

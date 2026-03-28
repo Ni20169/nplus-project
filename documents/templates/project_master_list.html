@@ -946,6 +946,9 @@
                         <li><a href="{% url 'permission_manage' %}">权限管理</a></li>
                     {% endif %}
                     {% endif %}
+                    {% if permissions.can_approval_manage %}
+                    <li><a href="{% url 'project_master_list' %}?show_approval=1">审批管理</a></li>
+                    {% endif %}
                 </ul>
             </div>
             <div class="menu-section">
@@ -965,9 +968,6 @@
                             {% endif %}
                             {% if permissions.can_view_project_list %}
                             <li><a href="#" onclick="refreshList()">项目列表</a></li>
-                            {% endif %}
-                            {% if permissions.can_approval_manage %}
-                            <li><a href="#" onclick="showApprovalPanel()">审批管理</a></li>
                             {% endif %}
                         </ul>
                     </li>
@@ -1012,9 +1012,6 @@
                     {% endif %}
                     {% if permissions.can_view_project_list %}
                     <button class="btn-refresh" onclick="refreshList()">项目列表</button>
-                    {% endif %}
-                    {% if permissions.can_approval_manage %}
-                    <button class="btn-approval" onclick="showApprovalPanel()">审批管理</button>
                     {% endif %}
                     {% if permissions.can_create_project %}
                     <a class="btn-export" href="{% url 'export_project_template' %}">导出 Excel 模板</a>
@@ -1069,11 +1066,7 @@
                                         <td>{{ approval.id }}</td>
                                         <td>{{ approval.project_code }}</td>
                                         <td>
-                                            {% if approval.approval_type == 'import' or approval.approval_type == 'export' %}
-                                                {{ approval.project_name }}
-                                            {% else %}
-                                                {{ approval.before_data.project_name|default:"-" }}
-                                            {% endif %}
+                                            {{ approval.project_name|default:approval.before_data.project_name|default:"-" }}
                                         </td>
                                         <td>{{ approval.get_approval_type_display }}</td>
                                         <td>{{ approval.submitter }}</td>

@@ -1,12 +1,17 @@
+import os
 import re
+import tempfile
+import uuid
+from datetime import datetime
 from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Q, Sum, Count
+from django.forms.models import model_to_dict
 from django.http import HttpResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from openpyxl import Workbook, load_workbook
 
@@ -23,6 +28,7 @@ from .models import (
     ContractAdjustmentActionLog,
     ContractMaster,
     Counterparty,
+    ProjectApproval,
     ProjectMaster,
 )
 
@@ -50,6 +56,93 @@ def _to_decimal(value, default="0"):
     if text == "":
         text = default
     return Decimal(text)
+
+
+def _serialize_counterparty(counterparty):
+    data = model_to_dict(
+        counterparty,
+        fields=[
+            "party_name",
+            "party_type",
+            "credit_code",
+            "contact_name",
+            "contact_phone",
+            "status",
+            "remark",
+            "established_date",
+            "province_code",
+            "city",
+            "enterprise_type",
+            "industry",
+            "former_name",
+            "registration_address",
+            "business_scope",
+        ],
+    )
+    if data.get("established_date"):
+        data["established_date"] = data["established_date"].strftime("%Y-%m-%d")
+    return data
+
+
+def _serialize_contract(contract):
+    data = model_to_dict(
+        contract,
+        fields=[
+            "project",
+            "execution_project",
+            "counterparty",
+            "contract_name",
+            "contract_no",
+            "source_system",
+            "contract_direction",
+            "contract_category",
+            "contract_year",
+            "contract_status",
+            "remark",
+            "sign_date",
+            "effective_date",
+            "close_date",
+        ],
+    )
+    for date_key in ["sign_date", "effective_date", "close_date"]:
+        if data.get(date_key):
+            data[date_key] = data[date_key].strftime("%Y-%m-%d")
+    data["project_id"] = data.pop("project", None)
+    data["execution_project_id"] = data.pop("execution_project", None)
+    data["counterparty_id"] = data.pop("counterparty", None)
+    return data
+
+
+def _has_pending_approval(target_module, target_id, approval_type):
+    pending = ProjectApproval.objects.filter(approval_type=approval_type, status="pending")
+    for item in pending:
+        after_data = item.after_data or {}
+        if after_data.get("target_module") == target_module and str(after_data.get("target_id")) == str(target_id):
+            return item
+    return None
+
+
+def _submit_business_approval(request, approval_type, target_module, target_id, target_code, target_name, before_data=None, after_data=None, change_note=""):
+    payload = {
+        "target_module": target_module,
+        "target_id": target_id,
+        "target_code": target_code,
+        "target_name": target_name,
+    }
+    if after_data:
+        payload.update(after_data)
+
+    return ProjectApproval.objects.create(
+        project_code=target_code,
+        project_name=target_name,
+        approval_type=approval_type,
+        before_data=before_data,
+        after_data=payload,
+        change_note=change_note,
+        submitter=request.user.username,
+        approver="倪明珠",
+        status="pending",
+    )
 
 
 @login_required
@@ -214,54 +307,106 @@ def _apply_adjustment_to_contract(adjustment):
 @login_required
 def contract_counterparty_view(request):
     permissions = _get_permissions(request.user)
-    
-    # 获取省份字典
+
     province_dict = DictType.objects.filter(code="PROVINCE", is_active=True).first()
     province_items = province_dict.items.filter(is_active=True).order_by("sort_order", "code") if province_dict else []
 
-    if request.method == "POST" and request.POST.get("form_type") == "create_counterparty":
-        credit_code = request.POST.get("credit_code", "").strip().upper()
-        if len(credit_code) != 18:
-            messages.error(request, "统一社会信用代码必须为18位")
-            return redirect("contract_counterparty_list")
-        if Counterparty.objects.filter(credit_code=credit_code).exists():
-            messages.error(request, "统一社会信用代码已存在，请确保唯一")
-            return redirect("contract_counterparty_list")
-        
-        established_date_str = request.POST.get("established_date", "").strip()
-        established_date = None
-        if established_date_str:
+    if request.method == "POST":
+        form_type = request.POST.get("form_type", "").strip()
+
+        if form_type == "create_counterparty":
+            credit_code = request.POST.get("credit_code", "").strip().upper()
+            if len(credit_code) != 18:
+                messages.error(request, "统一社会信用代码必须为18位")
+                return redirect("contract_counterparty_list")
+            if Counterparty.objects.filter(credit_code=credit_code).exists():
+                messages.error(request, "统一社会信用代码已存在，请确保唯一")
+                return redirect("contract_counterparty_list")
+
+            established_date_str = request.POST.get("established_date", "").strip()
+            established_date = None
+            if established_date_str:
+                try:
+                    established_date = datetime.strptime(established_date_str, "%Y-%m-%d").date()
+                except ValueError:
+                    pass
+
             try:
-                from datetime import datetime
-                established_date = datetime.strptime(established_date_str, "%Y-%m-%d").date()
-            except ValueError:
-                pass
-        
-        try:
-            with transaction.atomic():
-                Counterparty.objects.create(
-                    party_name=request.POST.get("party_name", "").strip(),
-                    party_type=request.POST.get("party_type", "").strip(),
-                    credit_code=credit_code,
-                    contact_name=request.POST.get("contact_name", "").strip(),
-                    contact_phone=request.POST.get("contact_phone", "").strip(),
-                    status=request.POST.get("status", "ACTIVE").strip() or "ACTIVE",
-                    remark=request.POST.get("remark", "").strip(),
-                    established_date=established_date,
-                    province_code=request.POST.get("province_code", "").strip(),
-                    city=request.POST.get("city", "").strip(),
-                    enterprise_type=request.POST.get("enterprise_type", "").strip(),
-                    industry=request.POST.get("industry", "").strip(),
-                    former_name=request.POST.get("former_name", "").strip(),
-                    registration_address=request.POST.get("registration_address", "").strip(),
-                    business_scope=request.POST.get("business_scope", "").strip(),
-                    created_by=request.user.username,
-                    updated_by=request.user.username,
-                )
-            messages.success(request, "往来单位已新增")
-        except Exception as exc:
-            messages.error(request, f"往来单位保存失败：{exc}")
-        return redirect("contract_counterparty_list")
+                with transaction.atomic():
+                    Counterparty.objects.create(
+                        party_name=request.POST.get("party_name", "").strip(),
+                        party_type=request.POST.get("party_type", "").strip(),
+                        credit_code=credit_code,
+                        contact_name=request.POST.get("contact_name", "").strip(),
+                        contact_phone=request.POST.get("contact_phone", "").strip(),
+                        status=request.POST.get("status", "ACTIVE").strip() or "ACTIVE",
+                        remark=request.POST.get("remark", "").strip(),
+                        established_date=established_date,
+                        province_code=request.POST.get("province_code", "").strip(),
+                        city=request.POST.get("city", "").strip(),
+                        enterprise_type=request.POST.get("enterprise_type", "").strip(),
+                        industry=request.POST.get("industry", "").strip(),
+                        former_name=request.POST.get("former_name", "").strip(),
+                        registration_address=request.POST.get("registration_address", "").strip(),
+                        business_scope=request.POST.get("business_scope", "").strip(),
+                        created_by=request.user.username,
+                        updated_by=request.user.username,
+                    )
+                messages.success(request, "往来单位已新增")
+            except Exception as exc:
+                messages.error(request, f"往来单位保存失败：{exc}")
+            return redirect("contract_counterparty_list")
+
+        if form_type == "update_counterparty":
+            counterparty_id = request.POST.get("counterparty_id", "").strip()
+            target = get_object_or_404(Counterparty, id=counterparty_id)
+            existing = _has_pending_approval("counterparty", target.id, "update")
+            if existing:
+                messages.warning(request, f"该往来单位已有待审批修改申请，审批单号：{existing.id}")
+                return redirect("contract_counterparty_list")
+
+            after_data = {
+                "party_name": request.POST.get("party_name", target.party_name).strip(),
+                "party_type": request.POST.get("party_type", target.party_type).strip(),
+                "contact_name": request.POST.get("contact_name", target.contact_name).strip(),
+                "contact_phone": request.POST.get("contact_phone", target.contact_phone).strip(),
+                "status": request.POST.get("status", target.status).strip(),
+                "remark": request.POST.get("remark", target.remark).strip(),
+            }
+            approval = _submit_business_approval(
+                request,
+                approval_type="update",
+                target_module="counterparty",
+                target_id=target.id,
+                target_code=target.credit_code,
+                target_name=target.party_name,
+                before_data=_serialize_counterparty(target),
+                after_data=after_data,
+                change_note=request.POST.get("change_note", "").strip() or "往来单位修改申请",
+            )
+            messages.success(request, f"往来单位修改申请已提交，等待倪明珠审批。审批单号：{approval.id}")
+            return redirect("contract_counterparty_list")
+
+        if form_type == "delete_counterparty":
+            counterparty_id = request.POST.get("counterparty_id", "").strip()
+            target = get_object_or_404(Counterparty, id=counterparty_id)
+            existing = _has_pending_approval("counterparty", target.id, "delete")
+            if existing:
+                messages.warning(request, f"该往来单位已有待审批删除申请，审批单号：{existing.id}")
+                return redirect("contract_counterparty_list")
+
+            approval = _submit_business_approval(
+                request,
+                approval_type="delete",
+                target_module="counterparty",
+                target_id=target.id,
+                target_code=target.credit_code,
+                target_name=target.party_name,
+                before_data=_serialize_counterparty(target),
+                change_note=request.POST.get("change_note", "").strip() or "往来单位删除申请",
+            )
+            messages.success(request, f"往来单位删除申请已提交，等待倪明珠审批。审批单号：{approval.id}")
+            return redirect("contract_counterparty_list")
 
     filters = {
         "party_name": request.GET.get("party_name", "").strip(),
@@ -299,57 +444,119 @@ def contract_counterparty_view(request):
 def contract_list_view(request):
     permissions = _get_permissions(request.user)
     dept_name_map = _get_dept_name_map()
+    execution_projects = list(
+        ProjectMaster.objects.filter(is_deleted=False, is_execution_level=True).order_by("-project_code")
+    )
+    for ep in execution_projects:
+        ep.dept_name = dept_name_map.get(ep.dept, ep.dept or "")
 
-    if request.method == "POST" and request.POST.get("form_type") == "create_contract":
-        project_id = request.POST.get("project_id", "").strip()
-        counterparty_id = request.POST.get("counterparty_id", "").strip()
-        ct_code = request.POST.get("contract_ct_code", "").strip().upper()
-        if not CT_CODE_PATTERN.fullmatch(ct_code):
-            messages.error(request, "CT码格式错误，必须为CT+12位数字")
+    if request.method == "POST":
+        form_type = request.POST.get("form_type", "").strip()
+
+        if form_type == "create_contract":
+            project_id = request.POST.get("project_id", "").strip()
+            execution_project_id = request.POST.get("execution_project_id", "").strip()
+            counterparty_id = request.POST.get("counterparty_id", "").strip()
+            ct_code = request.POST.get("contract_ct_code", "").strip().upper()
+            if not CT_CODE_PATTERN.fullmatch(ct_code):
+                messages.error(request, "CT码格式错误，必须为CT+12位数字")
+                return redirect("contract_list")
+            if not execution_project_id:
+                messages.error(request, "对应执行层项目为必填项")
+                return redirect("contract_list")
+            try:
+                project = ProjectMaster.objects.get(id=project_id, is_deleted=False)
+                execution_project = ProjectMaster.objects.get(id=execution_project_id, is_deleted=False, is_execution_level=True)
+                counterparty = Counterparty.objects.get(id=counterparty_id)
+                with transaction.atomic():
+                    contract = ContractMaster(
+                        project=project,
+                        execution_project=execution_project,
+                        counterparty=counterparty,
+                        contract_ct_code=ct_code,
+                        contract_name=request.POST.get("contract_name", "").strip(),
+                        contract_no=request.POST.get("contract_no", "").strip(),
+                        source_system=request.POST.get("source_system", "").strip(),
+                        source_record_id=request.POST.get("source_record_id", "").strip(),
+                        source_contract_no=request.POST.get("source_contract_no", "").strip(),
+                        contract_direction=request.POST.get("contract_direction", "").strip(),
+                        contract_category=request.POST.get("contract_category", "").strip(),
+                        undertaking_dept_code="",
+                        undertaking_dept_name=dept_name_map.get(execution_project.dept, execution_project.dept or ""),
+                        contract_year=request.POST.get("contract_year", "").strip(),
+                        sign_date=request.POST.get("sign_date") or None,
+                        effective_date=request.POST.get("effective_date") or None,
+                        close_date=request.POST.get("close_date") or None,
+                        original_amount_tax=_to_decimal(request.POST.get("original_amount_tax", "0")),
+                        original_amount_notax=_to_decimal(request.POST.get("original_amount_notax", "0")),
+                        original_tax_rate=_to_decimal(request.POST.get("original_tax_rate"), default="0") if request.POST.get("original_tax_rate", "").strip() else None,
+                        current_amount_tax=_to_decimal(request.POST.get("current_amount_tax", "0")),
+                        current_amount_notax=_to_decimal(request.POST.get("current_amount_notax", "0")),
+                        current_tax_rate=_to_decimal(request.POST.get("current_tax_rate"), default="0") if request.POST.get("current_tax_rate", "").strip() else None,
+                        contract_status=request.POST.get("contract_status", "SIGNED").strip() or "SIGNED",
+                        remark=request.POST.get("remark", "").strip(),
+                        created_by=request.user.username,
+                        updated_by=request.user.username,
+                    )
+                    if contract.current_amount_tax == Decimal("0") and contract.current_amount_notax == Decimal("0"):
+                        contract.current_amount_tax = contract.original_amount_tax
+                        contract.current_amount_notax = contract.original_amount_notax
+                        if not contract.current_tax_rate:
+                            contract.current_tax_rate = contract.original_tax_rate
+                    contract.full_clean()
+                    contract.save()
+                messages.success(request, "合同已新增")
+            except Exception as exc:
+                messages.error(request, f"合同保存失败：{exc}")
             return redirect("contract_list")
-        try:
-            project = ProjectMaster.objects.get(id=project_id, is_deleted=False)
-            counterparty = Counterparty.objects.get(id=counterparty_id)
-            with transaction.atomic():
-                contract = ContractMaster(
-                    project=project,
-                    counterparty=counterparty,
-                    contract_ct_code=ct_code,
-                    contract_name=request.POST.get("contract_name", "").strip(),
-                    contract_no=request.POST.get("contract_no", "").strip(),
-                    source_system=request.POST.get("source_system", "").strip(),
-                    source_record_id=request.POST.get("source_record_id", "").strip(),
-                    source_contract_no=request.POST.get("source_contract_no", "").strip(),
-                    contract_direction=request.POST.get("contract_direction", "").strip(),
-                    contract_category=request.POST.get("contract_category", "").strip(),
-                    undertaking_dept_code="",
-                    undertaking_dept_name=dept_name_map.get(project.dept, project.dept or ""),
-                    contract_year=request.POST.get("contract_year", "").strip(),
-                    sign_date=request.POST.get("sign_date") or None,
-                    effective_date=request.POST.get("effective_date") or None,
-                    close_date=request.POST.get("close_date") or None,
-                    original_amount_tax=_to_decimal(request.POST.get("original_amount_tax", "0")),
-                    original_amount_notax=_to_decimal(request.POST.get("original_amount_notax", "0")),
-                    original_tax_rate=_to_decimal(request.POST.get("original_tax_rate"), default="0") if request.POST.get("original_tax_rate", "").strip() else None,
-                    current_amount_tax=_to_decimal(request.POST.get("current_amount_tax", "0")),
-                    current_amount_notax=_to_decimal(request.POST.get("current_amount_notax", "0")),
-                    current_tax_rate=_to_decimal(request.POST.get("current_tax_rate"), default="0") if request.POST.get("current_tax_rate", "").strip() else None,
-                    contract_status=request.POST.get("contract_status", "SIGNED").strip() or "SIGNED",
-                    remark=request.POST.get("remark", "").strip(),
-                    created_by=request.user.username,
-                    updated_by=request.user.username,
-                )
-                if contract.current_amount_tax == Decimal("0") and contract.current_amount_notax == Decimal("0"):
-                    contract.current_amount_tax = contract.original_amount_tax
-                    contract.current_amount_notax = contract.original_amount_notax
-                    if not contract.current_tax_rate:
-                        contract.current_tax_rate = contract.original_tax_rate
-                contract.full_clean()
-                contract.save()
-            messages.success(request, "合同已新增")
-        except Exception as exc:
-            messages.error(request, f"合同保存失败：{exc}")
-        return redirect("contract_list")
+
+        if form_type == "update_contract":
+            contract_id = request.POST.get("contract_id", "").strip()
+            target = get_object_or_404(ContractMaster, id=contract_id, is_deleted=False)
+            existing = _has_pending_approval("contract", target.id, "update")
+            if existing:
+                messages.warning(request, f"该合同已有待审批修改申请，审批单号：{existing.id}")
+                return redirect("contract_list")
+
+            after_data = {
+                "contract_name": request.POST.get("contract_name", target.contract_name).strip(),
+                "contract_status": request.POST.get("contract_status", target.contract_status).strip(),
+                "remark": request.POST.get("remark", target.remark).strip(),
+            }
+            approval = _submit_business_approval(
+                request,
+                approval_type="update",
+                target_module="contract",
+                target_id=target.id,
+                target_code=target.contract_ct_code,
+                target_name=target.contract_name,
+                before_data=_serialize_contract(target),
+                after_data=after_data,
+                change_note=request.POST.get("change_note", "").strip() or "合同修改申请",
+            )
+            messages.success(request, f"合同修改申请已提交，等待倪明珠审批。审批单号：{approval.id}")
+            return redirect("contract_list")
+
+        if form_type == "delete_contract":
+            contract_id = request.POST.get("contract_id", "").strip()
+            target = get_object_or_404(ContractMaster, id=contract_id, is_deleted=False)
+            existing = _has_pending_approval("contract", target.id, "delete")
+            if existing:
+                messages.warning(request, f"该合同已有待审批删除申请，审批单号：{existing.id}")
+                return redirect("contract_list")
+
+            approval = _submit_business_approval(
+                request,
+                approval_type="delete",
+                target_module="contract",
+                target_id=target.id,
+                target_code=target.contract_ct_code,
+                target_name=target.contract_name,
+                before_data=_serialize_contract(target),
+                change_note=request.POST.get("change_note", "").strip() or "合同删除申请",
+            )
+            messages.success(request, f"合同删除申请已提交，等待倪明珠审批。审批单号：{approval.id}")
+            return redirect("contract_list")
 
     filters = {
         "project_code": request.GET.get("project_code", "").strip(),
@@ -392,6 +599,7 @@ def contract_list_view(request):
     context = {
         "contracts": list(qs.order_by("-created_at")[:300]),
         "projects": projects,
+        "execution_projects": execution_projects,
         "counterparties": Counterparty.objects.filter(status="ACTIVE").order_by("party_name"),
         "filters": filters,
         "permissions": permissions,
@@ -581,31 +789,87 @@ def import_counterparty_ledger(request):
             messages.error(request, f"\u5f80\u6765\u5355\u4f4d\u5bfc\u5165\u7f3a\u5c11\u5fc5\u8981\u5217\uff1a{field}")
             return redirect("contract_counterparty_list")
 
-    created = updated = skipped = 0
     invalid_credit_code_rows = []
     for row_no, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
         row_data = {
             field: str(row[idx] if idx < len(row) and row[idx] is not None else "").strip()
             for field, idx in idx_map.items()
         }
-        if not row_data.get("credit_code"):
-            skipped += 1
-            continue
-        code = row_data["credit_code"].upper()
-        if len(code) != 18:
+        code = row_data.get("credit_code", "").upper()
+        if code and len(code) != 18:
             invalid_credit_code_rows.append(row_no)
+
+    if invalid_credit_code_rows:
+        row_text = "\u3001".join(str(i) for i in invalid_credit_code_rows)
+        messages.error(request, f"\u7edf\u4e00\u793e\u4f1a\u4fe1\u7528\u4ee3\u780118\u4f4d\u957f\u5ea6\u4e0d\u5408\u6cd5\u884c\u53f7\uff1a\u7b2c {row_text} \u884c")
+        return redirect("contract_counterparty_list")
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp_file:
+        file.seek(0)
+        for chunk in file.chunks():
+            tmp_file.write(chunk)
+        tmp_path = tmp_file.name
+
+    approval = _submit_business_approval(
+        request,
+        approval_type="import",
+        target_module="counterparty",
+        target_id=0,
+        target_code=f"CP-IM-{uuid.uuid4().hex[:8].upper()}",
+        target_name="\u5f80\u6765\u5355\u4f4d\u53f0\u8d26\u5bfc\u5165",
+        after_data={"mode": mode, "file_name": file.name},
+        change_note=f"\u5f80\u6765\u5355\u4f4d\u5bfc\u5165\u7533\u8bf7\uff08{mode}\uff09",
+    )
+    approval.import_file_path = tmp_path
+    approval.save(update_fields=["import_file_path"])
+    messages.success(request, f"\u5bfc\u5165\u5ba1\u6279\u5df2\u63d0\u4ea4\uff0c\u7b49\u5f85\u502a\u660e\u73e0\u5ba1\u6279\u3002\u5ba1\u6279\u5355\u53f7\uff1a{approval.id}")
+    return redirect("contract_counterparty_list")
+
+
+def process_counterparty_import_file(file_path, mode, submitter):
+    wb = load_workbook(file_path, data_only=True)
+    ws = wb.active
+    headers = [str(c.value).strip() if c.value else "" for c in ws[1]]
+    mapping = {
+        "\u5355\u4f4d\u540d\u79f0": "party_name",
+        "\u5355\u4f4d\u7c7b\u578b": "party_type",
+        "\u7edf\u4e00\u793e\u4f1a\u4fe1\u7528\u4ee3\u7801": "credit_code",
+        "\u8054\u7cfb\u4eba": "contact_name",
+        "\u8054\u7cfb\u7535\u8bdd": "contact_phone",
+        "\u72b6\u6001": "status",
+        "\u5907\u6ce8": "remark",
+        "\u6210\u7acb\u65e5\u671f": "established_date",
+        "\u6240\u5c5e\u7701\u4efd": "province_code",
+        "\u6240\u5c5e\u57ce\u5e02": "city",
+        "\u4f01\u4e1a\u7c7b\u578b": "enterprise_type",
+        "\u6240\u5c5e\u884c\u4e1a": "industry",
+        "\u66fe\u7528\u540d": "former_name",
+        "\u6ce8\u518c\u5730\u5740": "registration_address",
+        "\u7ecf\u8425\u8303\u56f4": "business_scope",
+    }
+    idx_map = {}
+    for idx, header in enumerate(headers):
+        if header in mapping:
+            idx_map[mapping[header]] = idx
+
+    created = updated = skipped = 0
+    for row in ws.iter_rows(min_row=2, values_only=True):
+        row_data = {
+            field: str(row[idx] if idx < len(row) and row[idx] is not None else "").strip()
+            for field, idx in idx_map.items()
+        }
+        code = row_data.get("credit_code", "").upper()
+        if not code or len(code) != 18:
             skipped += 1
             continue
-        
-        # 解析成立日期
+
         established_date = None
         if row_data.get("established_date"):
             try:
-                from datetime import datetime
                 established_date = datetime.strptime(row_data["established_date"], "%Y-%m-%d").date()
             except ValueError:
-                pass
-        
+                established_date = None
+
         defaults = {
             "party_name": row_data.get("party_name", ""),
             "party_type": row_data.get("party_type", "OTHER_VENDOR"),
@@ -629,21 +893,15 @@ def import_counterparty_ledger(request):
         if obj and mode == "upsert":
             for key, value in defaults.items():
                 setattr(obj, key, value)
-            obj.updated_by = request.user.username
+            obj.updated_by = submitter
             obj.save()
             updated += 1
             continue
-        Counterparty.objects.create(credit_code=code, created_by=request.user.username, updated_by=request.user.username, **defaults)
+        Counterparty.objects.create(credit_code=code, created_by=submitter, updated_by=submitter, **defaults)
         created += 1
 
-    messages.success(
-        request,
-        f"\u5f80\u6765\u5355\u4f4d\u5bfc\u5165\u5b8c\u6210\uff1a\u65b0\u589e {created} \u6761\uff0c\u66f4\u65b0 {updated} \u6761\uff0c\u8df3\u8fc7 {skipped} \u6761\uff0c\u5176\u4e2d\u7edf\u4e00\u793e\u4f1a\u4fe1\u7528\u4ee3\u780118\u4f4d\u957f\u5ea6\u4e0d\u5408\u6cd5 {len(invalid_credit_code_rows)} \u6761"
-    )
-    if invalid_credit_code_rows:
-        row_text = "\u3001".join(str(i) for i in invalid_credit_code_rows)
-        messages.error(request, f"\u7edf\u4e00\u793e\u4f1a\u4fe1\u7528\u4ee3\u780118\u4f4d\u957f\u5ea6\u4e0d\u5408\u6cd5\u884c\u53f7\uff1a\u7b2c {row_text} \u884c")
-    return redirect("contract_counterparty_list")
+    os.unlink(file_path)
+    return {"created": created, "updated": updated, "skipped": skipped}
 
 
 @login_required
@@ -687,11 +945,60 @@ def import_contract_ledger(request):
         if header in mapping:
             idx_map[mapping[header]] = idx
 
-    for field in ["project_code", "contract_ct_code", "contract_name", "credit_code",
-                  "source_system", "contract_direction", "contract_category"]:
+    for field in ["project_code", "contract_ct_code", "contract_name", "credit_code", "source_system", "contract_direction", "contract_category"]:
         if field not in idx_map:
             messages.error(request, f"\u5408\u540c\u5bfc\u5165\u7f3a\u5c11\u5fc5\u8981\u5217\uff1a{field}")
             return redirect("contract_list")
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp_file:
+        file.seek(0)
+        for chunk in file.chunks():
+            tmp_file.write(chunk)
+        tmp_path = tmp_file.name
+
+    approval = _submit_business_approval(
+        request,
+        approval_type="import",
+        target_module="contract",
+        target_id=0,
+        target_code=f"CT-IM-{uuid.uuid4().hex[:8].upper()}",
+        target_name="\u5408\u540c\u53f0\u8d26\u5bfc\u5165",
+        after_data={"mode": mode, "file_name": file.name},
+        change_note=f"\u5408\u540c\u53f0\u8d26\u5bfc\u5165\u7533\u8bf7\uff08{mode}\uff09",
+    )
+    approval.import_file_path = tmp_path
+    approval.save(update_fields=["import_file_path"])
+    messages.success(request, f"\u5bfc\u5165\u5ba1\u6279\u5df2\u63d0\u4ea4\uff0c\u7b49\u5f85\u502a\u660e\u73e0\u5ba1\u6279\u3002\u5ba1\u6279\u5355\u53f7\uff1a{approval.id}")
+    return redirect("contract_list")
+
+
+def process_contract_import_file(file_path, mode, submitter):
+    dept_name_map = _get_dept_name_map()
+    wb = load_workbook(file_path, data_only=True)
+    ws = wb.active
+    headers = [str(c.value).strip() if c.value else "" for c in ws[1]]
+    mapping = {
+        "\u9879\u76ee\u4e3b\u6570\u636e\u7f16\u7801": "project_code",
+        "\u5408\u540cCT\u7801": "contract_ct_code",
+        "\u5408\u540c\u540d\u79f0": "contract_name",
+        "\u7edf\u4e00\u793e\u4f1a\u4fe1\u7528\u4ee3\u7801": "credit_code",
+        "\u6765\u6e90\u7cfb\u7edf": "source_system",
+        "\u5408\u540c\u65b9\u5411": "contract_direction",
+        "\u5408\u540c\u5206\u7c7b": "contract_category",
+        "\u5408\u540c\u5e74\u4efd": "contract_year",
+        "\u539f\u59cb\u542b\u7a0e\u91d1\u989d": "original_amount_tax",
+        "\u539f\u59cb\u4e0d\u542b\u7a0e\u91d1\u989d": "original_amount_notax",
+        "\u539f\u59cb\u7a0e\u7387": "original_tax_rate",
+        "\u5f53\u524d\u542b\u7a0e\u91d1\u989d": "current_amount_tax",
+        "\u5f53\u524d\u4e0d\u542b\u7a0e\u91d1\u989d": "current_amount_notax",
+        "\u5f53\u524d\u7a0e\u7387": "current_tax_rate",
+        "\u5408\u540c\u72b6\u6001": "contract_status",
+        "\u5907\u6ce8": "remark",
+    }
+    idx_map = {}
+    for idx, header in enumerate(headers):
+        if header in mapping:
+            idx_map[mapping[header]] = idx
 
     created = updated = skipped = 0
     for row in ws.iter_rows(min_row=2, values_only=True):
@@ -703,15 +1010,13 @@ def import_contract_ledger(request):
         if not CT_CODE_PATTERN.fullmatch(ct_code):
             skipped += 1
             continue
-        project = ProjectMaster.objects.filter(
-            project_code=row_data.get("project_code", ""), is_deleted=False
-        ).first()
-        counterparty = Counterparty.objects.filter(
-            credit_code=row_data.get("credit_code", "").upper()
-        ).first()
+
+        project = ProjectMaster.objects.filter(project_code=row_data.get("project_code", ""), is_deleted=False).first()
+        counterparty = Counterparty.objects.filter(credit_code=row_data.get("credit_code", "").upper()).first()
         if not project or not counterparty:
             skipped += 1
             continue
+
         try:
             defaults = {
                 "project": project,
@@ -722,6 +1027,9 @@ def import_contract_ledger(request):
                 "contract_category": row_data.get("contract_category", "OTHER"),
                 "undertaking_dept_code": "",
                 "undertaking_dept_name": dept_name_map.get(project.dept, project.dept or ""),
+                "execution_project": project,
+                "execution_project_code_snapshot": project.project_code,
+                "execution_project_name_snapshot": project.project_name,
                 "contract_year": row_data.get("contract_year", ""),
                 "original_amount_tax": _to_decimal(row_data.get("original_amount_tax", "0")),
                 "original_amount_notax": _to_decimal(row_data.get("original_amount_notax", "0")),
@@ -743,15 +1051,16 @@ def import_contract_ledger(request):
         if obj and mode == "upsert":
             for key, value in defaults.items():
                 setattr(obj, key, value)
-            obj.updated_by = request.user.username
+            obj.updated_by = submitter
             obj.full_clean()
             obj.save()
             updated += 1
             continue
-        new_contract = ContractMaster(contract_ct_code=ct_code, created_by=request.user.username, updated_by=request.user.username, **defaults)
+
+        new_contract = ContractMaster(contract_ct_code=ct_code, created_by=submitter, updated_by=submitter, **defaults)
         new_contract.full_clean()
         new_contract.save()
         created += 1
 
-    messages.success(request, f"\u5408\u540c\u53f0\u8d26\u5bfc\u5165\u5b8c\u6210\uff1a\u65b0\u589e {created} \u6761\uff0c\u66f4\u65b0 {updated} \u6761\uff0c\u8df3\u8fc7 {skipped} \u6761")
-    return redirect("contract_list")
+    os.unlink(file_path)
+    return {"created": created, "updated": updated, "skipped": skipped}

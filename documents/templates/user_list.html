@@ -224,6 +224,9 @@
                         <li><a href="{% url 'permission_manage' %}">权限管理</a></li>
                     {% endif %}
                     {% endif %}
+                    {% if permissions.can_approval_manage %}
+                    <li><a href="{% url 'project_master_list' %}?show_approval=1">审批管理</a></li>
+                    {% endif %}
                 </ul>
             </div>
             <div class="menu-section">
@@ -259,7 +262,18 @@
                         {% endfor %}
                     {% endif %}
 
-                    {% if request.user.is_staff %}
+                    <form method="post" style="margin-bottom: 14px;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="change_self_password">
+                        <div class="form-row">
+                            <input type="password" name="current_password" placeholder="当前密码" required>
+                            <input type="password" name="new_password" placeholder="新密码（8位+大小写+数字）" required>
+                            <input type="password" name="confirm_password" placeholder="确认新密码" required>
+                        </div>
+                        <button class="btn btn-reset" type="submit">修改我的登录密码</button>
+                    </form>
+
+                    {% if can_manage_users and request.user.is_staff %}
                     <form method="post">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="create">
@@ -285,7 +299,7 @@
                                 <th>是否管理员</th>
                                 <th>最后登录</th>
                                 <th>创建时间</th>
-                                {% if request.user.is_staff %}<th>操作</th>{% endif %}
+                                {% if can_manage_users and request.user.is_staff %}<th>操作</th>{% endif %}
                             </tr>
                         </thead>
                         <tbody>
@@ -293,7 +307,7 @@
                             <tr>
                                 <td>{{ user.username }}</td>
                                 <td>
-                                    {% if request.user.is_staff %}
+                                    {% if can_manage_users and request.user.is_staff %}
                                     <form method="post" style="display:inline;">
                                         {% csrf_token %}
                                         <input type="hidden" name="action" value="update_department">
@@ -309,7 +323,7 @@
                                 <td>{{ user.is_staff|yesno:"是,否" }}</td>
                                 <td>{{ user.last_login }}</td>
                                 <td>{{ user.date_joined }}</td>
-                                {% if request.user.is_staff %}
+                                {% if can_manage_users and request.user.is_staff %}
                                 <td>
                                     <form method="post" style="display:inline;">
                                         {% csrf_token %}
@@ -331,7 +345,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="6">暂无用户</td>
+                                <td colspan="7">暂无用户</td>
                             </tr>
                             {% endfor %}
                         </tbody>

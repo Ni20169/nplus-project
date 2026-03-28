@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.db import models
 from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -379,6 +380,14 @@ class ContractMaster(models.Model):
         related_name="contracts",
         verbose_name="所属项目",
     )
+    execution_project = models.ForeignKey(
+        ProjectMaster,
+        on_delete=models.PROTECT,
+        related_name="execution_contracts",
+        verbose_name="对应执行层项目",
+        null=True,
+        blank=True,
+    )
     counterparty = models.ForeignKey(
         Counterparty,
         on_delete=models.PROTECT,
@@ -387,6 +396,8 @@ class ContractMaster(models.Model):
     )
 
     project_code_snapshot = models.CharField("项目主数据编码快照", max_length=12)
+    execution_project_code_snapshot = models.CharField("执行层项目编码快照", max_length=12, blank=True)
+    execution_project_name_snapshot = models.CharField("执行层项目名称快照", max_length=100, blank=True)
     contract_ct_code = models.CharField(
         "合同CT码",
         max_length=14,
@@ -460,14 +471,21 @@ class ContractMaster(models.Model):
 
     def save(self, *args, **kwargs):
         self.project_code_snapshot = self.project.project_code
+        if self.execution_project_id:
+            self.execution_project_code_snapshot = self.execution_project.project_code
+            self.execution_project_name_snapshot = self.execution_project.project_name
+        else:
+            self.execution_project_code_snapshot = ""
+            self.execution_project_name_snapshot = ""
         self.counterparty_name_snapshot = self.counterparty.party_name
-        dept_name = self.project.dept or ""
-        if self.project and self.project.dept:
+        dept_source = self.execution_project if self.execution_project_id else self.project
+        dept_name = dept_source.dept or ""
+        if dept_source and dept_source.dept:
             dept_type = DictType.objects.filter(code="DEPT", is_active=True).prefetch_related("items").first()
             if dept_type:
                 dept_name = next(
-                    (item.name for item in dept_type.items.all() if item.code == self.project.dept and item.is_active),
-                    self.project.dept,
+                    (item.name for item in dept_type.items.all() if item.code == dept_source.dept and item.is_active),
+                    dept_source.dept,
                 )
         self.undertaking_dept_name = dept_name
         self.undertaking_dept_code = ""

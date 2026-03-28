@@ -7,7 +7,7 @@ import hashlib
 from datetime import datetime
 
 from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -178,11 +178,18 @@ def login_view(request):
     if request.method == "POST":
         username = request.POST.get("username", "").strip()
         password = request.POST.get("password", "")
-        remember = request.POST.get("remember")
+        remember_period = request.POST.get("remember_period", "").strip()
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            if not remember:
+            expiry_map = {
+                "7d": 7 * 24 * 60 * 60,
+                "30d": 30 * 24 * 60 * 60,
+                "180d": 180 * 24 * 60 * 60,
+            }
+            if remember_period in expiry_map:
+                request.session.set_expiry(expiry_map[remember_period])
+            else:
                 request.session.set_expiry(0)
             return redirect("project_master_list")
         messages.error(request, "用户名或密码错误")
@@ -1292,77 +1299,168 @@ def approve_action(request, approval_id):
     try:
         with transaction.atomic():
             if action == "approve":
+                approval_after = approval.after_data or {}
+                target_module = approval_after.get("target_module", "project")
+
                 # 执行修改审批
                 if approval.approval_type == "update":
-                    project = ProjectMaster.objects.filter(
-                        project_code=approval.project_code,
-                        is_deleted=False,
-                    ).first()
+                    if target_module == "contract":
+                        from .models import ContractMaster
 
-                    if not project:
-                        messages.error(request, "目标项目不存在或已删除，无法审批通过")
-                        return redirect("project_master_list")
+                        contract = ContractMaster.objects.filter(
+                            id=approval_after.get("target_id"),
+                            is_deleted=False,
+                        ).first()
+                        if not contract:
+                            messages.error(request, "目标合同不存在或已删除，无法审批通过")
+                            return redirect("project_master_list")
 
-                    after_data = approval.after_data or {}
-                    editable_fields = [
-                        "project_name",
-                        "org_name",
-                        "parent_pj_code",
-                        "province_code",
-                        "city_code",
-                        "business_unit",
-                        "dept",
-                        "project_type",
-                        "org_mode",
-                        "data_status",
-                        "is_execution_level",
-                        "status",
-                        "remark",
-                    ]
-                    for key in editable_fields:
-                        if key in after_data:
-                            value = after_data[key]
-                            if key == "is_execution_level" and isinstance(value, str):
-                                value = value.strip().lower() in {"true", "1", "是"}
-                            setattr(project, key, value)
-                    project.updated_by = approval.submitter
-                    project.full_clean()
-                    project.save()
+                        editable_fields = ["contract_name", "contract_status", "remark"]
+                        for key in editable_fields:
+                            if key in approval_after:
+                                setattr(contract, key, approval_after[key])
+                        contract.updated_by = approval.submitter
+                        contract.full_clean()
+                        contract.save()
 
-                    ProjectMasterLog.objects.create(
-                        project_code=project.project_code,
-                        action="update",
-                        before_data=approval.before_data,
-                        after_data=approval.after_data,
-                        operator=approval.submitter,
-                        source="approval",
-                    )
+                    elif target_module == "counterparty":
+                        from .models import Counterparty
 
-                # 执行实际的删除操作
-                elif approval.approval_type == "delete":
-                    project = ProjectMaster.objects.filter(
-                        project_code=approval.project_code,
-                        is_deleted=False
-                    ).first()
+                        counterparty = Counterparty.objects.filter(
+                            id=approval_after.get("target_id")
+                        ).first()
+                        if not counterparty:
+                            messages.error(request, "目标往来单位不存在，无法审批通过")
+                            return redirect("project_master_list")
 
-                    if project:
-                        project.is_deleted = True
+                        editable_fields = [
+                            "party_name",
+                            "party_type",
+                            "contact_name",
+                            "contact_phone",
+                            "status",
+                            "remark",
+                        ]
+                        for key in editable_fields:
+                            if key in approval_after:
+                                setattr(counterparty, key, approval_after[key])
+                        counterparty.updated_by = approval.submitter
+                        counterparty.full_clean()
+                        counterparty.save()
+
+                    else:
+                        project = ProjectMaster.objects.filter(
+                            project_code=approval.project_code,
+                            is_deleted=False,
+                        ).first()
+
+                        if not project:
+                            messages.error(request, "目标项目不存在或已删除，无法审批通过")
+                            return redirect("project_master_list")
+
+                        after_data = approval.after_data or {}
+                        editable_fields = [
+                            "project_name",
+                            "org_name",
+                            "parent_pj_code",
+                            "province_code",
+                            "city_code",
+                            "business_unit",
+                            "dept",
+                            "project_type",
+                            "org_mode",
+                            "data_status",
+                            "is_execution_level",
+                            "status",
+                            "remark",
+                        ]
+                        for key in editable_fields:
+                            if key in after_data:
+                                value = after_data[key]
+                                if key == "is_execution_level" and isinstance(value, str):
+                                    value = value.strip().lower() in {"true", "1", "是"}
+                                setattr(project, key, value)
                         project.updated_by = approval.submitter
-                        project.save(update_fields=["is_deleted", "updated_by"])
+                        project.full_clean()
+                        project.save()
 
                         ProjectMasterLog.objects.create(
                             project_code=project.project_code,
-                            action="delete",
+                            action="update",
                             before_data=approval.before_data,
+                            after_data=approval.after_data,
                             operator=approval.submitter,
                             source="approval",
                         )
+
+                # 执行实际的删除操作
+                elif approval.approval_type == "delete":
+                    if target_module == "contract":
+                        from .models import ContractMaster
+
+                        contract = ContractMaster.objects.filter(
+                            id=approval_after.get("target_id"),
+                            is_deleted=False,
+                        ).first()
+                        if contract:
+                            contract.is_deleted = True
+                            contract.updated_by = approval.submitter
+                            contract.save(update_fields=["is_deleted", "updated_by"])
+                    elif target_module == "counterparty":
+                        from .models import Counterparty
+
+                        counterparty = Counterparty.objects.filter(id=approval_after.get("target_id")).first()
+                        if counterparty:
+                            counterparty.delete()
+                    else:
+                        project = ProjectMaster.objects.filter(
+                            project_code=approval.project_code,
+                            is_deleted=False
+                        ).first()
+
+                        if project:
+                            project.is_deleted = True
+                            project.updated_by = approval.submitter
+                            project.save(update_fields=["is_deleted", "updated_by"])
+
+                            ProjectMasterLog.objects.create(
+                                project_code=project.project_code,
+                                action="delete",
+                                before_data=approval.before_data,
+                                operator=approval.submitter,
+                                source="approval",
+                            )
                 
                 # 执行导入操作
                 elif approval.approval_type == "import":
                     if approval.import_file_path and os.path.exists(approval.import_file_path):
-                        _process_import_file(approval.import_file_path, approval.submitter)
-                        messages.success(request, "导入文件已处理完成")
+                        if target_module == "contract":
+                            from .contract_views import process_contract_import_file
+
+                            result = process_contract_import_file(
+                                approval.import_file_path,
+                                approval_after.get("mode", "insert"),
+                                approval.submitter,
+                            )
+                            messages.success(
+                                request,
+                                f"合同导入已处理：新增 {result['created']} 条，更新 {result['updated']} 条，跳过 {result['skipped']} 条",
+                            )
+                        elif target_module == "counterparty":
+                            from .contract_views import process_counterparty_import_file
+
+                            result = process_counterparty_import_file(
+                                approval.import_file_path,
+                                approval_after.get("mode", "insert"),
+                                approval.submitter,
+                            )
+                            messages.success(
+                                request,
+                                f"往来单位导入已处理：新增 {result['created']} 条，更新 {result['updated']} 条，跳过 {result['skipped']} 条",
+                            )
+                        else:
+                            _process_import_file(approval.import_file_path, approval.submitter)
+                            messages.success(request, "导入文件已处理完成")
                     else:
                         messages.error(request, "导入文件不存在或已过期")
                         return redirect("project_master_list")
@@ -1515,10 +1613,9 @@ def _process_import_file(file_path, submitter):
 @login_required
 def user_list(request):
     permissions = _get_user_permissions(request.user)
-    if not permissions["can_user_manage"]:
-        return _redirect_no_permission(request)
+    can_manage_users = permissions["can_user_manage"]
 
-    if request.user.is_staff:
+    if can_manage_users and request.user.is_staff:
         users = User.objects.all().order_by("-date_joined")
     else:
         users = User.objects.filter(id=request.user.id)
@@ -1526,8 +1623,42 @@ def user_list(request):
     for user in users:
         UserProfile.objects.get_or_create(user=user)
 
-    if request.method == "POST" and request.user.is_staff:
+    if request.method == "POST":
         action = request.POST.get("action")
+        if action == "change_self_password":
+            current_password = request.POST.get("current_password", "")
+            new_password = request.POST.get("new_password", "").strip()
+            confirm_password = request.POST.get("confirm_password", "").strip()
+
+            if not request.user.check_password(current_password):
+                messages.error(request, "当前密码不正确")
+                return redirect("user_list")
+            if new_password != confirm_password:
+                messages.error(request, "两次输入的新密码不一致")
+                return redirect("user_list")
+
+            if len(new_password) < 8:
+                messages.error(request, "新密码长度至少8位")
+                return redirect("user_list")
+            if not re.search(r"[A-Z]", new_password):
+                messages.error(request, "新密码必须包含大写字母")
+                return redirect("user_list")
+            if not re.search(r"[a-z]", new_password):
+                messages.error(request, "新密码必须包含小写字母")
+                return redirect("user_list")
+            if not re.search(r"[0-9]", new_password):
+                messages.error(request, "新密码必须包含数字")
+                return redirect("user_list")
+
+            request.user.set_password(new_password)
+            request.user.save(update_fields=["password"])
+            update_session_auth_hash(request, request.user)
+            messages.success(request, "登录密码修改成功")
+            return redirect("user_list")
+
+        if not (can_manage_users and request.user.is_staff):
+            return _redirect_no_permission(request)
+
         if action == "create":
             username = request.POST.get("username", "").strip()
             email = request.POST.get("email", "").strip()
@@ -1584,7 +1715,15 @@ def user_list(request):
             messages.success(request, f"用户 {target.username} 的部门已更新")
         return redirect("user_list")
 
-    return render(request, "user_list.html", {"users": users, "permissions": permissions})
+    return render(
+        request,
+        "user_list.html",
+        {
+            "users": users,
+            "permissions": permissions,
+            "can_manage_users": can_manage_users,
+        },
+    )
 
 
 @login_required
