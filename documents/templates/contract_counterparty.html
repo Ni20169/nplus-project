@@ -351,6 +351,22 @@
                                     <label>单位名称</label>
                                     <input type="text" name="party_name" value="{{ filters.party_name }}" placeholder="输入要查找的单位名称">
                                 </div>
+                                <div class="field">
+                                    <label>单位类型（模糊）</label>
+                                    <input type="text" name="party_type_keyword" value="{{ filters.party_type_keyword }}" placeholder="如：SUPPLIER / 供应商">
+                                </div>
+                                <div class="field">
+                                    <label>统一社会信用代码（模糊）</label>
+                                    <input type="text" name="credit_code_keyword" value="{{ filters.credit_code_keyword }}" placeholder="输入信用代码关键字">
+                                </div>
+                                <div class="field">
+                                    <label>状态（模糊）</label>
+                                    <input type="text" name="status_keyword" value="{{ filters.status_keyword }}" placeholder="如：ACTIVE / 启用">
+                                </div>
+                                <div class="field">
+                                    <label>所属行业（模糊）</label>
+                                    <input type="text" name="industry_keyword" value="{{ filters.industry_keyword }}" placeholder="输入行业关键字">
+                                </div>
                             </div>
                             <div class="form-actions">
                                 <button type="submit" class="btn-search">查询</button>

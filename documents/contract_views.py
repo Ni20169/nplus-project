@@ -183,6 +183,38 @@ def _apply_counterparty_filters(queryset, filters, province_items):
     if filters.get("party_name"):
         queryset = queryset.filter(party_name__icontains=filters["party_name"])
 
+    party_type_keyword = filters.get("party_type_keyword", "").strip().lower()
+    if party_type_keyword:
+        matched_party_types = [
+            value
+            for value, label in PARTY_TYPE_CHOICES
+            if party_type_keyword in value.lower() or party_type_keyword in label.lower()
+        ]
+        queryset = queryset.filter(
+            Q(party_type__icontains=party_type_keyword) | Q(party_type__in=matched_party_types)
+        )
+
+    if filters.get("credit_code_keyword"):
+        queryset = queryset.filter(credit_code__icontains=filters["credit_code_keyword"])
+
+    status_keyword = filters.get("status_keyword", "").strip().lower()
+    if status_keyword:
+        status_label_map = {
+            "ACTIVE": "启用",
+            "INACTIVE": "停用",
+        }
+        matched_status = [
+            value
+            for value, label in status_label_map.items()
+            if status_keyword in value.lower() or status_keyword in label.lower()
+        ]
+        queryset = queryset.filter(
+            Q(status__icontains=status_keyword) | Q(status__in=matched_status)
+        )
+
+    if filters.get("industry_keyword"):
+        queryset = queryset.filter(industry__icontains=filters["industry_keyword"])
+
     return queryset
 
 
@@ -313,7 +345,11 @@ def export_counterparty_list(request):
     filters = {
         "keyword": request.GET.get("keyword", "").strip(),
         "province": request.GET.get("province", "").strip(),
-        "city": request.GET.get("city", "").strip(),
+        "party_name": request.GET.get("party_name", "").strip(),
+        "party_type_keyword": request.GET.get("party_type_keyword", "").strip(),
+        "credit_code_keyword": request.GET.get("credit_code_keyword", "").strip(),
+        "status_keyword": request.GET.get("status_keyword", "").strip(),
+        "industry_keyword": request.GET.get("industry_keyword", "").strip(),
     }
     province_items, province_name_map = _get_counterparty_province_data()
     qs = _apply_counterparty_filters(Counterparty.objects.all(), filters, province_items)
@@ -579,6 +615,10 @@ def contract_counterparty_view(request):
         "keyword": request.GET.get("keyword", "").strip(),
         "province": request.GET.get("province", "").strip(),
         "party_name": request.GET.get("party_name", "").strip(),
+        "party_type_keyword": request.GET.get("party_type_keyword", "").strip(),
+        "credit_code_keyword": request.GET.get("credit_code_keyword", "").strip(),
+        "status_keyword": request.GET.get("status_keyword", "").strip(),
+        "industry_keyword": request.GET.get("industry_keyword", "").strip(),
     }
     qs = _apply_counterparty_filters(Counterparty.objects.all(), filters, province_items)
     sorted_counterparties = list(qs)
@@ -602,6 +642,10 @@ def contract_counterparty_view(request):
         "keyword": filters["keyword"],
         "province": filters["province"],
         "party_name": filters["party_name"],
+        "party_type_keyword": filters["party_type_keyword"],
+        "credit_code_keyword": filters["credit_code_keyword"],
+        "status_keyword": filters["status_keyword"],
+        "industry_keyword": filters["industry_keyword"],
     })
 
     context = {
