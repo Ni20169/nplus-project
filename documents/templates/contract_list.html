@@ -501,6 +501,7 @@
                                     <th>含税原始金额</th>
                                     <th>状态</th>
                                     <th>承担部门</th>
+                                    <th>签约日期</th>
                                     <th>年份</th>
                                     <th>创建时间</th>
                                     <th>创建人</th>
@@ -547,6 +548,7 @@
                                     {% endif %}
                                 </td>
                                 <td>{{ item.undertaking_dept_name|default:"—" }}</td>
+                                <td>{{ item.sign_date|date:"Y-m-d"|default:"—" }}</td>
                                 <td>{{ item.contract_year|default:"—" }}</td>
                                 <td>{{ item.created_at|date:"Y-m-d" }}</td>
                                 <td>{{ item.created_by|default:"—" }}</td>
@@ -558,7 +560,7 @@
                                 </td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="19" style="text-align:center;color:#999;padding:20px;">暂无数据，请新增或导入合同台账</td></tr>
+                            <tr><td colspan="20" style="text-align:center;color:#999;padding:20px;">暂无数据，请新增或导入合同台账</td></tr>
                             {% endfor %}
                             </tbody>
                         </table>
