@@ -546,9 +546,13 @@ def export_contract_list(request):
     if not permissions.get("can_view_contract_ledger"):
         from .views import _redirect_no_permission
         return _redirect_no_permission(request)
+    from .views import _ensure_export_approved
+    if _ensure_export_approved(request, "contract_list", "合同台账导出") is None:
+        return redirect("contract_list")
 
     filters = {
         "project_code": request.GET.get("project_code", "").strip(),
+        "execution_project_code": request.GET.get("execution_project_code", "").strip(),
         "contract_ct_code": request.GET.get("contract_ct_code", "").strip(),
         "contract_name": request.GET.get("contract_name", "").strip(),
         "source_system": request.GET.get("source_system", "").strip(),
@@ -562,6 +566,8 @@ def export_contract_list(request):
     qs = ContractMaster.objects.filter(is_deleted=False).select_related("project", "execution_project", "counterparty")
     if filters["project_code"]:
         qs = qs.filter(project_code_snapshot__icontains=filters["project_code"])
+    if filters["execution_project_code"]:
+        qs = qs.filter(execution_project_code_snapshot=filters["execution_project_code"])
     if filters["contract_ct_code"]:
         qs = qs.filter(contract_ct_code__icontains=filters["contract_ct_code"])
     if filters["contract_name"]:
@@ -1041,6 +1047,7 @@ def contract_list_view(request):
 
     filters = {
         "project_code": request.GET.get("project_code", "").strip(),
+        "execution_project_code": request.GET.get("execution_project_code", "").strip(),
         "contract_ct_code": request.GET.get("contract_ct_code", "").strip(),
         "contract_name": request.GET.get("contract_name", "").strip(),
         "source_system": request.GET.get("source_system", "").strip(),
@@ -1051,9 +1058,13 @@ def contract_list_view(request):
         "contract_year": request.GET.get("contract_year", "").strip(),
         "counterparty_name": request.GET.get("counterparty_name", "").strip(),
     }
-    qs = ContractMaster.objects.filter(is_deleted=False).select_related("project", "counterparty")
+    qs = ContractMaster.objects.filter(is_deleted=False).select_related(
+        "project", "execution_project", "counterparty"
+    )
     if filters["project_code"]:
         qs = qs.filter(project_code_snapshot__icontains=filters["project_code"])
+    if filters["execution_project_code"]:
+        qs = qs.filter(execution_project_code_snapshot=filters["execution_project_code"])
     if filters["contract_ct_code"]:
         qs = qs.filter(contract_ct_code__icontains=filters["contract_ct_code"])
     if filters["contract_name"]:
@@ -1079,6 +1090,11 @@ def contract_list_view(request):
     projects = list(ProjectMaster.objects.filter(is_deleted=False).order_by("-project_code"))
     for project in projects:
         project.dept_name = dept_name_map.get(project.dept, project.dept or "")
+    execution_project_code_options = list(
+        ProjectMaster.objects.filter(is_deleted=False, is_execution_level=True)
+        .order_by("-project_code")
+        .values("project_code", "project_name")
+    )
     
     sorted_contracts = list(qs)
     sorted_contracts.sort(
@@ -1110,6 +1126,23 @@ def contract_list_view(request):
         "contract_status_choices": CONTRACT_STATUS_CHOICES,
         "active_menu": "contract_list",
         "total_count": len(sorted_contracts),
+        "is_paginated": page_obj.has_other_pages(),
+        "current_query": urlencode(
+            {
+                "project_code": filters["project_code"],
+                "execution_project_code": filters["execution_project_code"],
+                "contract_ct_code": filters["contract_ct_code"],
+                "contract_name": filters["contract_name"],
+                "source_system": filters["source_system"],
+                "contract_direction": filters["contract_direction"],
+                "contract_category": filters["contract_category"],
+                "contract_status": filters["contract_status"],
+                "undertaking_dept": filters["undertaking_dept"],
+                "contract_year": filters["contract_year"],
+                "counterparty_name": filters["counterparty_name"],
+            }
+        ),
+        "execution_project_code_options": execution_project_code_options,
     }
     return render(request, "contract_list.html", context)
 
