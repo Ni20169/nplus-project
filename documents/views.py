@@ -98,6 +98,20 @@ def _ensure_export_approved(request, export_type, export_label):
             "province": request.GET.get("province", "").strip(),
             "city": request.GET.get("city", "").strip(),
         }
+    elif export_type == "contract_list":
+        params = {
+            "project_code": request.GET.get("project_code", "").strip(),
+            "execution_project_code": request.GET.get("execution_project_code", "").strip(),
+            "contract_ct_code": request.GET.get("contract_ct_code", "").strip(),
+            "contract_name": request.GET.get("contract_name", "").strip(),
+            "source_system": request.GET.get("source_system", "").strip(),
+            "contract_direction": request.GET.get("contract_direction", "").strip(),
+            "contract_category": request.GET.get("contract_category", "").strip(),
+            "contract_status": request.GET.get("contract_status", "").strip(),
+            "undertaking_dept": request.GET.get("undertaking_dept", "").strip(),
+            "contract_year": request.GET.get("contract_year", "").strip(),
+            "counterparty_name": request.GET.get("counterparty_name", "").strip(),
+        }
     else:
         params = {}
 
@@ -1324,7 +1338,13 @@ def approve_action(request, approval_id):
     if request.method != "POST":
         return redirect("project_master_list")
 
-    approval = get_object_or_404(ProjectApproval, id=approval_id, status="pending")
+    approval = ProjectApproval.objects.filter(id=approval_id).first()
+    if not approval:
+        messages.error(request, "审批单不存在或已被删除")
+        return redirect("project_master_list")
+    if approval.status != "pending":
+        messages.warning(request, "该审批单已处理，请刷新审批列表")
+        return redirect("project_master_list")
 
     # 检查当前用户是否为审批人
     if request.user.username != approval.approver:

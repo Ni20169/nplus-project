@@ -57,6 +57,7 @@
         .btn-add { background-color: #2ecc71; border-color: #2ecc71; color: #fff; font-weight: 600; }
         .btn-search { background-color: #3498db; border-color: #3498db; color: #fff; font-weight: 600; }
         .btn-import { background-color: #F25A4A; }
+        .btn-export { background-color: #8e44ad; border-color: #8e44ad; color: #fff; }
         .btn-template { background-color: #00BDBD; border-color: #00BDBD; color: #fff; }
         .btn-cancel { background-color: #95a5a6; color: #fff; border: none; cursor: pointer; }
         .btn-edit, .btn-delete { padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; color: #fff; white-space: nowrap; font-size: 13px; }
@@ -119,13 +120,10 @@
         .tag-exec-yes { background: #d4edda; color: #155724; }
         .tag-exec-no { background: #f8d7da; color: #721c24; }
         /* 分页样式 */
-        .pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding: 15px; background: #f9fafb; border-radius: 6px; }
-        .pagination-info { font-size: 14px; color: #666; }
-        .pagination-controls { display: flex; gap: 8px; align-items: center; }
-        .pagination-btn, .pagination-link { display: inline-block; padding: 6px 12px; border: 1px solid #d0d0d0; border-radius: 4px; background: #fff; color: #333; font-size: 13px; text-decoration: none; cursor: pointer; transition: all 0.2s; }
-        .pagination-btn:hover, .pagination-link:hover { background: #f0f0f0; border-color: #999; }
-        .pagination-current { display: inline-block; padding: 6px 12px; background: #4a90d9; color: #fff; border-radius: 4px; font-size: 13px; }
-        .pagination-pages { display: flex; gap: 4px; }
+        .pagination { display: flex; justify-content: flex-end; gap: 8px; align-items: center; margin-top: 10px; font-size: 13px; }
+        .pagination a, .pagination span { padding: 6px 10px; border: 1px solid #d8dee8; border-radius: 4px; background: #fff; color: #333; text-decoration: none; }
+        .pagination .current { background: #3498db; color: #fff; border-color: #3498db; }
+        .pagination .disabled { color: #999; background: #f5f5f5; }
     </style>
 </head>
 <body>
@@ -201,8 +199,9 @@
                     <button class="btn-add" onclick="showPanel('addForm')">新增合同</button>
                     <button class="btn-search" onclick="showPanel('filterPanel')">查询筛选</button>
                     <button class="btn-import" onclick="showPanel('importPanel')">导入台账</button>
-                    <a id="exportContractBtn" href="{% url 'export_contract_list' %}" class="btn-import" style="text-decoration:none;">导出台账</a>
+                    <a id="exportContractBtn" href="{% url 'export_contract_list' %}" class="btn-export" style="text-decoration:none;" title="需经倪明珠审批通过后方可导出">导出台账</a>
                 </div>
+                <div class="hint" style="margin-top:-2px;margin-bottom:8px;">导出台账需经倪明珠审批通过后方可下载；首次点击将自动提交审批申请。</div>
                 <script>
                 (function(){
                     var btn = document.getElementById('exportContractBtn');
@@ -396,6 +395,25 @@
                                     <input type="text" name="project_code" value="{{ filters.project_code }}" placeholder="关键词">
                                 </div>
                                 <div class="field">
+                                    <label>对应执行层项目编码</label>
+                                    <div class="ss-wrap">
+                                        <input
+                                            type="text"
+                                            class="ss-input"
+                                            id="ss-exec-project-code-filter-input"
+                                            placeholder="输入关键词筛选执行层项目编码…"
+                                            autocomplete="off"
+                                            value="{% if filters.execution_project_code %}{{ filters.execution_project_code }}{% endif %}">
+                                        <input type="hidden" name="execution_project_code" id="execution_project_code_filter_val" value="{{ filters.execution_project_code }}">
+                                        <div class="ss-dropdown" id="ss-exec-project-code-filter-dropdown">
+                                            <div class="ss-item ss-placeholder" data-value="">（全部）</div>
+                                            {% for item in execution_project_code_options %}
+                                            <div class="ss-item" data-value="{{ item.project_code }}">{{ item.project_code }} — {{ item.project_name }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field">
                                     <label>CT码</label>
                                     <input type="text" name="contract_ct_code" value="{{ filters.contract_ct_code }}" placeholder="关键词">
                                 </div>
@@ -474,6 +492,7 @@
                                     <th>合同名称</th>
                                     <th>项目编码</th>
                                     <th>对应执行层项目</th>
+                                    <th>对应执行层项目名称</th>
                                     <th>执行层</th>
                                     <th>签约对方</th>
                                     <th>来源系统</th>
@@ -497,8 +516,9 @@
                                 <td>{{ item.contract_name }}</td>
                                 <td>{{ item.project.project_code|default:"—" }}</td>
                                 <td>{{ item.execution_project_code_snapshot|default:"—" }}</td>
+                                <td>{{ item.execution_project_name_snapshot|default:"—" }}</td>
                                 <td>
-                                    {% if item.project.is_execution_level %}
+                                    {% if item.execution_project and item.execution_project.is_execution_level %}
                                         <span class="tag tag-exec tag-exec-yes">执行层</span>
                                     {% else %}
                                         <span class="tag tag-exec tag-exec-no">非执行层</span>
@@ -538,38 +558,31 @@
                                 </td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="16" style="text-align:center;color:#999;padding:20px;">暂无数据，请新增或导入合同台账</td></tr>
+                            <tr><td colspan="19" style="text-align:center;color:#999;padding:20px;">暂无数据，请新增或导入合同台账</td></tr>
                             {% endfor %}
                             </tbody>
                         </table>
                         
                         <!-- 分页控件 -->
-                        {% if page_obj.has_other_pages %}
+                        {% if is_paginated %}
                         <div class="pagination">
-                            <div class="pagination-info">
-                                第 {{ page_obj.number }} 页 / 共 {{ paginator.num_pages }} 页 （共 {{ total_count }} 条记录）
-                            </div>
-                            <div class="pagination-controls">
-                                {% if page_obj.has_previous %}
-                                    <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">首页</a>
-                                    <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">上一页</a>
-                                {% endif %}
-                                
-                                <div class="pagination-pages">
-                                    {% for num in paginator.page_range %}
-                                        {% if page_obj.number == num %}
-                                            <span class="pagination-current">{{ num }}</span>
-                                        {% else %}
-                                            <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-link">{{ num }}</a>
-                                        {% endif %}
-                                    {% endfor %}
-                                </div>
-                                
-                                {% if page_obj.has_next %}
-                                    <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">下一页</a>
-                                    <a href="?page={{ paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">末页</a>
-                                {% endif %}
-                            </div>
+                            {% if page_obj.has_previous %}
+                            <a href="?{% if current_query %}{{ current_query }}&{% endif %}page=1">首页</a>
+                            <a href="?{% if current_query %}{{ current_query }}&{% endif %}page={{ page_obj.previous_page_number }}">上一页</a>
+                            {% else %}
+                            <span class="disabled">首页</span>
+                            <span class="disabled">上一页</span>
+                            {% endif %}
+
+                            <span class="current">第 {{ page_obj.number }} / {{ paginator.num_pages }} 页</span>
+
+                            {% if page_obj.has_next %}
+                            <a href="?{% if current_query %}{{ current_query }}&{% endif %}page={{ page_obj.next_page_number }}">下一页</a>
+                            <a href="?{% if current_query %}{{ current_query }}&{% endif %}page={{ paginator.num_pages }}">末页</a>
+                            {% else %}
+                            <span class="disabled">下一页</span>
+                            <span class="disabled">末页</span>
+                            {% endif %}
                         </div>
                         {% endif %}
                     </div>
@@ -767,6 +780,13 @@
                 const meta = executionProjectMeta[val];
                 if (deptInput) deptInput.value = meta ? (meta.dept || '') : '';
             }
+        );
+        /* 查询区域：对应执行层项目编码下拉 */
+        initSS(
+            document.getElementById('ss-exec-project-code-filter-input'),
+            document.getElementById('ss-exec-project-code-filter-dropdown'),
+            document.getElementById('execution_project_code_filter_val'),
+            null
         );
 
         /* 往来单位下拉 */
