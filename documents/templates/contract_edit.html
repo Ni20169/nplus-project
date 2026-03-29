@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑合同台账</title>
+    <style>
+        body { font-family: "PingFang SC","Microsoft YaHei","Noto Sans SC","Source Han Sans SC",sans-serif; background:#f5f5f5; color:#333; font-size:14px; }
+        .container { max-width: 1200px; margin: 24px auto; background: #fff; padding: 20px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.06); }
+        h1 { font-size: 18px; margin-bottom: 8px; }
+        .hint { background: #f3f6ff; border: 1px solid #d5def5; color: #35508a; border-radius: 4px; padding: 8px 10px; margin-bottom: 12px; font-size: 13px; }
+        .form-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+        .field { display: flex; flex-direction: column; gap: 6px; }
+        .field label { font-size: 13px; color: #444; font-weight: 600; }
+        input, select, textarea { width: 100%; padding: 6px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; }
+        textarea { min-height: 60px; resize: vertical; }
+        .required-star { color: #e74c3c; }
+        .col-span-2 { grid-column: span 2; }
+        .actions { margin-top: 12px; display: flex; gap: 8px; }
+        .btn { padding: 8px 14px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; min-width: 110px; text-align: center; font-weight: 600; }
+        .btn-save { background-color: #7fe6a8; color: #111; }
+        .btn-cancel { background-color: #95a5a6; color: #fff; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+        @media (max-width: 1024px) { .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 700px) { .form-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>编辑合同台账</h1>
+        <div class="hint">提交后不会立即生效，需经倪明珠审批通过后方可正式修改合同数据。</div>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="update_contract_full">
+            <div class="form-grid">
+                <div class="field">
+                    <label><span class="required-star">*</span>所属项目</label>
+                    <select name="project_id" required>
+                        {% for item in projects %}
+                        <option value="{{ item.id }}" {% if item.id == contract.project_id %}selected{% endif %}>{{ item.project_code }} - {{ item.project_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label><span class="required-star">*</span>对应执行层项目</label>
+                    <select name="execution_project_id" required>
+                        {% for item in execution_projects %}
+                        <option value="{{ item.id }}" {% if item.id == contract.execution_project_id %}selected{% endif %}>{{ item.project_code }} - {{ item.project_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label><span class="required-star">*</span>签约对方</label>
+                    <select name="counterparty_id" required>
+                        {% for item in counterparties %}
+                        <option value="{{ item.id }}" {% if item.id == contract.counterparty_id %}selected{% endif %}>{{ item.party_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label><span class="required-star">*</span>CT码</label>
+                    <input type="text" name="contract_ct_code" value="{{ contract.contract_ct_code }}" maxlength="14" required>
+                </div>
+                <div class="field">
+                    <label><span class="required-star">*</span>合同名称</label>
+                    <input type="text" name="contract_name" value="{{ contract.contract_name }}" required>
+                </div>
+                <div class="field">
+                    <label><span class="required-star">*</span>合同编号</label>
+                    <input type="text" name="contract_no" value="{{ contract.contract_no }}" required>
+                </div>
+                <div class="field">
+                    <label><span class="required-star">*</span>来源系统</label>
+                    <select name="source_system" required>
+                        {% for value, label in source_system_choices %}
+                        <option value="{{ value }}" {% if contract.source_system == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label><span class="required-star">*</span>合同方向</label>
+                    <select name="contract_direction" required>
+                        {% for value, label in contract_direction_choices %}
+                        <option value="{{ value }}" {% if contract.contract_direction == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label><span class="required-star">*</span>合同分类</label>
+                    <select name="contract_category" required>
+                        {% for value, label in contract_category_choices %}
+                        <option value="{{ value }}" {% if contract.contract_category == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label><span class="required-star">*</span>签约日期</label>
+                    <input type="date" name="sign_date" value="{% if contract.sign_date %}{{ contract.sign_date|date:'Y-m-d' }}{% endif %}" required>
+                </div>
+                <div class="field">
+                    <label>原始含税金额</label>
+                    <input type="number" name="original_amount_tax" step="0.01" value="{{ contract.original_amount_tax }}">
+                </div>
+                <div class="field">
+                    <label>原始不含税金额</label>
+                    <input type="number" name="original_amount_notax" step="0.01" value="{{ contract.original_amount_notax }}">
+                </div>
+                <div class="field">
+                    <label>原始税率</label>
+                    <input type="number" name="original_tax_rate" step="0.0001" value="{{ contract.original_tax_rate|default:'' }}">
+                </div>
+                <div class="field">
+                    <label>调整后含税金额</label>
+                    <input type="number" name="current_amount_tax" step="0.01" value="{{ contract.current_amount_tax }}">
+                </div>
+                <div class="field">
+                    <label>调整后不含税金额</label>
+                    <input type="number" name="current_amount_notax" step="0.01" value="{{ contract.current_amount_notax }}">
+                </div>
+                <div class="field">
+                    <label>调整后税率</label>
+                    <input type="number" name="current_tax_rate" step="0.0001" value="{{ contract.current_tax_rate|default:'' }}">
+                </div>
+                <div class="field">
+                    <label><span class="required-star">*</span>合同状态</label>
+                    <select name="contract_status" required>
+                        {% for value, label in contract_status_choices %}
+                        <option value="{{ value }}" {% if contract.contract_status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field col-span-2">
+                    <label>备注</label>
+                    <textarea name="remark">{{ contract.remark|default:'' }}</textarea>
+                </div>
+                <div class="field col-span-2">
+                    <label>修改说明</label>
+                    <input type="text" name="change_note" placeholder="请输入本次修改说明（建议填写）">
+                </div>
+            </div>
+            <div class="actions">
+                <button type="submit" class="btn btn-save">提交修改申请</button>
+                <a href="{% url 'contract_list' %}" class="btn btn-cancel">取消</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

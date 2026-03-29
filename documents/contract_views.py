@@ -99,6 +99,12 @@ def _contract_ct_numeric_sort_key(contract):
     return (1, code, -getattr(contract, "id", 0))
 
 
+def _contract_last_adjustment_type_display(contract):
+    type_map = dict(ADJUSTMENT_TYPE_CHOICES)
+    code = getattr(contract, "last_adjustment_type", "") or ""
+    return type_map.get(code, code)
+
+
 def _get_permissions(user):
     from .views import _get_user_permissions
     return _get_user_permissions(user)
@@ -191,12 +197,18 @@ def _serialize_contract(contract):
             "project",
             "execution_project",
             "counterparty",
+            "contract_ct_code",
             "contract_name",
             "contract_no",
             "source_system",
             "contract_direction",
             "contract_category",
-            "contract_year",
+            "original_amount_tax",
+            "original_amount_notax",
+            "original_tax_rate",
+            "current_amount_tax",
+            "current_amount_notax",
+            "current_tax_rate",
             "contract_status",
             "remark",
             "sign_date",
@@ -631,6 +643,7 @@ def export_contract_list(request):
         "调整后不含税金额",
         "调整后税率",
         "调整次数",
+        "最新调整事项",
         "最近调整日期",
         "合同状态",
         "备注",
@@ -644,6 +657,7 @@ def export_contract_list(request):
     direction_map = dict(CONTRACT_DIRECTION_CHOICES)
     category_map = dict(CONTRACT_CATEGORY_CHOICES)
     status_map = dict(CONTRACT_STATUS_CHOICES)
+    adjustment_type_map = dict(ADJUSTMENT_TYPE_CHOICES)
     for c in contracts:
         ws.append([
             c.contract_ct_code,
@@ -666,6 +680,7 @@ def export_contract_list(request):
             float(c.current_amount_notax) if c.current_amount_notax is not None else "",
             float(c.current_tax_rate) if c.current_tax_rate is not None else "",
             c.approved_adjustment_count,
+            adjustment_type_map.get(c.last_adjustment_type, c.last_adjustment_type),
             c.last_adjustment_date.strftime("%Y-%m-%d") if c.last_adjustment_date else "",
             status_map.get(c.contract_status, c.contract_status),
             c.remark,
@@ -676,7 +691,7 @@ def export_contract_list(request):
         ])
 
     col_widths = [16, 30, 20, 18, 20, 30, 20, 14, 14, 14, 12, 18, 10,
-                  16, 16, 12, 16, 16, 12, 10, 14, 12, 24, 12, 12, 12, 12]
+                  16, 16, 12, 16, 16, 12, 10, 14, 14, 12, 24, 12, 12, 12, 12]
     for i, width in enumerate(col_widths, start=1):
         from openpyxl.utils import get_column_letter
         ws.column_dimensions[get_column_letter(i)].width = width
@@ -1014,29 +1029,9 @@ def contract_list_view(request):
 
         if form_type == "update_contract":
             contract_id = request.POST.get("contract_id", "").strip()
-            target = get_object_or_404(ContractMaster, id=contract_id, is_deleted=False)
-            existing = _has_pending_approval("contract", target.id, "update")
-            if existing:
-                messages.warning(request, f"该合同已有待审批修改申请，审批单号：{existing.id}")
-                return redirect("contract_list")
-
-            after_data = {
-                "contract_name": request.POST.get("contract_name", target.contract_name).strip(),
-                "contract_status": request.POST.get("contract_status", target.contract_status).strip(),
-                "remark": request.POST.get("remark", target.remark).strip(),
-            }
-            approval = _submit_business_approval(
-                request,
-                approval_type="update",
-                target_module="contract",
-                target_id=target.id,
-                target_code=target.contract_ct_code,
-                target_name=target.contract_name,
-                before_data=_serialize_contract(target),
-                after_data=after_data,
-                change_note=request.POST.get("change_note", "").strip() or "合同修改申请",
-            )
-            messages.success(request, f"合同修改申请已提交，等待倪明珠审批。审批单号：{approval.id}")
+            if contract_id:
+                return redirect("contract_edit", contract_id=contract_id)
+            messages.error(request, "缺少合同ID，无法跳转编辑页")
             return redirect("contract_list")
 
         if form_type == "delete_contract":
@@ -1113,6 +1108,8 @@ def contract_list_view(request):
     
     sorted_contracts = list(qs)
     sorted_contracts.sort(key=_contract_ct_numeric_sort_key)
+    for item in sorted_contracts:
+        item.last_adjustment_type_display = _contract_last_adjustment_type_display(item)
 
     # 执行分页（排序先于分页，确保页内稳定）
     paginator = Paginator(sorted_contracts, 50)  # 每页50条
@@ -1158,6 +1155,96 @@ def contract_list_view(request):
         "execution_project_code_options": execution_project_code_options,
     }
     return render(request, "contract_list.html", context)
+
+
+@login_required
+def contract_edit(request, contract_id):
+    permissions = _get_permissions(request.user)
+    if not permissions.get("can_view_contract_ledger"):
+        from .views import _redirect_no_permission
+        return _redirect_no_permission(request)
+
+    contract = get_object_or_404(
+        ContractMaster.objects.select_related("project", "execution_project", "counterparty"),
+        id=contract_id,
+        is_deleted=False,
+    )
+    dept_name_map = _get_dept_name_map()
+    projects = list(ProjectMaster.objects.filter(is_deleted=False).order_by("-project_code"))
+    execution_projects = list(
+        ProjectMaster.objects.filter(is_deleted=False, is_execution_level=True).order_by("-project_code")
+    )
+    counterparties = list(
+        Counterparty.objects.filter(Q(status="ACTIVE") | Q(id=contract.counterparty_id)).order_by("party_name")
+    )
+    for project in projects:
+        project.dept_name = dept_name_map.get(project.dept, project.dept or "")
+    for ep in execution_projects:
+        ep.dept_name = dept_name_map.get(ep.dept, ep.dept or "")
+
+    if request.method == "POST" and request.POST.get("form_type", "").strip() == "update_contract_full":
+        existing = _has_pending_approval("contract", contract.id, "update")
+        if existing:
+            messages.warning(request, f"该合同已有待审批修改申请，审批单号：{existing.id}")
+            return redirect("contract_edit", contract_id=contract.id)
+
+        try:
+            project = ProjectMaster.objects.get(id=int(request.POST.get("project_id", contract.project_id)), is_deleted=False)
+            execution_project = ProjectMaster.objects.get(
+                id=int(request.POST.get("execution_project_id", contract.execution_project_id)),
+                is_deleted=False,
+                is_execution_level=True,
+            )
+            counterparty = Counterparty.objects.get(id=int(request.POST.get("counterparty_id", contract.counterparty_id)))
+            after_data = {
+                "project_id": project.id,
+                "execution_project_id": execution_project.id,
+                "counterparty_id": counterparty.id,
+                "contract_ct_code": request.POST.get("contract_ct_code", contract.contract_ct_code).strip().upper(),
+                "contract_name": request.POST.get("contract_name", contract.contract_name).strip(),
+                "contract_no": request.POST.get("contract_no", contract.contract_no).strip(),
+                "source_system": request.POST.get("source_system", contract.source_system).strip() or "MANUAL",
+                "contract_direction": request.POST.get("contract_direction", contract.contract_direction).strip() or "NONE",
+                "contract_category": request.POST.get("contract_category", contract.contract_category).strip() or "OTHER",
+                "sign_date": request.POST.get("sign_date") or None,
+                "original_amount_tax": str(_to_decimal(request.POST.get("original_amount_tax", contract.original_amount_tax), default=str(contract.original_amount_tax or "0"))),
+                "original_amount_notax": str(_to_decimal(request.POST.get("original_amount_notax", contract.original_amount_notax), default=str(contract.original_amount_notax or "0"))),
+                "original_tax_rate": str(_to_decimal(request.POST.get("original_tax_rate"), default="0")) if request.POST.get("original_tax_rate", "").strip() else None,
+                "current_amount_tax": str(_to_decimal(request.POST.get("current_amount_tax", contract.current_amount_tax), default=str(contract.current_amount_tax or "0"))),
+                "current_amount_notax": str(_to_decimal(request.POST.get("current_amount_notax", contract.current_amount_notax), default=str(contract.current_amount_notax or "0"))),
+                "current_tax_rate": str(_to_decimal(request.POST.get("current_tax_rate"), default="0")) if request.POST.get("current_tax_rate", "").strip() else None,
+                "contract_status": request.POST.get("contract_status", contract.contract_status).strip() or "SIGNED",
+                "remark": request.POST.get("remark", contract.remark).strip(),
+            }
+        except Exception as exc:
+            messages.error(request, f"数据校验失败：{exc}")
+            return redirect("contract_edit", contract_id=contract.id)
+
+        approval = _submit_business_approval(
+            request,
+            approval_type="update",
+            target_module="contract",
+            target_id=contract.id,
+            target_code=contract.contract_ct_code,
+            target_name=contract.contract_name,
+            before_data=_serialize_contract(contract),
+            after_data=after_data,
+            change_note=request.POST.get("change_note", "").strip() or "合同台账全字段修改申请",
+        )
+        messages.success(request, f"合同修改申请已提交，需经倪明珠审批通过后方可生效。审批单号：{approval.id}")
+        return redirect("contract_list")
+
+    context = {
+        "contract": contract,
+        "projects": projects,
+        "execution_projects": execution_projects,
+        "counterparties": counterparties,
+        "source_system_choices": SOURCE_SYSTEM_CHOICES,
+        "contract_direction_choices": CONTRACT_DIRECTION_CHOICES,
+        "contract_category_choices": CONTRACT_CATEGORY_CHOICES,
+        "contract_status_choices": CONTRACT_STATUS_CHOICES,
+    }
+    return render(request, "contract_edit.html", context)
 
 
 # ---------------------------------------------------------------------------

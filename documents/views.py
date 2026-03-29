@@ -5,6 +5,7 @@ import logging
 import json
 import hashlib
 from datetime import datetime
+from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
@@ -1367,7 +1368,7 @@ def approve_action(request, approval_id):
                 # 执行修改审批
                 if approval.approval_type == "update":
                     if target_module == "contract":
-                        from .models import ContractMaster
+                        from .models import ContractMaster, Counterparty
 
                         contract = ContractMaster.objects.filter(
                             id=approval_after.get("target_id"),
@@ -1377,10 +1378,78 @@ def approve_action(request, approval_id):
                             messages.error(request, "目标合同不存在或已删除，无法审批通过")
                             return redirect("project_master_list")
 
-                        editable_fields = ["contract_name", "contract_status", "remark"]
-                        for key in editable_fields:
+                        # 全字段审批回写（保留自动推导字段由模型自身同步）
+                        fk_project_id = approval_after.get("project_id")
+                        fk_execution_project_id = approval_after.get("execution_project_id")
+                        fk_counterparty_id = approval_after.get("counterparty_id")
+                        if fk_project_id:
+                            project = ProjectMaster.objects.filter(id=fk_project_id, is_deleted=False).first()
+                            if not project:
+                                messages.error(request, "审批数据中的所属项目不存在，无法审批通过")
+                                return redirect("project_master_list")
+                            contract.project = project
+                        if fk_execution_project_id:
+                            execution_project = ProjectMaster.objects.filter(
+                                id=fk_execution_project_id,
+                                is_deleted=False,
+                                is_execution_level=True,
+                            ).first()
+                            if not execution_project:
+                                messages.error(request, "审批数据中的执行层项目不存在或非执行层，无法审批通过")
+                                return redirect("project_master_list")
+                            contract.execution_project = execution_project
+                        if fk_counterparty_id:
+                            counterparty = Counterparty.objects.filter(id=fk_counterparty_id).first()
+                            if not counterparty:
+                                messages.error(request, "审批数据中的签约方不存在，无法审批通过")
+                                return redirect("project_master_list")
+                            contract.counterparty = counterparty
+
+                        for key in [
+                            "contract_ct_code",
+                            "contract_name",
+                            "contract_no",
+                            "source_system",
+                            "contract_direction",
+                            "contract_category",
+                            "contract_status",
+                            "remark",
+                        ]:
                             if key in approval_after:
-                                setattr(contract, key, approval_after[key])
+                                value = approval_after.get(key)
+                                if key == "contract_ct_code" and isinstance(value, str):
+                                    value = value.strip().upper()
+                                setattr(contract, key, value)
+
+                        sign_date_val = approval_after.get("sign_date")
+                        if sign_date_val:
+                            if isinstance(sign_date_val, str):
+                                contract.sign_date = datetime.strptime(sign_date_val, "%Y-%m-%d").date()
+                            else:
+                                contract.sign_date = sign_date_val
+
+                        def _to_decimal_or_none(raw):
+                            if raw in ("", None):
+                                return None
+                            return Decimal(str(raw))
+
+                        try:
+                            if "original_amount_tax" in approval_after:
+                                contract.original_amount_tax = _to_decimal_or_none(approval_after.get("original_amount_tax")) or Decimal("0")
+                            if "original_amount_notax" in approval_after:
+                                contract.original_amount_notax = _to_decimal_or_none(approval_after.get("original_amount_notax")) or Decimal("0")
+                            if "original_tax_rate" in approval_after:
+                                contract.original_tax_rate = _to_decimal_or_none(approval_after.get("original_tax_rate"))
+                            if "current_amount_tax" in approval_after:
+                                contract.current_amount_tax = _to_decimal_or_none(approval_after.get("current_amount_tax")) or Decimal("0")
+                            if "current_amount_notax" in approval_after:
+                                contract.current_amount_notax = _to_decimal_or_none(approval_after.get("current_amount_notax")) or Decimal("0")
+                            if "current_tax_rate" in approval_after:
+                                contract.current_tax_rate = _to_decimal_or_none(approval_after.get("current_tax_rate"))
+                        except (InvalidOperation, TypeError, ValueError):
+                            messages.error(request, "审批数据中的金额/税率格式非法，无法审批通过")
+                            return redirect("project_master_list")
+
                         contract.updated_by = approval.submitter
                         contract.full_clean()
                         contract.save()

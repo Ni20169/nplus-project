@@ -28,6 +28,7 @@ urlpatterns = [
     path("documents/contracts/counterparties/", contract_views.contract_counterparty_view, name="contract_counterparty_list"),
     path("documents/contracts/counterparties/<int:counterparty_id>/edit/", contract_views.contract_counterparty_edit, name="contract_counterparty_edit"),
     path("documents/contracts/list/", contract_views.contract_list_view, name="contract_list"),
+    path("documents/contracts/<int:contract_id>/edit/", contract_views.contract_edit, name="contract_edit"),
     path("documents/contracts/adjustments/", contract_views.contract_adjustment_view, name="contract_adjustment_list"),
     path("documents/contracts/template/counterparty/", contract_views.export_counterparty_template, name="export_counterparty_template"),
     path("documents/contracts/export/counterparty/", contract_views.export_counterparty_list, name="export_counterparty_list"),

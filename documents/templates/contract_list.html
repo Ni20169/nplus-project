@@ -89,7 +89,7 @@
         .data-table { background-color: rgba(255,255,255,0.9); border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.06); padding: 8px; flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
         .table-meta { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #666; margin: 4px 4px 8px; flex-shrink: 0; }
         .table-wrapper { flex: 1; overflow: auto; scrollbar-gutter: stable both-edges; }
-        table { width: 100%; border-collapse: collapse; min-width: 1200px; table-layout: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 2200px; table-layout: auto; }
         table thead { position: sticky; top: 0; background: #fff; z-index: 10; box-shadow: 0 2px 2px rgba(0,0,0,0.1); }
         th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #eee; font-size: 13px; white-space: nowrap; }
         th { background-color: #f3f6f9; font-weight: 600; }
@@ -202,6 +202,7 @@
                     <a id="exportContractBtn" href="{% url 'export_contract_list' %}" class="btn-export" style="text-decoration:none;" title="需经倪明珠审批通过后方可导出">导出台账</a>
                 </div>
                 <div class="hint" style="margin-top:-2px;margin-bottom:8px;">导出台账需经倪明珠审批通过后方可下载；首次点击将自动提交审批申请。</div>
+                <div class="hint" style="margin-top:-4px;margin-bottom:8px;">合同修改/删除为审批生效模式：提交申请后需经倪明珠审批通过，正式数据才会变更。</div>
                 <script>
                 (function(){
                     var btn = document.getElementById('exportContractBtn');
@@ -499,6 +500,14 @@
                                     <th>方向</th>
                                     <th>分类</th>
                                     <th>含税原始金额</th>
+                                    <th>原始不含税金额</th>
+                                    <th>原始税率</th>
+                                    <th>调整后含税金额</th>
+                                    <th>调整后不含税金额</th>
+                                    <th>调整后税率</th>
+                                    <th>调整次数</th>
+                                    <th>最新调整事项</th>
+                                    <th>最近调整日期</th>
                                     <th>状态</th>
                                     <th>承担部门</th>
                                     <th>签约日期</th>
@@ -530,12 +539,20 @@
                                 <td>{{ item.get_contract_direction_display|default:"—" }}</td>
                                 <td>{{ item.get_contract_category_display|default:"—" }}</td>
                                 <td class="td-number">
-                                    {% if item.current_amount_tax is not None %}
-                                        {{ item.current_amount_tax|floatformat:2 }}
+                                    {% if item.original_amount_tax is not None %}
+                                        {{ item.original_amount_tax|floatformat:2 }}
                                     {% else %}
                                         —
                                     {% endif %}
                                 </td>
+                                <td class="td-number">{% if item.original_amount_notax is not None %}{{ item.original_amount_notax|floatformat:2 }}{% else %}—{% endif %}</td>
+                                <td class="td-number">{% if item.original_tax_rate is not None %}{{ item.original_tax_rate|floatformat:4 }}{% else %}—{% endif %}</td>
+                                <td class="td-number">{% if item.current_amount_tax is not None %}{{ item.current_amount_tax|floatformat:2 }}{% else %}—{% endif %}</td>
+                                <td class="td-number">{% if item.current_amount_notax is not None %}{{ item.current_amount_notax|floatformat:2 }}{% else %}—{% endif %}</td>
+                                <td class="td-number">{% if item.current_tax_rate is not None %}{{ item.current_tax_rate|floatformat:4 }}{% else %}—{% endif %}</td>
+                                <td class="td-number">{{ item.approved_adjustment_count|default:"0" }}</td>
+                                <td>{{ item.last_adjustment_type_display|default:"—" }}</td>
+                                <td>{{ item.last_adjustment_date|date:"Y-m-d"|default:"—" }}</td>
                                 <td>
                                     {% if item.contract_status == "SIGNED" or item.contract_status == "ACTIVE" %}
                                         <span class="tag tag-signed">{{ item.get_contract_status_display }}</span>
@@ -555,12 +572,12 @@
                                 <td>{{ item.updated_at|date:"Y-m-d" }}</td>
                                 <td>{{ item.updated_by|default:"—" }}</td>
                                 <td>
-                                    <button type="button" class="btn-edit" onclick="submitContractUpdate({{ item.id }}, '{{ item.contract_name|escapejs }}', '{{ item.contract_status|escapejs }}', '{{ item.remark|default:''|escapejs }}')">修改</button>
+                                    <a class="btn-edit" href="{% url 'contract_edit' item.id %}" style="text-decoration:none;display:inline-block;">修改</a>
                                     <button type="button" class="btn-delete" onclick="submitContractDelete({{ item.id }}, '{{ item.contract_name|escapejs }}')">删除</button>
                                 </td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="20" style="text-align:center;color:#999;padding:20px;">暂无数据，请新增或导入合同台账</td></tr>
+                            <tr><td colspan="28" style="text-align:center;color:#999;padding:20px;">暂无数据，请新增或导入合同台账</td></tr>
                             {% endfor %}
                             </tbody>
                         </table>
