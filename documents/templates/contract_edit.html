@@ -27,7 +27,7 @@
 <body>
     <div class="container">
         <h1>编辑合同台账</h1>
-        <div class="hint">提交后不会立即生效，需经倪明珠审批通过后方可正式修改合同数据。</div>
+        <div class="hint">提交后不会立即生效，需经管理员审批通过后方可正式修改合同数据。</div>
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="form_type" value="update_contract_full">
