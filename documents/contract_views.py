@@ -12,6 +12,7 @@ from django.contrib.postgres.search import SearchQuery, SearchVector
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db import transaction
 from django.db.models import Q, Sum, Count, CharField
@@ -112,6 +113,18 @@ def _to_decimal(value, default="0"):
     if text == "":
         text = default
     return Decimal(text)
+
+
+def _normalize_choice_value(raw_value, choices, default=None):
+    text = str(raw_value if raw_value is not None else "").strip()
+    if not text:
+        return default
+    # Support both stored value (e.g. "SIGNED") and display label (e.g. "已签订").
+    direct_values = {value for value, _ in choices}
+    if text in direct_values:
+        return text
+    label_to_value = {label: value for value, label in choices}
+    return label_to_value.get(text, text)
 
 
 def _parse_excel_date(value):
@@ -1510,10 +1523,13 @@ def process_contract_import_file(file_path, mode, submitter):
 
     created = updated = skipped = 0
     for row in ws.iter_rows(min_row=2, values_only=True):
+        if not any(cell not in (None, "") for cell in row):
+            continue
         row_data = {
             field: str(row[idx] if idx < len(row) and row[idx] is not None else "").strip()
             for field, idx in idx_map.items()
         }
+        sign_date_raw = row[idx_map["sign_date"]] if "sign_date" in idx_map and idx_map["sign_date"] < len(row) else None
         ct_code = row_data.get("contract_ct_code", "").upper()
         if not CT_CODE_PATTERN.fullmatch(ct_code):
             skipped += 1
@@ -1535,6 +1551,9 @@ def process_contract_import_file(file_path, mode, submitter):
             continue
 
         try:
+            sign_date_val = _parse_excel_date(sign_date_raw)
+            if not sign_date_val:
+                raise ValueError("invalid sign date")
             current_amount_tax_val = _to_decimal(row_data["current_amount_tax"]) if row_data.get("current_amount_tax") else None
             current_amount_notax_val = _to_decimal(row_data["current_amount_notax"]) if row_data.get("current_amount_notax") else None
             current_tax_rate_val = _to_decimal(row_data["current_tax_rate"]) if row_data.get("current_tax_rate") else None
@@ -1544,14 +1563,30 @@ def process_contract_import_file(file_path, mode, submitter):
                 "counterparty": counterparty,
                 "contract_name": row_data.get("contract_name", ""),
                 "contract_no": row_data.get("contract_no", ""),
-                "source_system": row_data.get("source_system", "MANUAL"),
-                "contract_direction": row_data.get("contract_direction", "NONE"),
-                "contract_category": row_data.get("contract_category", "OTHER"),
-                "sign_date": datetime.strptime(row_data.get("sign_date", ""), "%Y-%m-%d").date(),
+                "source_system": _normalize_choice_value(
+                    row_data.get("source_system", ""),
+                    SOURCE_SYSTEM_CHOICES,
+                    default="MANUAL",
+                ),
+                "contract_direction": _normalize_choice_value(
+                    row_data.get("contract_direction", ""),
+                    CONTRACT_DIRECTION_CHOICES,
+                    default="NONE",
+                ),
+                "contract_category": _normalize_choice_value(
+                    row_data.get("contract_category", ""),
+                    CONTRACT_CATEGORY_CHOICES,
+                    default="OTHER",
+                ),
+                "sign_date": sign_date_val,
                 "original_amount_tax": _to_decimal(row_data.get("original_amount_tax", "0")),
                 "original_amount_notax": _to_decimal(row_data.get("original_amount_notax", "0")),
                 "original_tax_rate": _to_decimal(row_data.get("original_tax_rate"), default="0") if row_data.get("original_tax_rate") else None,
-                "contract_status": row_data.get("contract_status", "SIGNED") or "SIGNED",
+                "contract_status": _normalize_choice_value(
+                    row_data.get("contract_status", ""),
+                    CONTRACT_STATUS_CHOICES,
+                    default="SIGNED",
+                ),
                 "remark": row_data.get("remark", ""),
             }
         except (InvalidOperation, ValueError):
@@ -1566,8 +1601,12 @@ def process_contract_import_file(file_path, mode, submitter):
             for key, value in defaults.items():
                 setattr(obj, key, value)
             obj.updated_by = submitter
-            obj.full_clean()
-            obj.save()
+            try:
+                obj.full_clean()
+                obj.save()
+            except ValidationError:
+                skipped += 1
+                continue
             if current_amount_tax_val is not None:
                 current_upd = {"current_amount_tax": current_amount_tax_val}
                 if current_amount_notax_val is not None:
@@ -1579,8 +1618,12 @@ def process_contract_import_file(file_path, mode, submitter):
             continue
 
         new_contract = ContractMaster(contract_ct_code=ct_code, created_by=submitter, updated_by=submitter, **defaults)
-        new_contract.full_clean()
-        new_contract.save()
+        try:
+            new_contract.full_clean()
+            new_contract.save()
+        except ValidationError:
+            skipped += 1
+            continue
         if current_amount_tax_val is not None:
             current_upd = {"current_amount_tax": current_amount_tax_val}
             if current_amount_notax_val is not None:
