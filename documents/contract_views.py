@@ -84,6 +84,21 @@ def _contract_counterparty_name(contract):
     return ""
 
 
+def _contract_ct_numeric_sort_key(contract):
+    """
+    合同台账默认排序：按 CT 码数字部分倒序（数值大的在前）。
+    兼容异常 CT 码：无法解析数字时归为异常组，放在标准 CT 码之后。
+    """
+    code = (getattr(contract, "contract_ct_code", "") or "").strip().upper()
+    if code.startswith("CT"):
+        numeric_part = code[2:]
+        if numeric_part.isdigit():
+            # 标准 CT 码：按数字倒序；同值再按主键倒序稳定排序
+            return (0, -int(numeric_part), -getattr(contract, "id", 0))
+    # 异常 CT 码：统一放到后面，按原始码和主键稳定排序
+    return (1, code, -getattr(contract, "id", 0))
+
+
 def _get_permissions(user):
     from .views import _get_user_permissions
     return _get_user_permissions(user)
@@ -1097,9 +1112,7 @@ def contract_list_view(request):
     )
     
     sorted_contracts = list(qs)
-    sorted_contracts.sort(
-        key=lambda item: _party_name_sort_key(_contract_counterparty_name(item), item.id)
-    )
+    sorted_contracts.sort(key=_contract_ct_numeric_sort_key)
 
     # 执行分页（排序先于分页，确保页内稳定）
     paginator = Paginator(sorted_contracts, 50)  # 每页50条
