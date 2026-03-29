@@ -200,10 +200,10 @@
                     <button class="btn-add" onclick="showPanel('addForm')">新增合同</button>
                     <button class="btn-search" onclick="showPanel('filterPanel')">查询筛选</button>
                     <button class="btn-import" onclick="showPanel('importPanel')">导入台账</button>
-                    <a id="exportContractBtn" href="{% url 'export_contract_list' %}" class="btn-export" style="text-decoration:none;" title="需经倪明珠审批通过后方可导出">导出台账</a>
+                    <a id="exportContractBtn" href="{% url 'export_contract_list' %}" class="btn-export" style="text-decoration:none;" title="需经管理员审批通过后方可导出">导出台账</a>
                 </div>
-                <div class="hint" style="margin-top:-2px;margin-bottom:8px;">导出台账需经倪明珠审批通过后方可下载；首次点击将自动提交审批申请。</div>
-                <div class="hint" style="margin-top:-4px;margin-bottom:8px;">合同修改/删除为审批生效模式：提交申请后需经倪明珠审批通过，正式数据才会变更。</div>
+                <div class="hint" style="margin-top:-2px;margin-bottom:8px;">导出台账需经管理员审批通过后方可下载；首次点击将自动提交审批申请。</div>
+                <div class="hint" style="margin-top:-4px;margin-bottom:8px;">合同修改/删除为审批生效模式：提交申请后需经管理员审批通过，正式数据才会变更。</div>
                 <script>
                 (function(){
                     var btn = document.getElementById('exportContractBtn');
@@ -580,7 +580,7 @@
                                 </td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="29" style="text-align:center;color:#999;padding:20px;">暂无数据，请新增或导入合同台账</td></tr>
+                            <tr><td colspan="28" style="text-align:center;color:#999;padding:20px;">暂无数据，请新增或导入合同台账</td></tr>
                             {% endfor %}
                             </tbody>
                         </table>
