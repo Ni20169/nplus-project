@@ -403,7 +403,9 @@ class ContractMaster(models.Model):
         verbose_name="签约相对方",
     )
 
-    project_code_snapshot = models.CharField("项目主数据编码快照", max_length=12)
+    project_code_snapshot = models.CharField(
+        "项目主数据编码快照", max_length=12, blank=True, default=""
+    )
     execution_project_code_snapshot = models.CharField("执行层项目编码快照", max_length=12, blank=True)
     execution_project_name_snapshot = models.CharField("执行层项目名称快照", max_length=100, blank=True)
     contract_ct_code = models.CharField(
@@ -421,8 +423,10 @@ class ContractMaster(models.Model):
     contract_category = models.CharField("合同分类", max_length=20, choices=CONTRACT_CATEGORY_CHOICES)
     undertaking_dept_code = models.CharField("承担部门编码", max_length=50, blank=True)
     undertaking_dept_name = models.CharField("承担部门名称", max_length=100, blank=True)
-    contract_year = models.PositiveSmallIntegerField("合同年份", null=True)
-    counterparty_name_snapshot = models.CharField("签约方名称快照", max_length=200)
+    contract_year = models.PositiveSmallIntegerField("合同年份", null=True, blank=True)
+    counterparty_name_snapshot = models.CharField(
+        "签约方名称快照", max_length=200, blank=True, default=""
+    )
 
     sign_date = models.DateField("签订日期")
 
@@ -473,22 +477,56 @@ class ContractMaster(models.Model):
         if self.original_amount_tax < 0 or self.original_amount_notax < 0:
             raise ValidationError("原始金额不允许为负值")
 
-    def save(self, *args, **kwargs):
-        self.project_code_snapshot = self.project.project_code
-        self.execution_project_code_snapshot = self.execution_project.project_code
-        self.execution_project_name_snapshot = self.execution_project.project_name
-        self.counterparty_name_snapshot = self.counterparty.party_name
-        dept_name = self.execution_project.dept or ""
-        if self.execution_project.dept:
-            dept_type = DictType.objects.filter(code="DEPT", is_active=True).prefetch_related("items").first()
+    def sync_derived_fields(self):
+        """
+        自动回填由关联对象/签订日期推导出来的字段。
+        主要用于导入/审批流程：允许用户不填自动生成字段，在校验前补齐。
+        """
+        # Snapshots
+        self.project_code_snapshot = self.project.project_code or ""
+        self.execution_project_code_snapshot = self.execution_project.project_code or ""
+        self.execution_project_name_snapshot = self.execution_project.project_name or ""
+        self.counterparty_name_snapshot = self.counterparty.party_name or ""
+
+        # Undertaking dept (use execution_project.dept)
+        dept_code = self.execution_project.dept or ""
+        self.undertaking_dept_code = dept_code
+        dept_name = ""
+        if dept_code:
+            dept_type = (
+                DictType.objects.filter(code="DEPT", is_active=True)
+                .prefetch_related("items")
+                .first()
+            )
             if dept_type:
                 dept_name = next(
-                    (item.name for item in dept_type.items.all() if item.code == self.execution_project.dept and item.is_active),
-                    self.execution_project.dept,
+                    (
+                        item.name
+                        for item in dept_type.items.all()
+                        if item.code == dept_code and item.is_active
+                    ),
+                    dept_code,
                 )
         self.undertaking_dept_name = dept_name
-        self.undertaking_dept_code = ""
-        self.contract_year = self.sign_date.year
+
+        # Contract year
+        self.contract_year = self.sign_date.year if self.sign_date else None
+
+    def full_clean(self, exclude=None, validate_unique=True):
+        # Ensure all derived fields are populated before any validation.
+        self.sync_derived_fields()
+
+        # When creating an original contract, initialize current amounts from originals.
+        if self._state.adding:
+            self.current_amount_tax = self.original_amount_tax
+            self.current_amount_notax = self.original_amount_notax
+            self.current_tax_rate = self.original_tax_rate
+
+        super().full_clean(exclude=exclude, validate_unique=validate_unique)
+
+    def save(self, *args, **kwargs):
+        # Fallback: fill derived fields even if caller bypasses full_clean().
+        self.sync_derived_fields()
         if self._state.adding:
             self.current_amount_tax = self.original_amount_tax
             self.current_amount_notax = self.original_amount_notax
@@ -514,9 +552,15 @@ class ContractAdjustment(models.Model):
         verbose_name="项目",
     )
 
-    project_code_snapshot = models.CharField("项目主数据编码快照", max_length=12)
-    contract_ct_code_snapshot = models.CharField("合同CT码快照", max_length=14)
-    contract_name_snapshot = models.CharField("合同名称快照", max_length=200)
+    project_code_snapshot = models.CharField(
+        "项目主数据编码快照", max_length=12, blank=True, default=""
+    )
+    contract_ct_code_snapshot = models.CharField(
+        "合同CT码快照", max_length=14, blank=True, default=""
+    )
+    contract_name_snapshot = models.CharField(
+        "合同名称快照", max_length=200, blank=True, default=""
+    )
 
     adjustment_type = models.CharField("调整类型", max_length=20, choices=ADJUSTMENT_TYPE_CHOICES)
     adjustment_no = models.CharField("调整单号", max_length=100)
